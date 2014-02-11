@@ -1,0 +1,7 @@
+######
+
+# No backup .*~ files
+.*~
+
+# No collected data
+data/
