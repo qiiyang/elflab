@@ -48,7 +48,6 @@ if debug_info:
 # ____Initialise the plotting buffer
 plotBuffer = mi.initialData.copy()# The buffer for data-plotting
 
-
 buffer_ready = True     # Flag for data-plotting
 
 # ____Initialise plots
@@ -57,16 +56,24 @@ xys.fill(float("nan"))
 
 fig, subs = plt.subplots(NROWS, NCOLS, squeeze=False)
 
-lines = []
+lines = []      # Line2D arrays
+
 for i in range(NROWS):
     linerow = []
     for j in range(NCOLS):
         line, = subs[i][j].plot([], [], markers[i][j], lw=LW)
+        subs[i][j].set_xlabel(mi.dataLabels[xNames[i][j]])
+        subs[i][j].set_ylabel(mi.dataLabels[yNames[i][j]])
         subs[i][j].set_xlim(1., -1.)
         subs[i][j].set_ylim(1., -1.)
         subs[i][j].grid()
         linerow.append(line)
     lines.append(linerow)
+
+# ____Initialise the extrema of x's and y's for each sub plots
+lims = np.empty((NROWS, NCOLS, 2, 2))
+lims[:,:,:,0].fill(float("inf"))
+lims[:,:,:,1].fill(float("-inf"))
     
 # Function to update the plot
 k = 0
@@ -78,8 +85,8 @@ def updatePlot(n):
         for j in range(NCOLS):
             xys[i, j, 0, k] = x = plotBuffer[xNames[i][j]]
             xys[i, j, 1, k] = y = plotBuffer[yNames[i][j]]
-            xMin, xMax = subs[i][j].get_xlim()   
-            yMin, yMax = subs[i][j].get_ylim()
+            xMin, xMax = lims[i, j, 0] 
+            yMin, yMax = lims[i, j, 1]
             
             if redraw or (x < xMin) or (x > xMax) or (y < yMin) or (y > yMax):
                 redraw = True
@@ -87,9 +94,11 @@ def updatePlot(n):
                 xMax = max(x, xMax)
                 yMin = min(y, yMin)
                 yMax = max(y, yMax)
+                lims[i, j, 0] = xMin, xMax
+                lims[i, j, 1] = yMin, yMax
                 subs[i][j].set_xlim (xMin - 0.01 * (xMax - xMin) - SMALL, xMax + 0.01 * (xMax - xMin) + SMALL)
                 subs[i][j].set_ylim (yMin - 0.01 * (yMax - yMin) - SMALL, yMax + 0.01 * (yMax - yMin) + SMALL)
-            lines[i][j].set_data(xys[i, j, 0], xys[i, j, 1])
+            lines[i][j].set_data(xys[i, j, 0, :k+1], xys[i, j, 1, :k+1])
     k += 1
     if redraw:
         fig.canvas.draw()
@@ -97,5 +106,6 @@ def updatePlot(n):
     return lines[0][0],
 
 # Animate!
-ani = animation.FuncAnimation(fig, updatePlot, frames=60, blit=False, interval=10, repeat=False)
+ani = animation.FuncAnimation(fig, updatePlot, frames=2, blit=True, interval=0.1, repeat=False)
 plt.show()
+

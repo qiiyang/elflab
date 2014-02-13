@@ -6,10 +6,12 @@ import matplotlib.animation as animation
 def data_gen():
     t = data_gen.t
     cnt = 0
-    while cnt < 1000:
+    while cnt < 10:
         cnt+=1
         t += 0.05
         yield t, np.sin(2*np.pi*t) * np.exp(-t/10.)
+    else:
+        print("generator finished.")
 data_gen.t = 0
 
 fig, ax = plt.subplots()
@@ -35,4 +37,5 @@ def run(data):
 ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=10,
     repeat=False)
 plt.show()
+print ("done.")
 

@@ -1,11 +1,14 @@
 ######
 
 # No backup  files
-.*~
-.bak
+*.*~
+*.bak
 
 # No collected data
-.dat
+*.dat
 
 # No testing codes
 test/
+
+# No python cache
+__pycache__
