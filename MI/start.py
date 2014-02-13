@@ -2,16 +2,16 @@
 
 """
 
+
+# ____Computing Parameters
+DEBUG_INFO = False
+
+
 # Parameters to be set by the user for each measurement
 # ____Plot Parameters
 NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
 LW = 2      # default line width
-
-# ____Computing Parameters
-debug_info = False
-MAXPOINTS = 1000000     # The maximum number of data points
-SMALL = 1.e-10      # smallest non-zero
 
 # ____Data to use as x-axis for each sub-plots
 xNames = [["n"],
