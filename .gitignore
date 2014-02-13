@@ -1,7 +1,8 @@
 ######
 
-# No backup .*~ files
+# No backup  files
 .*~
+.bak
 
 # No collected data
 .dat

@@ -12,7 +12,6 @@ def data_gen():
         yield t, np.sin(2*np.pi*t) * np.exp(-t/10.)
 data_gen.t = 0
 
-plt.autoscale(True, 'both', True)
 fig, ax = plt.subplots()
 line, = ax.plot([], [], 'gx', lw=2)
 ax.set_ylim(-1.1, 1.1)
