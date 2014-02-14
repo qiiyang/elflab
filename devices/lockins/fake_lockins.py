@@ -5,7 +5,7 @@ from math import sin, cos
 
 class SinCosLockin(LockinBase):
     """ X=sin(wn), Y = cos(wn) """
-    def __init__(self, w=0.03):
+    def __init__(self, w=0.0003):
         self.w = w      # angular frequency
         self.phi = 0.   # phase
     

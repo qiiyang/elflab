@@ -16,8 +16,8 @@ NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
 PLOTFPS = 100
 XYVARS = [
-            [("t", "X")],
-            [("T", "Y")]
+            [("n", "X")],
+            [("n", "Y")]
          ]      # Names of variable pairs to plot in each sub-plot
             
 # Set search paths
@@ -36,10 +36,6 @@ import time
 import threading
 import multiprocessing
 import measure_once_async as once
-
-# Global variables
-flag_pause = False
-flag_quit = False
 
 # Data collection with thread
 def keepMeasuring(processLock, threadLock, pipeEnd):
@@ -64,12 +60,16 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             for k in (0, 1):
                 xys[i][j].append(0.)    
                 
-    # ____Initialise clock
+    # ____Initialise clock and counter
     time.perf_counter()
+    n = 0
     
+    # Measure
     while not flag_quit:
-        while not (flag_quit or flag_pause):
+        if not flag_pause:
             buffer = once.measure(buffer, therm, magnet, lockin)
+            buffer["n"] = n
+            n += 1
             if pipeEnd.poll():
                 for i in range(NROWS):
                     for j in range(NCOLS):
@@ -78,12 +78,10 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
                 while pipeEnd.poll():
                     pipeEnd.recv()  # clearing receiving pipe
                 pipeEnd.send(xys)
-            time.sleep(INTERVAL)
-            
         if not flag_quit:
             time.sleep(INTERVAL)
     
-    print("Measurements terminated by user.")
+    print("[Galileo: ] Measurements terminated by user.")
 
 # Data Plotting Process
 def plottingProc(processLock, pipeEnd, nrows, ncols, xyLabels, plot_interval):
@@ -93,6 +91,11 @@ def plottingProc(processLock, pipeEnd, nrows, ncols, xyLabels, plot_interval):
     
 # The main procedure
 if __name__ == '__main__':
+
+    # Global variables
+    flag_pause = False
+    flag_quit = False
+    
     end1, end2 = multiprocessing.Pipe()
     processLock = multiprocessing.RLock()
     threadLock = threading.RLock()
@@ -114,6 +117,20 @@ if __name__ == '__main__':
     proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, xyLabels, 1000./PLOTFPS))
     proc.start()
     
+    time.sleep(3.)
+    while not flag_quit:
+        command = input(r"Galileo listening> ",).strip().lower()
+        
+        if (command == "quit") or (command == "q"):
+            flag_quit = True
+        elif (command == "pause") or (command == "p"):
+            flag_pause == True
+        elif (command == "resume") or (command == "r"):
+            flag_pause == False
+            
+    
     # Waiting to finish
     thread.join()
     proc.join()
+    
+    print("[Galileo: ] User closed graph window. Galileo quits.")
