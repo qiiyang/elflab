@@ -47,15 +47,15 @@ dataLabels = { "n": "n",     # data point index
 
 # Templates for initialise a data point                
 initialData = { "n": 0,     # data point index
-                "t": 1.,     # time stamp in s
-                "T": 2.,     # temperature in K
-                "H": 3.,     # magnetic field in T
-                "f": 3.,     # Frequency in Hz
-                "X": 4.,     # lock-in X in V
-                "dX": 5.,    # error of X in V
-                "Y": 6.,     # lock-in Y in V
-                "dX": 7.,    # error of Y in V
-                "I_therm": 8.,   # thermometer current
-                "V_therm": 9.,   # thermometer voltage
-                "I_mag": 11.     # magnet current
+                "t": 0.,     # time stamp in s
+                "T": 0.,     # temperature in K
+                "H": 0.,     # magnetic field in T
+                "f": 0.,     # Frequency in Hz
+                "X": 0.,     # lock-in X in V
+                "dX": 0.,    # error of X in V
+                "Y": 0.,     # lock-in Y in V
+                "dX": 0.,    # error of Y in V
+                "I_therm": 0.,   # thermometer current
+                "V_therm": 0.,   # thermometer voltage
+                "I_mag": 0.     # magnet current
                 }

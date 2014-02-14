@@ -2,7 +2,7 @@
 
 from .magnet_base import MagnetBase
 
-class StepMag(MagnetBase):
+class StepMagnet(MagnetBase):
     """ A fake magnet returns stepped increasing H and zero I, V """
     def __init__(self, initialH=0., step=1.e-3):
         self.H = initialH

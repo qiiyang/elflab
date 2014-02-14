@@ -13,3 +13,5 @@ class StepTherm(ThermBase):
         return (0., 0., self.T)
 
         
+def f():
+    return 0.

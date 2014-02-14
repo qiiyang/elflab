@@ -14,7 +14,7 @@ class PlotLive:
     
     # Computing-related constants
     MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
-    INITFLOATS = 10    # Initial buffer size, as number of float stored
+    INITFLOATS = 10000    # Initial buffer size, as number of float stored
     SMALL = 1.e-12       # a very small non-zero
     
     # Graph-related constants
@@ -37,11 +37,11 @@ class PlotLive:
         # Calculate derived constants
         self.maxPoints = self.MAXFLOATS // (nrows * ncols * 2)      # maximum number of datapoints
         self.bufPoints = self.INITFLOATS // (nrows * ncols * 2)     # initial buffer size
-        self.styles = xyLabels.copy()       # plotting style strings for each sub-plot
+        self.styles = [[]]*nrows      # plotting style strings for each sub-plot
         for i in range(nrows):
             for j in range(ncols):
                 k = i*ncols + j
-                self.styles[i][j] = self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)]
+                self.styles[i] += [self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)]]
         if DEBUG_INFO:
             print("##### Debug Info: class PlotLive #####\n------------------------\n    styles ==\n{}\n------------------------".format(self.styles))
         
