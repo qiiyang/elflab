@@ -26,7 +26,7 @@ class PlotLive:
     COLOURPOOL = ["b", "g", "r", "k", "y", "m"]     # pools of colours
     
     # The constructor
-    def __init__(self, pipeEnd, nrows=1, ncols=1, xyLabels=[[("", "")]], samplingInterval=DEFAULT_INTERVAL):
+    def __init__(self, pipeEnd, nrows=1, ncols=1, xyVars=[[("", "")]], xyLabels=[[("", "")]], samplingInterval=DEFAULT_INTERVAL):
                 # self, (one end of a Pipe), (No. of rows of subplots), (No. of cols), (list of variables to plot in each subplots), (list of labels), sampling interval in ms
         # Save constants
         self.pipeEnd = pipeEnd
@@ -62,12 +62,13 @@ class PlotLive:
         # ____Plot empty sub-plots, set the plot styles and save the Line2D objects
         for i in range(nrows):
             for j in range(ncols):
-                line, = self.subs[i][j].plot([], [], self.styles[i][j], lw=self.LW)
+                line, = self.subs[i][j].plot([], [], self.styles[i][j], lw=self.LW, label=xyVars[i][j][1])
                 self.subs[i][j].set_xlabel(xyLabels[i][j][0])
                 self.subs[i][j].set_ylabel(xyLabels[i][j][1])
                 self.subs[i][j].set_xlim(1., -1.)
                 self.subs[i][j].set_ylim(1., -1.)
                 self.subs[i][j].grid()
+                self.subs[i][j].legend()
                 self.lines.append(line)
             
     # Generator to inquire data from the pipe

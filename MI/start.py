@@ -84,9 +84,9 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
     print("[Galileo:] You terminated the measurements. Close the graph window to quit Galileo.")
 
 # Data Plotting Process
-def plottingProc(processLock, pipeEnd, nrows, ncols, xyLabels, plot_interval):
+def plottingProc(processLock, pipeEnd, nrows, ncols, xyVars, xyLabels, plot_interval):
     import plots.plot_live as plot
-    pl = plot.PlotLive(pipeEnd, nrows, ncols, xyLabels, plot_interval)
+    pl = plot.PlotLive(pipeEnd, nrows, ncols, xyVars, xyLabels, plot_interval)
     pl.start()
     
 # The main procedure
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     thread.start()
     
     # Start plotting
-    proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, xyLabels, PLOT_INTERVAL))
+    proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, XYVARS, xyLabels, PLOT_INTERVAL))
     proc.start()
     
     time.sleep(1.)
