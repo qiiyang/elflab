@@ -114,7 +114,7 @@ class PlotLive:
                 
             self.bufPoints = newLen
         
-        rescale = False
+        flag_rescale = False
         for i in range(self.nrows):
             for j in range(self.ncols):
                 self.xys[i, j, 0, k] = x = dataPoint[i][j][0]
@@ -133,33 +133,54 @@ class PlotLive:
                 self.xyLims[i, j, 1] = yMin, yMax                
                 
                 # Test whether x, y are out of range
-                if not rescale:
+                if not flag_rescale:
                     # Get the scales of each axis
                     xScale = self.subs[i][j].get_xlim()
                     yScale = self.subs[i][j].get_ylim()
                     if (x < xScale[0]) or (x > xScale[1]) or (y < yScale[0]) or (y > yScale[1]):
-                        rescale = True
+                        flag_rescale = True
 
                 # Update the subplot    
                 self.lines[i*self.ncols+j].set_data(self.xys[i, j, 0, :k+1], self.xys[i, j, 1, :k+1])
                 
         # Rescale if necessary
-        if rescale:
-            for i in range(self.nrows):
-                for j in range(self.ncols):
-                    xMin, xMax = self.xyLims[i, j, 0] 
-                    yMin, yMax = self.xyLims[i, j, 1]   
-                    
-                    delX = self.OVERRANGE * (xMax - xMin + self.SMALL)
-                    delY = self.OVERRANGE * (yMax - yMin + self.SMALL)
-                    
-                    self.subs[i][j].set_xlim (xMin - delX, xMax + delX)
-                    self.subs[i][j].set_ylim (yMin - delY, yMax + delY)
-            self.fig.canvas.draw()
-            if DEBUG_INFO:
-                print ("rescalling")
+        if flag_rescale:
+            self.reScale()
         return self.lines
-
+    
+    # Function to rescale the plot
+    def reScale(self):
+        for i in range(self.nrows):
+            for j in range(self.ncols):
+                xMin, xMax = self.xyLims[i, j, 0] 
+                yMin, yMax = self.xyLims[i, j, 1]   
+                
+                delX = self.OVERRANGE * (xMax - xMin + self.SMALL)
+                delY = self.OVERRANGE * (yMax - yMin + self.SMALL)
+                
+                self.subs[i][j].set_xlim (xMin - delX, xMax + delX)
+                self.subs[i][j].set_ylim (yMin - delY, yMax + delY)
+        self.fig.canvas.draw()
+        if DEBUG_INFO:
+            print ("rescalling")        
+    
+    # Re-initialize the plot
+    def replot(self):
+        self.fig, self.subs= plt.subplots(nrows, ncols, squeeze=False)
+        self.lines = []      # 1D list of Line2D objects
+        # ____Plot sub-plots with current data, set the plot styles and save the Line2D objects
+        for i in range(nrows):
+            for j in range(ncols):
+                line, = self.subs[i][j].plot([], [], self.styles[i][j], lw=self.LW, label=xyVars[i][j][1])
+                self.subs[i][j].set_xlabel(xyLabels[i][j][0])
+                self.subs[i][j].set_ylabel(xyLabels[i][j][1])
+                self.subs[i][j].set_xlim(1., -1.)
+                self.subs[i][j].set_ylim(1., -1.)
+                self.subs[i][j].grid()
+                self.subs[i][j].legend()
+                self.lines.append(line)
+        
+        
     # Function to animate the plot
     def start(self):
         self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=self.BLIT, interval=self.samplingInterval*1000.,
