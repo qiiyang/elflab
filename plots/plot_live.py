@@ -13,7 +13,8 @@ class PlotLive:
     """ Implementation of plotting live data from measurements"""
     
     # Computing-related constants
-    MAXFLOATS = 10000000     # The maximum number of float numbers to be stored
+    MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
+    INITFLOATS = 10    # Initial buffer size, as number of float stored
     SMALL = 1.e-12       # a very small non-zero
     
     # Graph-related constants
@@ -35,6 +36,7 @@ class PlotLive:
         
         # Calculate derived constants
         self.maxPoints = self.MAXFLOATS // (nrows * ncols * 2)      # maximum number of datapoints
+        self.bufPoints = self.INITFLOATS // (nrows * ncols * 2)     # initial buffer size
         self.styles = xyLabels.copy()       # plotting style strings for each sub-plot
         for i in range(nrows):
             for j in range(ncols):
@@ -43,9 +45,9 @@ class PlotLive:
         if DEBUG_INFO:
             print("##### Debug Info: class PlotLive #####\n------------------------\n    styles ==\n{}\n------------------------".format(self.styles))
         
-        # Initialise the plotted data
+        # Initialise the plot buffer
         self.nPoints = 0
-        self.xys = np.empty([nrows, ncols, 2, self.maxPoints], dtype=float)
+        self.xys = np.empty([nrows, ncols, 2, self.bufPoints], dtype=float, order='C')    # the buffer
         
         # Initialise the record of extrema of x's and y's for each sub plots
         self.xyLims = np.empty((nrows, ncols, 2, 2))
@@ -79,9 +81,26 @@ class PlotLive:
         
     # Function to update the plots
     def update(self, dataPoint):
-        # dataPoint[i][j] = (x, y) for sub-plot(i,j)
+                    # dataPoint[i][j] = (x, y) for sub-plot(i,j)
         k = self.nPoints
         self.nPoints += 1
+        
+        # Check buffer size
+        if self.nPoints > self.maxPoints:
+            raise Exception("Plotting buffer is full!")
+        elif self.nPoints > self.bufPoints:
+            # Extend the buffer
+            newLen = self.bufPoints * 2     # The new buffer length
+            if newLen > self.maxPoints:
+                newLen = self.maxPoints
+            ext = np.empty((self.nrows, self.ncols, 2, newLen - self.bufPoints))
+            self.xys = np.append(self.xys, ext, axis=3)
+            
+            if DEBUG_INFO:
+                print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
+                
+            self.bufPoints = newLen
+        
         rescale = False
         for i in range(self.nrows):
             for j in range(self.ncols):
