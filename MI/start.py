@@ -5,6 +5,10 @@
 DEBUG_INFO = False
 
 # Parameters to be set by the user for each measurement
+
+# ____Measurement Parameters
+INTERVAL = 0.001 # interval between single measurements, in s
+
 # ____Plot Parameters
 NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
@@ -12,7 +16,6 @@ XYVARS = [
             [("T", "X")],
             [("T", "Y")]
          ]      # Names of variable pairs to plot in each sub-plot
-
             
 # Set search paths
 import sys

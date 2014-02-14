@@ -13,7 +13,8 @@ dataIndices = { "n": 0,     # data point index
                 "Y": 7,     # lock-in Y in V
                 "dX": 8,    # error of Y in V
                 "I_therm": 9,   # thermometer current
-                "V_therm": 10   # thermometer voltage
+                "V_therm": 10,   # thermometer voltage
+                "I_mag": 11     # magnet current
                 }
 
 indicesData = [ "n",     # data point index
@@ -26,7 +27,8 @@ indicesData = [ "n",     # data point index
                 "Y",     # lock-in Y in V
                 "dX" ,   # error of Y in V
                 "I_therm",   # thermometer current
-                "V_therm"   # thermometer voltage
+                "V_therm",   # thermometer voltage
+                "I_mag"
                 ]                
                 
 dataLabels = { "n": "n",     # data point index
@@ -39,7 +41,8 @@ dataLabels = { "n": "n",     # data point index
                 "Y": r"$Y$ (V)",     # lock-in Y in V
                 "dY": r"$\Delta{}Y (V)",    # error of Y in V
                 "I_therm": r"$I_{therm}$",   # thermometer current
-                "V_therm": r"$V_{therm}$"   # thermometer voltage
+                "V_therm": r"$V_{therm}$",   # thermometer voltage
+                "I_mag": r"$I_{mag}$"     # magnet current
                 }
 
 # Templates for initialise a data point                
@@ -53,5 +56,6 @@ initialData = { "n": 0,     # data point index
                 "Y": 6.,     # lock-in Y in V
                 "dX": 7.,    # error of Y in V
                 "I_therm": 8.,   # thermometer current
-                "V_therm": 9.   # thermometer voltage
+                "V_therm": 9.,   # thermometer voltage
+                "I_mag": 11.     # magnet current
                 }

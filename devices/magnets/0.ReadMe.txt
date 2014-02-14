@@ -1,0 +1,4 @@
+Contains classes defining magnets
+
+read():
+	return (I, H) in A and T

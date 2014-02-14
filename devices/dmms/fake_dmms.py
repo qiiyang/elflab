@@ -1,8 +1,10 @@
 """ Simulated DMMs """
 
-class ConstDMM:
+from .dmm_base import DeviceBase
+
+class ConstDMM(DeviceBase):
     """ A fake DMM only reads constant value """
-    def __init___(self, reading=0.):
+    def __init__(self, reading=0.):
         self.reading = reading
     
     def read(self):

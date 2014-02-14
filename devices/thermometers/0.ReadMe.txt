@@ -1,0 +1,3 @@
+Contains classes defining temperature measurements.
+
+Each thermometer class has a read() method, which will return (I, V, T) in SI units.
