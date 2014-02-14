@@ -14,7 +14,7 @@ MAGNET = (r"devices.magnets.fake_magnets", "StepMagnet")
 # ____Plot Parameters
 NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
-PLOT_INTERVAL = 0.3     # Interval between plot frames in second
+PLOT_INTERVAL = 0.003     # Interval between plot frames in second
 XYVARS = [
             [("n", "X")],
             [("n", "Y")]
@@ -71,13 +71,14 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             buffer["n"] = n
             n += 1
             if pipeEnd.poll():
-                for i in range(NROWS):
-                    for j in range(NCOLS):
-                        for k in (0, 1):
-                            xys[i][j][k] = buffer[XYVARS[i][j][k]]
-                while pipeEnd.poll():
-                    pipeEnd.recv()  # clearing receiving pipe
-                pipeEnd.send(xys)
+                with threadLock:    # Prevent other thread from accessing the pipe
+                    for i in range(NROWS):
+                        for j in range(NCOLS):
+                            for k in (0, 1):
+                                xys[i][j][k] = buffer[XYVARS[i][j][k]]
+                    while pipeEnd.poll():
+                        pipeEnd.recv()  # clearing receiving pipe
+                    pipeEnd.send(xys)
         if not flag_stop:
             time.sleep(INTERVAL)
     
@@ -95,6 +96,10 @@ if __name__ == '__main__':
     # Global variables
     flag_pause = False
     flag_stop = False
+    flag_quit = False
+    flag_replot = False
+    
+    n_plotPoints = 0
     
     end1, end2 = multiprocessing.Pipe()
     processLock = multiprocessing.RLock()
@@ -125,9 +130,10 @@ if __name__ == '__main__':
 *******************************************************************
 
 Available commands:
-            "pause"     or  "p":      Pause the measurements
-            "resume"    or  "r":      Resume the measurements
-            "stop"      or  "s":      Stop the measurements
+            "pause"     or  "p":      Pause the measurements.
+            "resume"    or  "r":      Resume the measurements.
+            "stop"      or  "s":      Stop the measurements, while
+                                  keeping the graph available.
 
     """)
     while not flag_stop:

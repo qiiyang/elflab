@@ -17,6 +17,7 @@ class PlotLive:
     MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
     INITFLOATS = 10000    # Initial buffer size, as number of float stored
     SMALL = 1.e-9       # a very small non-zero
+    BLIT = False        # whether to blit
     
     # Graph-related constants
     LW = 2      # line width
@@ -24,6 +25,11 @@ class PlotLive:
     DEFAULT_INTERVAL = 0.3   # in s
     MARKERPOOL = ["x", "+", "o", "s", "^", "D", "*"]     # pools of plotting markers
     COLOURPOOL = ["b", "g", "r", "k", "y", "m"]     # pools of colours
+    
+    # flags
+    flag_stop = False
+    flag_quit = False
+    flag_replot = False
     
     # The constructor
     def __init__(self, pipeEnd, nrows=1, ncols=1, xyVars=[[("", "")]], xyLabels=[[("", "")]], samplingInterval=DEFAULT_INTERVAL):
@@ -114,33 +120,41 @@ class PlotLive:
                 self.xys[i, j, 0, k] = x = dataPoint[i][j][0]
                 self.xys[i, j, 1, k] = y = dataPoint[i][j][1]
                 
-                # Get the scales of each axis
-                xScale = self.subs[i][j].get_xlim()
-                yScale = self.subs[i][j].get_ylim()
+                # Recalculating min & max
+                xMin, xMax = self.xyLims[i, j, 0] 
+                yMin, yMax = self.xyLims[i, j, 1] 
+                
+                xMin = min(x, xMin)
+                xMax = max(x, xMax)
+                yMin = min(y, yMin)
+                yMax = max(y, yMax)
+                
+                self.xyLims[i, j, 0] = xMin, xMax
+                self.xyLims[i, j, 1] = yMin, yMax                
                 
                 # Test whether x, y are out of range
-                if rescale or (x < xScale[0]) or (x > xScale[1]) or (y < yScale[0]) or (y > yScale[1]):
-                    rescale = True
+                if not rescale:
+                    # Get the scales of each axis
+                    xScale = self.subs[i][j].get_xlim()
+                    yScale = self.subs[i][j].get_ylim()
+                    if (x < xScale[0]) or (x > xScale[1]) or (y < yScale[0]) or (y > yScale[1]):
+                        rescale = True
+
+                # Update the subplot    
+                self.lines[i*self.ncols+j].set_data(self.xys[i, j, 0, :k+1], self.xys[i, j, 1, :k+1])
+                
+        # Rescale if necessary
+        if rescale:
+            for i in range(self.nrows):
+                for j in range(self.ncols):
                     xMin, xMax = self.xyLims[i, j, 0] 
-                    yMin, yMax = self.xyLims[i, j, 1]                    
-                    xMin = min(x, xMin)
-                    xMax = max(x, xMax)
-                    yMin = min(y, yMin)
-                    yMax = max(y, yMax)
-                    
-                    self.xyLims[i, j, 0] = xMin, xMax
-                    self.xyLims[i, j, 1] = yMin, yMax
+                    yMin, yMax = self.xyLims[i, j, 1]   
                     
                     delX = self.OVERRANGE * (xMax - xMin + self.SMALL)
                     delY = self.OVERRANGE * (yMax - yMin + self.SMALL)
                     
                     self.subs[i][j].set_xlim (xMin - delX, xMax + delX)
                     self.subs[i][j].set_ylim (yMin - delY, yMax + delY)
-                # Update the subplot    
-                self.lines[i*self.ncols+j].set_data(self.xys[i, j, 0, :k+1], self.xys[i, j, 1, :k+1])
-                
-        # Rescale if necessary
-        if rescale:
             self.fig.canvas.draw()
             if DEBUG_INFO:
                 print ("rescalling")
@@ -148,6 +162,6 @@ class PlotLive:
 
     # Function to animate the plot
     def start(self):
-        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=True, interval=self.samplingInterval*1000.,
+        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=self.BLIT, interval=self.samplingInterval*1000.,
     repeat=False)
-        plt.show()
+        self.fig.show()
