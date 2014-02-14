@@ -78,7 +78,7 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
                                 xys[i][j][k] = buffer[XYVARS[i][j][k]]
                     while pipeEnd.poll():
                         pipeEnd.recv()  # clearing receiving pipe
-                    pipeEnd.send(xys)
+                    pipeEnd.send(([],xys))
         if not flag_stop:
             time.sleep(INTERVAL)
     

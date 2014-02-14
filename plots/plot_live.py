@@ -38,6 +38,7 @@ class PlotLive:
         self.pipeEnd = pipeEnd
         self.nrows = nrows
         self.ncols = ncols
+        self.xyVars = xyVars
         self.xyLabels = xyLabels
         self.samplingInterval = samplingInterval
         
@@ -78,47 +79,53 @@ class PlotLive:
                 self.lines.append(line)
             
     # Generator to inquire data from the pipe
-    def inquireXys(self):
+    def inquireXys(self):        
         while self.nPoints < self.maxPoints:
+            # Inquire data from the pipe
             self.pipeEnd.send(True)
             time.sleep(self.samplingInterval / 100.)
             while not self.pipeEnd.poll():
                 time.sleep(self.samplingInterval)
             while self.pipeEnd.poll():      # Retrieve and empty the pipe
-                dataPoint = self.pipeEnd.recv()     # dataPoint: a 2D list of (x, y) for each sub-plot
+                dataPoint = self.pipeEnd.recv()[1]     # dataPoint: a 2D list of (x, y) for each sub-plot
+ 
             if DEBUG_INFO:
                 print (dataPoint)
-            yield dataPoint
+ 
+            # Store data in buffer
+            k = self.nPoints
+            self.nPoints += 1
+            
+            # ____Check buffer size
+            if self.nPoints > self.maxPoints:
+                raise Exception("Plotting buffer is full!")
+            elif self.nPoints > self.bufPoints:
+                # Extend the buffer
+                newLen = self.bufPoints * 2     # The new buffer length
+                if newLen > self.maxPoints:
+                    newLen = self.maxPoints
+                ext = np.empty((self.nrows, self.ncols, 2, newLen - self.bufPoints))
+                self.xys = np.append(self.xys, ext, axis=3)
+                if DEBUG_INFO:
+                    print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
+                self.bufPoints = newLen
+            # ____Store data
+            self.xys[:, :, :, k] = dataPoint
+
+            yield self.nPoints
         else:
             print("[WARNING:] Plotting buffer is full!!!!!!")
         
     # Function to update the plots
-    def update(self, dataPoint):
+    def update(self, nPoints):
                     # dataPoint[i][j] = (x, y) for sub-plot(i,j)
-        k = self.nPoints
-        self.nPoints += 1
-        
-        # Check buffer size
-        if self.nPoints > self.maxPoints:
-            raise Exception("Plotting buffer is full!")
-        elif self.nPoints > self.bufPoints:
-            # Extend the buffer
-            newLen = self.bufPoints * 2     # The new buffer length
-            if newLen > self.maxPoints:
-                newLen = self.maxPoints
-            ext = np.empty((self.nrows, self.ncols, 2, newLen - self.bufPoints))
-            self.xys = np.append(self.xys, ext, axis=3)
-            
-            if DEBUG_INFO:
-                print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
-                
-            self.bufPoints = newLen
+        k = self.nPoints - 1
         
         flag_rescale = False
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.xys[i, j, 0, k] = x = dataPoint[i][j][0]
-                self.xys[i, j, 1, k] = y = dataPoint[i][j][1]
+                x = self.xys[i, j, 0, k]
+                y = self.xys[i, j, 1, k]
                 
                 # Recalculating min & max
                 xMin, xMax = self.xyLims[i, j, 0] 
@@ -145,11 +152,14 @@ class PlotLive:
                 
         # Rescale if necessary
         if flag_rescale:
-            self.reScale()
+            self.rescale()
+            self.fig.canvas.draw()
+            if DEBUG_INFO:
+                print ("rescalling")   
         return self.lines
     
     # Function to rescale the plot
-    def reScale(self):
+    def rescale(self):
         for i in range(self.nrows):
             for j in range(self.ncols):
                 xMin, xMax = self.xyLims[i, j, 0] 
@@ -159,26 +169,22 @@ class PlotLive:
                 delY = self.OVERRANGE * (yMax - yMin + self.SMALL)
                 
                 self.subs[i][j].set_xlim (xMin - delX, xMax + delX)
-                self.subs[i][j].set_ylim (yMin - delY, yMax + delY)
-        self.fig.canvas.draw()
-        if DEBUG_INFO:
-            print ("rescalling")        
+                self.subs[i][j].set_ylim (yMin - delY, yMax + delY)     
     
     # Re-initialize the plot
     def replot(self):
-        self.fig, self.subs= plt.subplots(nrows, ncols, squeeze=False)
+        self.fig, self.subs= plt.subplots(self.nrows, self.ncols, squeeze=False)
         self.lines = []      # 1D list of Line2D objects
         # ____Plot sub-plots with current data, set the plot styles and save the Line2D objects
-        for i in range(nrows):
-            for j in range(ncols):
-                line, = self.subs[i][j].plot([], [], self.styles[i][j], lw=self.LW, label=xyVars[i][j][1])
-                self.subs[i][j].set_xlabel(xyLabels[i][j][0])
-                self.subs[i][j].set_ylabel(xyLabels[i][j][1])
-                self.subs[i][j].set_xlim(1., -1.)
-                self.subs[i][j].set_ylim(1., -1.)
+        for i in range(self.nrows):
+            for j in range(self.ncols):
+                line, = self.subs[i][j].plot(self.xys[i, j, 0, :self.nPoints], self.xys[i, j, 1, :self.nPoints], self.styles[i][j], lw=self.LW, label=self.xyVars[i][j][1])
+                self.subs[i][j].set_xlabel(self.xyLabels[i][j][0])
+                self.subs[i][j].set_ylabel(self.xyLabels[i][j][1])
                 self.subs[i][j].grid()
                 self.subs[i][j].legend()
                 self.lines.append(line)
+        self.rescale()
         
         
     # Function to animate the plot
