@@ -65,7 +65,7 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
     n = 0
     
     # Measure
-    while not flag_quit:
+    while not flag_stop:
         if not flag_pause:
             buffer = once.measure(buffer, therm, magnet, lockin)
             buffer["n"] = n
@@ -78,10 +78,10 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
                 while pipeEnd.poll():
                     pipeEnd.recv()  # clearing receiving pipe
                 pipeEnd.send(xys)
-        if not flag_quit:
+        if not flag_stop:
             time.sleep(INTERVAL)
     
-    print("[Galileo: ] Measurements terminated by user.")
+    print("[Galileo: ] You terminated the measurements. The graph window remains open.")
 
 # Data Plotting Process
 def plottingProc(processLock, pipeEnd, nrows, ncols, xyLabels, plot_interval):
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     # Global variables
     flag_pause = False
-    flag_quit = False
+    flag_stop = False
     
     end1, end2 = multiprocessing.Pipe()
     processLock = multiprocessing.RLock()
@@ -117,20 +117,20 @@ if __name__ == '__main__':
     proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, xyLabels, 1000./PLOTFPS))
     proc.start()
     
-    time.sleep(3.)
-    while not flag_quit:
-        command = input(r"Galileo listening> ",).strip().lower()
+    time.sleep(1.)
+    while not flag_stop:
+        command = input(r"Eppur si muove> ",).strip().lower()
         
-        if (command == "quit") or (command == "q"):
-            flag_quit = True
+        if (command == "stop") or (command == "s"):
+            flag_stop = True
         elif (command == "pause") or (command == "p"):
-            flag_pause == True
+            flag_pause = True
         elif (command == "resume") or (command == "r"):
-            flag_pause == False
+            flag_pause = False
             
     
     # Waiting to finish
     thread.join()
     proc.join()
     
-    print("[Galileo: ] User closed graph window. Galileo quits.")
+    print("[Galileo: ] You closed graph window. Galileo quits.")
