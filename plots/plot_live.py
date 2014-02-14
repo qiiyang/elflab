@@ -8,6 +8,7 @@ DEBUG_INFO = False
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import time
 
 class PlotLive:
     """ Implementation of plotting live data from measurements"""
@@ -19,8 +20,8 @@ class PlotLive:
     
     # Graph-related constants
     LW = 2      # line width
-    OVERRANGE = 0.01     # percentage to over-range the axes
-    DEFAULT_INTERVAL = 300   # in ms
+    OVERRANGE = 0.05     # percentage to over-range the axes
+    DEFAULT_INTERVAL = 0.3   # in s
     MARKERPOOL = ["x", "+", "o", "s", "^", "D", "*"]     # pools of plotting markers
     COLOURPOOL = ["b", "g", "r", "k", "y", "m"]     # pools of colours
     
@@ -73,7 +74,11 @@ class PlotLive:
     def inquireXys(self):
         while self.nPoints < self.maxPoints:
             self.pipeEnd.send(True)
-            dataPoint = self.pipeEnd.recv()     # dataPoint: a 2D list of (x, y) for each sub-plot
+            time.sleep(self.samplingInterval / 100.)
+            while not self.pipeEnd.poll():
+                time.sleep(self.samplingInterval)
+            while self.pipeEnd.poll():      # Retrieve and empty the pipe
+                dataPoint = self.pipeEnd.recv()     # dataPoint: a 2D list of (x, y) for each sub-plot
             if DEBUG_INFO:
                 print (dataPoint)
             yield dataPoint
@@ -107,12 +112,16 @@ class PlotLive:
             for j in range(self.ncols):
                 self.xys[i, j, 0, k] = x = dataPoint[i][j][0]
                 self.xys[i, j, 1, k] = y = dataPoint[i][j][1]
-                xMin, xMax = self.xyLims[i, j, 0] 
-                yMin, yMax = self.xyLims[i, j, 1]
+                
+                # Get the scales of each axis
+                xScale = self.subs[i][j].get_xlim()
+                yScale = self.subs[i][j].get_ylim()
+                
                 # Test whether x, y are out of range
-                if rescale or (x < xMin) or (x > xMax) or (y < yMin) or (y > yMax):
+                if rescale or (x < xScale[0]) or (x > xScale[1]) or (y < yScale[0]) or (y > yScale[1]):
                     rescale = True
-                    
+                    xMin, xMax = self.xyLims[i, j, 0] 
+                    yMin, yMax = self.xyLims[i, j, 1]                    
                     xMin = min(x, xMin)
                     xMax = max(x, xMax)
                     yMin = min(y, yMin)
@@ -138,6 +147,6 @@ class PlotLive:
 
     # Function to animate the plot
     def start(self):
-        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=True, interval=self.samplingInterval,
+        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=True, interval=self.samplingInterval*1000.,
     repeat=False)
         plt.show()

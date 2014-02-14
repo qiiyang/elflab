@@ -14,7 +14,7 @@ MAGNET = (r"devices.magnets.fake_magnets", "StepMagnet")
 # ____Plot Parameters
 NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
-PLOTFPS = 100
+PLOT_INTERVAL = 0.3     # Interval between plot frames in second
 XYVARS = [
             [("n", "X")],
             [("n", "Y")]
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     thread.start()
     
     # Start plotting
-    proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, xyLabels, 1000./PLOTFPS))
+    proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, xyLabels, PLOT_INTERVAL))
     proc.start()
     
     time.sleep(1.)
