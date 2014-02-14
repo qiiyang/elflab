@@ -37,11 +37,13 @@ class PlotLive:
         # Calculate derived constants
         self.maxPoints = self.MAXFLOATS // (nrows * ncols * 2)      # maximum number of datapoints
         self.bufPoints = self.INITFLOATS // (nrows * ncols * 2)     # initial buffer size
-        self.styles = [[]]*nrows      # plotting style strings for each sub-plot
+        self.styles = []     # plotting style strings for each sub-plot
         for i in range(nrows):
+            self.styles.append([])
             for j in range(ncols):
                 k = i*ncols + j
-                self.styles[i] += [self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)]]
+                self.styles[i].append(self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)])
+                print(self.styles)
         if DEBUG_INFO:
             print("##### Debug Info: class PlotLive #####\n------------------------\n    styles ==\n{}\n------------------------".format(self.styles))
         
