@@ -15,7 +15,7 @@ class PlotLive:
     # Computing-related constants
     MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
     INITFLOATS = 10000    # Initial buffer size, as number of float stored
-    SMALL = 1.e-12       # a very small non-zero
+    SMALL = 1.e-9       # a very small non-zero
     
     # Graph-related constants
     LW = 2      # line width
@@ -43,7 +43,6 @@ class PlotLive:
             for j in range(ncols):
                 k = i*ncols + j
                 self.styles[i].append(self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)])
-                print(self.styles)
         if DEBUG_INFO:
             print("##### Debug Info: class PlotLive #####\n------------------------\n    styles ==\n{}\n------------------------".format(self.styles))
         

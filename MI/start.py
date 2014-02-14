@@ -81,7 +81,7 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
         if not flag_stop:
             time.sleep(INTERVAL)
     
-    print("[Galileo: ] You terminated the measurements. The graph window remains open.")
+    print("[Galileo:] You terminated the measurements. Close the graph window to quit Galileo.")
 
 # Data Plotting Process
 def plottingProc(processLock, pipeEnd, nrows, ncols, xyLabels, plot_interval):
@@ -118,19 +118,32 @@ if __name__ == '__main__':
     proc.start()
     
     time.sleep(1.)
+    print("""\
+*************** Galileo Measurement Utility ***********************
+'Measure what is measurable, and make measurable what is not so.'
+                                                --- Galileo Galilei
+*******************************************************************
+
+Available commands:
+            "pause"     or  "p":      Pause the measurements
+            "resume"    or  "r":      Resume the measurements
+            "stop"      or  "s":      Stop the measurements
+
+    """)
     while not flag_stop:
         command = input(r"Eppur si muove> ",).strip().lower()
-        
         if (command == "stop") or (command == "s"):
             flag_stop = True
         elif (command == "pause") or (command == "p"):
             flag_pause = True
         elif (command == "resume") or (command == "r"):
             flag_pause = False
+        elif not (command == ''):
+            print("[Galileo:] Unrecognised command \"{}\".".format(command))
             
     
     # Waiting to finish
     thread.join()
     proc.join()
     
-    print("[Galileo: ] You closed graph window. Galileo quits.")
+    print("[Galileo:] You closed graph window. Galileo quits.")
