@@ -58,7 +58,8 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
         for j in range(NCOLS):
             xys[i].append([])
             for k in (0, 1):
-                xys[i][j].append(0.)    
+                xys[i][j].append(0.)
+    flags = {}      # flags to send to plotting process
                 
     # ____Initialise clock and counter
     time.perf_counter()
@@ -70,18 +71,23 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             buffer = once.measure(buffer, therm, magnet, lockin)
             buffer["n"] = n
             n += 1
+            
+            # Send data for plotting
             if pipeEnd.poll():
                 with threadLock:    # Prevent other thread from accessing the pipe
                     for i in range(NROWS):
                         for j in range(NCOLS):
                             for k in (0, 1):
                                 xys[i][j][k] = buffer[XYVARS[i][j][k]]
+                    flags = {"stop":flag_stop, "replot":flag_replot, "quit":flag_quit}
                     while pipeEnd.poll():
                         pipeEnd.recv()  # clearing receiving pipe
-                    pipeEnd.send(([],xys))
+                    pipeEnd.send((flags,xys))
         if not flag_stop:
             time.sleep(INTERVAL)
-    
+    with threadLock:
+        flags = {"stop":flag_stop, "replot":flag_replot, "quit":flag_quit}
+        pipeEnd.send((flags,[]))
     print("[Galileo:] You terminated the measurements. Close the graph window to quit Galileo.")
 
 # Data Plotting Process

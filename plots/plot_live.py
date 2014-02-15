@@ -17,7 +17,7 @@ class PlotLive:
     MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
     INITFLOATS = 10000    # Initial buffer size, as number of float stored
     SMALL = 1.e-9       # a very small non-zero
-    BLIT = False        # whether to blit
+    BLIT = True        # whether to blit
     
     # Graph-related constants
     LW = 2      # line width
@@ -27,10 +27,12 @@ class PlotLive:
     COLOURPOOL = ["b", "g", "r", "k", "y", "m"]     # pools of colours
     
     # flags
-    flag_stop = False
-    flag_quit = False
-    flag_replot = False
-    
+    flag_stop = False   # True if Measurements stopped
+    flag_quit = False       # True if user commanded quit
+    flag_replot = False     # True if asked to replot
+    flag_alive = False      # True if there's an open plot window
+        
+        
     # The constructor
     def __init__(self, pipeEnd, nrows=1, ncols=1, xyVars=[[("", "")]], xyLabels=[[("", "")]], samplingInterval=DEFAULT_INTERVAL):
                 # self, (one end of a Pipe), (No. of rows of subplots), (No. of cols), (list of variables to plot in each subplots), (list of labels), sampling interval in ms
@@ -80,41 +82,52 @@ class PlotLive:
             
     # Generator to inquire data from the pipe
     def inquireXys(self):        
-        while self.nPoints < self.maxPoints:
+        while not (self.flag_stop or self.flag_quit):
+            if self.nPoints >= self.maxPoints:
+                print("[WARNING:] Plotting buffer is full!!!!!!")
+                self.flag_stop = True
+                break
+                
             # Inquire data from the pipe
-            self.pipeEnd.send(True)
-            time.sleep(self.samplingInterval / 100.)
+            self.pipeEnd.send(self.flag_alive)     # True if yet to be replotted
             while not self.pipeEnd.poll():
-                time.sleep(self.samplingInterval)
+                time.sleep(self.samplingInterval / 100.)
+                
             while self.pipeEnd.poll():      # Retrieve and empty the pipe
-                dataPoint = self.pipeEnd.recv()[1]     # dataPoint: a 2D list of (x, y) for each sub-plot
- 
+                flags, dataPoint = self.pipeEnd.recv()     # dataPoint: a 2D list of (x, y) for each sub-plot
+                
+            # Update flags
+            if flags["replot"]:
+                self.flag_replot = True
+            if flags["stop"]:
+                self.flag_stop = True
+            if flags["quit"]:
+                self.flag_quit = True
+                
             if DEBUG_INFO:
                 print (dataPoint)
- 
-            # Store data in buffer
-            k = self.nPoints
-            self.nPoints += 1
-            
-            # ____Check buffer size
-            if self.nPoints > self.maxPoints:
-                raise Exception("Plotting buffer is full!")
-            elif self.nPoints > self.bufPoints:
-                # Extend the buffer
-                newLen = self.bufPoints * 2     # The new buffer length
-                if newLen > self.maxPoints:
-                    newLen = self.maxPoints
-                ext = np.empty((self.nrows, self.ncols, 2, newLen - self.bufPoints))
-                self.xys = np.append(self.xys, ext, axis=3)
-                if DEBUG_INFO:
-                    print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
-                self.bufPoints = newLen
-            # ____Store data
-            self.xys[:, :, :, k] = dataPoint
-
-            yield self.nPoints
-        else:
-            print("[WARNING:] Plotting buffer is full!!!!!!")
+            if not (self.flag_stop or self.flag_quit):
+                # Store data in buffer
+                k = self.nPoints
+                self.nPoints += 1
+                
+                # ____Check buffer size
+                if self.nPoints > self.maxPoints:
+                    raise Exception("Plotting buffer is full!")
+                elif self.nPoints > self.bufPoints:
+                    # Extend the buffer
+                    newLen = self.bufPoints * 2     # The new buffer length
+                    if newLen > self.maxPoints:
+                        newLen = self.maxPoints
+                    ext = np.empty((self.nrows, self.ncols, 2, newLen - self.bufPoints))
+                    self.xys = np.append(self.xys, ext, axis=3)
+                    if DEBUG_INFO:
+                        print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
+                    self.bufPoints = newLen
+                # ____Store data
+                self.xys[:, :, :, k] = dataPoint
+                yield self.nPoints
+        
         
     # Function to update the plots
     def update(self, nPoints):
@@ -184,11 +197,14 @@ class PlotLive:
                 self.subs[i][j].grid()
                 self.subs[i][j].legend()
                 self.lines.append(line)
-        self.rescale()
-        
+        if self.nPoints > 0:
+            self.rescale()
         
     # Function to animate the plot
     def start(self):
-        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=self.BLIT, interval=self.samplingInterval*1000.,
-    repeat=False)
-        self.fig.show()
+        self.ani = animation.FuncAnimation(self.fig, self.update, self.inquireXys, blit=self.BLIT, interval=self.samplingInterval*1000., repeat=False)
+        
+        plt.show()
+        # After closing maintenance 
+        #self.replot()
+        #self.fig.show()
