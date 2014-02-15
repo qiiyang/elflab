@@ -26,8 +26,8 @@ XYVARS = [
 import sys
 import os
 # _____Find LabPy root path and add to search path
-labPyPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, labPyPath)
+galileoPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, galileo)
 if DEBUG_INFO:
     print ("-------------------------\n##### Debug Info 1 #####\nsys.path =\n   {}\n-------------------------\n".format(sys.path))
     
@@ -74,11 +74,10 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             n += 1
             
             # Send data for plotting
-            if pipeEnd.poll():
-                while pipeEnd.poll():
-                    if pipeEnd.recv():  # clearing receiving pipe
-                        flag_plot_alive = True
-                with threadLock:    # Prevent other thread from accessing the pipe
+            with threadLock:        # Prevent other threads from accessing the pipe
+                if pipeEnd.poll():
+                    while pipeEnd.poll():
+                        flag_plotAlive=pipeEnd.recv()
                     for i in range(NROWS):
                         for j in range(NCOLS):
                             for k in (0, 1):
@@ -86,9 +85,7 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
                     pipeEnd.send(("data", xys))
         if not flag_stop:
             time.sleep(MEASUREMENT_PERIOD)
-    with threadLock:
-        pipeEnd.send("stop", 0)
-    print("[Galileo:] You terminated the measurements. Close the graph window to quit Galileo.")
+    print("    [Galileo:] You terminated the measurements. Type \"quit\" to quit Galileo.\n")
 
 # Data Plotting Process
 def plottingProc(processLock, pipeEnd, nrows, ncols, xyVars, xyLabels, listenPeriod, refreshPeriod):
@@ -105,11 +102,11 @@ if __name__ == '__main__':
     flag_quit = False
     flag_replot = False
     flag_autoscale = True
-    flag_plot_alive = False
+    flag_plotAlive = False
     
     n_plotPoints = 0
     
-    end1, end2 = multiprocessing.Pipe()
+    endMain, endPlot = multiprocessing.Pipe()   # Pipe for inter-process communications
     processLock = multiprocessing.RLock()
     threadLock = threading.RLock()
     
@@ -122,42 +119,60 @@ if __name__ == '__main__':
             for k in (0, 1):
                 xyLabels[i][j].append(mi.dataLabels[XYVARS[i][j][k]])
 
+    # Start the plotting service
+    plotProc = multiprocessing.Process(target=plottingProc, name="Galileo: Data plotting", args=(processLock, endPlot, NROWS, NCOLS, XYVARS, xyLabels, PLOT_LISTEN_PERIOD, PLOT_REFRESH_PERIOD))
+    plotProc.start()
+                
     # Start data logging
-    thread = threading.Thread(target=keepMeasuring, name="Galileo: Data logging", args=(processLock, threadLock, end1))
-    thread.start()
-    
-    # Start plotting
-    proc = multiprocessing.Process(target=plottingProc, name="Galileo: Data plotting", args=(processLock, end2, NROWS, NCOLS, XYVARS, xyLabels, PLOT_LISTEN_PERIOD, PLOT_REFRESH_PERIOD))
-    proc.start()
+    measureThread = threading.Thread(target=keepMeasuring, name="Galileo: Data logging", args=(processLock, threadLock, endMain))
+    measureThread.start()
     
     time.sleep(1.)
     print("""\
-*************** Galileo Measurement Utility ***********************
-'Measure what is measurable, and make measurable what is not so.'
+    *************** Galileo Measurement Utility ***********************
+    'Measure what is measurable, and make measurable what is not so.'
                                                 --- Galileo Galilei
-*******************************************************************
+    *******************************************************************
 
 Available commands:
-            "pause"     or  "p":      Pause the measurements.
-            "resume"    or  "r":      Resume the measurements.
-            "stop"      or  "s":      Stop the measurements, while
-                                  keeping the graph available.
+            "pause"     or  "p":        Pause the measurements (CAN
+                                        resume later).
 
+            "resume"    or  "r":        Resume the measurements.
+
+            "stop"      or  "s":        Stop the measurements (can NOT
+                                        resume later), while keeping
+                                        the graph available.
+
+            "quit"      or  "q"         Quit Galileo and return to com-
+                                        mand line console.
+
+            Ctrl+Break                  Force quit.
+                                        
+Type a command after the prompt "?>", and press "Enter" to execute.
     """)
-    while not flag_stop:
-        command = input(r"Eppur si muove> ",).strip().lower()
+    while not flag_quit:
+        command = input(r"?> ",).strip().lower()
         if (command == "stop") or (command == "s"):
-            flag_stop = True
+            with threadLock:
+                flag_stop = True
+                endMain.send(("stop", []))
+            measureThread.join()
+        elif (command == "quit") or (command == "q"):
+            if not flag_stop:
+                with threadLock:
+                    flag_stop = True
+                    endMain.send(("stop", []))
+                measureThread.join()           
+            with threadLock:
+                flag_quit = True
+                endMain.send(("quit", []))
+            plotProc.join()
         elif (command == "pause") or (command == "p"):
             flag_pause = True
         elif (command == "resume") or (command == "r"):
             flag_pause = False
         elif not (command == ''):
-            print("[Galileo:] Unrecognised command \"{}\".".format(command))
-            
-    
-    # Waiting to finish
-    thread.join()
-    proc.join()
-    
-    print("[Galileo:] You closed graph window. Galileo quits.")
+            print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
+
+    print("    [Galileo:] And yet it moves.\n")

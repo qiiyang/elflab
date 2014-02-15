@@ -97,7 +97,7 @@ class PlotLive:
                         self.flag_autoscale = False
                     elif command == "replot":
                         self.flag_replot = True
-                    elif command == "data":
+                    elif (command == "data") and not self.flag_stop:
                         # Store data in buffer
                         k = self.nPoints
                         self.nPoints += 1
@@ -133,7 +133,8 @@ class PlotLive:
                                 self.xyLims[i, j, 0] = xMin, xMax
                                 self.xyLims[i, j, 1] = yMin, yMax
             # Wait
-            time.sleep(self.listenPeriod)
+            if not self.flag_quit:
+                time.sleep(self.listenPeriod)
     
     # Generator for animation
     def genCheckFlags(self):
@@ -219,3 +220,4 @@ class PlotLive:
                 time.sleep(self.refreshPeriod)
             
         self.listenThread.join()
+        print("    [Galileo:] Live plotting service is terminated.\n")
