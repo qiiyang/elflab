@@ -5,7 +5,7 @@ DEBUG_INFO = False
 
 # Parameters to be set by the user for each measurement
 # ____Measurement Parameters
-INTERVAL = 0.001    # interval between single measurements, in s
+MEASUREMENT_PERIOD = 0.001    # interval between single measurements, in s
 THERMOMETER = ("devices.thermometers.fake_therms", "StepTherm")
                 # (module, class) of the instrument
 LOCKIN = (r"devices.lockins.fake_lockins", "SinCosLockin")
@@ -14,7 +14,9 @@ MAGNET = (r"devices.magnets.fake_magnets", "StepMagnet")
 # ____Plot Parameters
 NROWS = 2   # number of rows of sub plots
 NCOLS = 1   # number of columns of sub plots
-PLOT_INTERVAL = 0.003     # Interval between plot frames in second
+PLOT_REFRESH_PERIOD = 0.5     # Interval between plot refreshes
+PLOT_LISTEN_PERIOD = 0.003    # Interval between listening events
+
 XYVARS = [
             [("n", "X")],
             [("n", "Y")]
@@ -59,7 +61,6 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             xys[i].append([])
             for k in (0, 1):
                 xys[i][j].append(0.)
-    flags = {}      # flags to send to plotting process
                 
     # ____Initialise clock and counter
     time.perf_counter()
@@ -74,26 +75,25 @@ def keepMeasuring(processLock, threadLock, pipeEnd):
             
             # Send data for plotting
             if pipeEnd.poll():
+                while pipeEnd.poll():
+                    if pipeEnd.recv():  # clearing receiving pipe
+                        flag_plot_alive = True
                 with threadLock:    # Prevent other thread from accessing the pipe
                     for i in range(NROWS):
                         for j in range(NCOLS):
                             for k in (0, 1):
                                 xys[i][j][k] = buffer[XYVARS[i][j][k]]
-                    flags = {"stop":flag_stop, "replot":flag_replot, "quit":flag_quit}
-                    while pipeEnd.poll():
-                        pipeEnd.recv()  # clearing receiving pipe
-                    pipeEnd.send((flags,xys))
+                    pipeEnd.send(("data", xys))
         if not flag_stop:
-            time.sleep(INTERVAL)
+            time.sleep(MEASUREMENT_PERIOD)
     with threadLock:
-        flags = {"stop":flag_stop, "replot":flag_replot, "quit":flag_quit}
-        pipeEnd.send((flags,[]))
+        pipeEnd.send("stop", 0)
     print("[Galileo:] You terminated the measurements. Close the graph window to quit Galileo.")
 
 # Data Plotting Process
-def plottingProc(processLock, pipeEnd, nrows, ncols, xyVars, xyLabels, plot_interval):
+def plottingProc(processLock, pipeEnd, nrows, ncols, xyVars, xyLabels, listenPeriod, refreshPeriod):
     import plots.plot_live as plot
-    pl = plot.PlotLive(pipeEnd, nrows, ncols, xyVars, xyLabels, plot_interval)
+    pl = plot.PlotLive(processLock, pipeEnd, nrows, ncols, xyVars, xyLabels, listenPeriod, refreshPeriod)
     pl.start()
     
 # The main procedure
@@ -104,6 +104,8 @@ if __name__ == '__main__':
     flag_stop = False
     flag_quit = False
     flag_replot = False
+    flag_autoscale = True
+    flag_plot_alive = False
     
     n_plotPoints = 0
     
@@ -121,11 +123,11 @@ if __name__ == '__main__':
                 xyLabels[i][j].append(mi.dataLabels[XYVARS[i][j][k]])
 
     # Start data logging
-    thread = threading.Thread(target=keepMeasuring, name="LabPy: Data logging", args=(processLock, threadLock, end1))
+    thread = threading.Thread(target=keepMeasuring, name="Galileo: Data logging", args=(processLock, threadLock, end1))
     thread.start()
     
     # Start plotting
-    proc = multiprocessing.Process(target=plottingProc, name="LabPy: Data plotting", args=(processLock, end2, NROWS, NCOLS, XYVARS, xyLabels, PLOT_INTERVAL))
+    proc = multiprocessing.Process(target=plottingProc, name="Galileo: Data plotting", args=(processLock, end2, NROWS, NCOLS, XYVARS, xyLabels, PLOT_LISTEN_PERIOD, PLOT_REFRESH_PERIOD))
     proc.start()
     
     time.sleep(1.)
