@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 import threading
+import multiprocessing
 
 class PlotLive:
     """ Implementation of plotting live data from measurements"""
@@ -31,17 +32,17 @@ class PlotLive:
     # flags
     flag_quit = False       # True if user commanded quit
     flag_replot = True     # True if asked to replot
-    flag_alive = False      # True if there's an open plot window
     flag_autoscale = True
     flag_newData = False    # True if there are new data to be updated to the plot
     flag_stop = False       # True if measurements are already finished
         
         
     # The constructor
-    def __init__(self, plotConn, processLock, xyVars, xyLabels, refreshInterval=DEFAULT_PERIOD, listenInterval=DEFAULT_PERIOD):
+    def __init__(self, status, plotConn, processLock, xyVars, xyLabels, refreshInterval=DEFAULT_PERIOD, listenInterval=DEFAULT_PERIOD):
                 # self, (one end of a Pipe), process lock,, (list of variables to plot in each subplots), (list of labels), refresh interval in s, sampling interval in s
         
         # Save constants
+        self.status = status
         self.processLock = processLock
         self.plotConn = plotConn
         self.xyVars = xyVars
@@ -71,7 +72,7 @@ class PlotLive:
         self.xyLims = np.empty((nrows, ncols, 2, 2))
         self.xyLims[:,:,:,0].fill(float("inf"))
         self.xyLims[:,:,:,1].fill(float("-inf"))
-                
+        
         # Initialize listener threading
         self.dataLock = threading.RLock()
         self.listenThread = threading.Thread(target = self.listen, name = "Galileo: plot listener")
@@ -79,10 +80,14 @@ class PlotLive:
     # Communication with the parent process                    
     def listen(self):
         while not self.flag_quit:
-            # Send self-status and inquire data from the pipe
-            self.plotConn.send(self.flag_alive)     # True if plot window exits
+            if not self.flag_stop:  # If the data-collection is still alive
+                # Inquire data from the pipe
+                self.plotConn.send("i")     # Doesn't matter what to send
+                # Wait until something is coming from the pipe
+                while not self.plotConn.poll():
+                    time.sleep(self.listenInterval)
             
-            # Get data if already available
+            # parsing the pipe flow
             while self.plotConn.poll() and not self.flag_quit:
                 command, dataPoint = self.plotConn.recv()      # Command and value
                 # Update flags
@@ -90,14 +95,16 @@ class PlotLive:
                     if command == "quit":
                         self.flag_quit = True
                         plt.close("all")
+                        self.status["command_done"].set()
                     elif command == "autoscale on":
                         self.flag_autoscale = True
+                        self.status["command_done"].set()
                     elif command == "autoscale off":
                         self.flag_autoscale = False
+                        self.status["command_done"].set()
                     elif command == "replot":
-                        self.fig.clf(True)
-                        plt.close("all")
-                        #self.flag_replot = True
+                        self.flag_replot = True
+                        self.status["command_done"].set()
                     elif command == "data":
                         # Store data in buffer
                         self.nPoints += 1
@@ -230,11 +237,9 @@ class PlotLive:
                 with self.dataLock:
                     self.replot()
                     self.flag_replot = False
-                    self.flag_alive = True
                 self.ani = animation.FuncAnimation(self.fig, func=self.update, frames=self.genCheckFlags, init_func=self.initLines, blit=self.BLIT, interval=self.refreshInterval*1000., repeat=False)
+                self.status["plot_shown"].set()
                 plt.show()
-                self.flag_alive = False
-                time.sleep(self.refreshInterval)
+                self.status["plot_shown"].clear()
             
         self.listenThread.join()
-        print("    [Galileo:] Live plotting service is terminated.\n")

@@ -97,10 +97,10 @@ class Galileo:
         self.mainConn, self.plotConn = multiprocessing.Pipe()
         self.pipeLock = threading.RLock()
         self.bufferLock = threading.RLock()
-        self.procLock = multiprocessing.RLock()
+        self.processLock = multiprocessing.RLock()
        
        
-    def keepMeasuring(self, mainConn, procLock, pipeLock, bufferLock):
+    def keepMeasuring(self, mainConn, processLock, pipeLock, bufferLock):
         # Start and finish a dummy thread
         logThread = threading.Thread(target=None)
         logThread.start()
@@ -146,7 +146,8 @@ class Galileo:
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
         self.experiment.terminate()  # Finish up any loose ends
-        print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
+        with self.processLock:
+            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
         
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
@@ -155,9 +156,19 @@ class Galileo:
     def start(self):
         # Start the plotting service
         print("    [Galileo:] Starting the live data plotting service......")
+        # Initialize the plot status indicators and send through the pipe
+        self.plotStatus = {"plot_shown": multiprocessing.Event(),
+                           "command_done": multiprocessing.Event(),
+                           "request_data": multiprocessing.Event()
+                        }
+        self.plotStatus["plot_shown"].clear()
+        self.plotStatus["command_done"].clear()
+        self.plotStatus["request_data"].clear()
+        
         plotProc = multiprocessing.Process(target=self.plottingProc, name="Galileo: Data plotting",
-                                           kwargs={"plotConn": self.plotConn,
-                                                   "processLock": self.procLock,
+                                           kwargs={"status": self.plotStatus,
+                                                   "plotConn": self.plotConn,
+                                                   "processLock": self.processLock,
                                                    "xyVars": self.plotXYs,
                                                    "xyLabels": self.plotLabels,
                                                    "refreshInterval": self.PLOT_REFRESH_INTERVAL,
@@ -166,17 +177,19 @@ class Galileo:
                                            )
 
         plotProc.start()
-        with self.pipeLock:
-            while not self.mainConn.poll():
-                time.sleep(self.PLOT_LISTEN_INTERVAL)
+        
+        # Wait for the first data requesting signal
+        #self.plotStatus["request_data"].wait()
         print("    [Galileo:] Live data plotting service has started.\n\n    [Galileo:] Starting measurements......")
 
                     
         # Start data logging
-        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.procLock, self.pipeLock, self.bufferLock))
+        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.bufferLock))
         measureThread.start()
         
-        time.sleep(1.)
+        print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
+        self.plotStatus["plot_shown"].wait()
+        
         print(self.HELP_INFO)
         
         while not self.flag_quit:
@@ -195,6 +208,7 @@ class Galileo:
                     self.flag_quit = True
                     self.mainConn.send(("quit", []))
                 plotProc.join()
+                print("    [Galileo:] Live plotting service is terminated.\n")
             elif (command == "pause") or (command == "p"):
                 if self.flag_stop:
                     print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot pause!")
@@ -216,9 +230,15 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()
-            elif command == "replot":
-                with self.pipeLock:
-                    self.mainConn.send(("replot",[]))
+            elif command == "plot":
+                if self.plotStatus["plot_shown"].is_set():
+                    print("    [Galileo:] A plot window should had already been open. Command ignored.")
+                else:
+                    print("    [Galileo:] Waiting for a plot window to open......")
+                    with self.pipeLock:
+                        self.mainConn.send(("replot",[]))
+                    self.plotStatus["plot_shown"].wait()
+                    print("    [Galileo:] A plot window should have opened.")
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")
