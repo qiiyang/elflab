@@ -6,7 +6,7 @@ import os
 import time
 import multiprocessing
 import threading
-import ..plots.plot_live as plotlive
+from ..plots import plot_live
 
 # Default values for timing parameters
 # MEASUREMENT_INTERVAL = 0.001    # interval between single measurements, in s
@@ -81,9 +81,9 @@ class Galileo:
         
         self.plotXYs = plotXYs
         plotLabels = []
-        for i in range(NROWS):
+        for i in range(self.NROWS):
             plotLabels.append([])
-            for j in range(NCOLS):
+            for j in range(self.NCOLS):
                 plotLabels[i].append([])
                 for k in (0, 1):
                     plotLabels[i][j].append(experiment.dataLabels[plotXYs[i][j][k]])
@@ -92,7 +92,7 @@ class Galileo:
         # initialize the pipes and locks
         self.mainConn, self.plotConn = multiprocessing.Pipe()
         self.pipeLock = threading.RLock()
-        self.bufferLock = threading.Lock()
+        self.bufferLock = threading.RLock()
         self.procLock = multiprocessing.RLock()
        
        
@@ -130,10 +130,10 @@ class Galileo:
                         while mainConn.poll():
                             self.flag_plotAlive = mainConn.recv()
                         # Blow data
-                        for i in range(NROWS):
-                            for j in range(NCOLS):
+                        for i in range(self.NROWS):
+                            for j in range(self.NCOLS):
                                 for k in (0, 1):
-                                    xys[i][j][k] = self.experiment.buffer[XYVARS[i][j][k]]
+                                    xys[i][j][k] = self.experiment.buffer[self.plotXYs[i][j][k]]
                         mainConn.send(("data", xys))
             # Wait if not stopping    
             if not self.flag_stop:
@@ -141,28 +141,28 @@ class Galileo:
                 
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
-        experiment.terminate()  # Finish up any loose ends
-        print("    [Galileo:] You terminated the measurements. Type \"quit\" to quit Galileo.\n")
-     
+        self.experiment.terminate()  # Finish up any loose ends
+        print("    [Galileo:] You terminated the measurements. Type \"quit\" to quit Galileo.\n")    
+        
     def plottingProc(self, *args, **kwargs):
-        import plots.plot_live as plot
-        pl = plot.PlotLive(*args, **kwargs)
-        pl.start()     
+        pl = plot_live.PlotLive(*args, **kwargs)
+        pl.start()         
         
     def start(self):
         # Start the plotting service
-        plotProc = multiprocessing.Process(target=plottingProc, name="Galileo: Data plotting",
+        plotProc = multiprocessing.Process(target=self.plottingProc, name="Galileo: Data plotting",
                                            kwargs={"plotConn": self.plotConn,
-                                                   "procLock": self.procLock,
-                                                   "plotXYs": self.plotXYs,
-                                                   "plotLabels": self.plotLabels,
-                                                   "refreshInterval": self.PLOT_REFRESH_INTERVALS,
-                                                   "listenInterval": self.PLOT_LISTEN_INTERVALS}
+                                                   "processLock": self.procLock,
+                                                   "xyVars": self.plotXYs,
+                                                   "xyLabels": self.plotLabels,
+                                                   "refreshInterval": self.PLOT_REFRESH_INTERVAL,
+                                                   "listenInterval": self.PLOT_LISTEN_INTERVAL}
                                            )
+
         plotProc.start()
                     
         # Start data logging
-        measureThread = threading.Thread(target=keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.procLock, self.pipeLock, self.bufferLock))
+        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.procLock, self.pipeLock, self.bufferLock))
         measureThread.start()
         
         time.sleep(1.)
@@ -181,9 +181,9 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()           
-                with pipeLock:
-                    flag_quit = True
-                    endMain.send(("quit", []))
+                with self.pipeLock:
+                    self.flag_quit = True
+                    self.mainConn.send(("quit", []))
                 plotProc.join()
             elif (command == "pause") or (command == "p"):
                 flag_pause = True

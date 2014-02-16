@@ -36,20 +36,20 @@ class PlotLive:
         
         
     # The constructor
-    def __init__(self, processLock, pipeEnd, nrows=1, ncols=1, xyVars=[[("", "")]], xyLabels=[[("", "")]], listenPeriod=DEFAULT_PERIOD, refreshPeriod=DEFAULT_PERIOD):
-                # self, (one end of a Pipe), (No. of rows of subplots), (No. of cols), (list of variables to plot in each subplots), (list of labels), sampling interval in s, refresh interval in s
+    def __init__(self, plotConn, processLock, xyVars, xyLabels, refreshInterval=DEFAULT_PERIOD, listenInterval=DEFAULT_PERIOD):
+                # self, (one end of a Pipe), process lock,, (list of variables to plot in each subplots), (list of labels), refresh interval in s, sampling interval in s
         
         # Save constants
         self.processLock = processLock
-        self.pipeEnd = pipeEnd
-        self.nrows = nrows
-        self.ncols = ncols
+        self.plotConn = plotConn
         self.xyVars = xyVars
         self.xyLabels = xyLabels
-        self.listenPeriod = listenPeriod
-        self.refreshPeriod = refreshPeriod
+        self.listenInterval = listenInterval
+        self.refreshInterval = refreshInterval
         
         # Calculate derived constants
+        self.nrows = nrows = len(xyVars)
+        self.ncols = ncols = len(xyVars[0])
         self.maxPoints = self.MAXFLOATS // (nrows * ncols * 2)      # maximum number of datapoints
         self.bufPoints = self.INITFLOATS // (nrows * ncols * 2)     # initial buffer size
         self.styles = []     # plotting style strings for each sub-plot
@@ -78,12 +78,12 @@ class PlotLive:
     def listen(self):
         while not self.flag_quit:
             # Inquire data from the pipe
-            self.pipeEnd.send(self.flag_alive)     # True if plot window exits
-            while not self.pipeEnd.poll():
-                time.sleep(self.listenPeriod / 10.)
+            self.plotConn.send(self.flag_alive)     # True if plot window exits
+            while not self.plotConn.poll():
+                time.sleep(self.listenInterval / 10.)
                 
-            while self.pipeEnd.poll() and not self.flag_quit:
-                command, dataPoint = self.pipeEnd.recv()      # Command and value
+            while self.plotConn.poll() and not self.flag_quit:
+                command, dataPoint = self.plotConn.recv()      # Command and value
                 # Update flags
                 with self.threadLock:
                     if command == "quit":
@@ -134,7 +134,7 @@ class PlotLive:
                                 self.xyLims[i, j, 1] = yMin, yMax
             # Wait
             if not self.flag_quit:
-                time.sleep(self.listenPeriod)
+                time.sleep(self.listenInterval)
     
     # Generator for animation
     def genCheckFlags(self):
@@ -209,15 +209,15 @@ class PlotLive:
         while not self.flag_quit:
             if self.flag_replot:
                 while self.nPoints < 2:
-                    time.sleep(self.refreshPeriod)
+                    time.sleep(self.refreshInterval)
                 with self.threadLock:
                     self.replot()
                     self.flag_replot = False
                     self.flag_alive = True
-                self.ani = animation.FuncAnimation(self.fig, self.update, self.genCheckFlags, blit=self.BLIT, interval=self.refreshPeriod*1000., repeat=False)
+                self.ani = animation.FuncAnimation(self.fig, self.update, self.genCheckFlags, blit=self.BLIT, interval=self.refreshInterval*1000., repeat=False)
                 plt.show()
                 self.flag_alive = False
-                time.sleep(self.refreshPeriod)
+                time.sleep(self.refreshInterval)
             
         self.listenThread.join()
         print("    [Galileo:] Live plotting service is terminated.\n")
