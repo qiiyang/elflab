@@ -2,8 +2,8 @@
 
 
 ********************** Galileo Measurement Utility ****************************
-    'Measure what is measurable, and make measurable what is not so.'
-                                                --- Galileo Galilei
+      'Measure what is measurable, and make measurable what is not so.'
+                                                        --- Galileo Galilei
 *******************************************************************************
 Available commands:
     System commands:

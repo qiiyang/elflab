@@ -15,8 +15,9 @@ class PlotLive:
     """ Implementation of plotting live data from measurements"""
     
     # Computing-related constants
-    MAXFLOATS = 100000000     # The maximum number of float numbers to be stored
-    INITFLOATS = 10000    # Initial buffer size, as number of float stored
+    MAXFLOATS = 10**7     # The maximum number of float numbers to be stored
+    INITFLOATS = 1000    # Initial buffer size, as number of float stored
+    DOWNSAMPLERATIO = 10    # Down-sampling ratio, when the buffer is full
     SMALL = 1.e-9       # a very small non-zero
     BLIT = False        # whether to blit
     
@@ -99,13 +100,15 @@ class PlotLive:
                         self.flag_replot = True
                     elif (command == "data") and not self.flag_stop:
                         # Store data in buffer
-                        k = self.nPoints
                         self.nPoints += 1
                         # ____Check buffer size
                         if self.nPoints > self.maxPoints:
-                            print("Plotting buffer is full!")
-                            self.flag_stop = True
-                            break
+                            # Down-sampling old data
+                            if DEBUG_INFO:
+                                print("[DEBUG: LivePlot] Plotting buffer full, down-sampling.")
+                            self.nPoints = self.maxPoints // self.DOWNSAMPLERATIO
+                            for i in range(self.nPoints):
+                                self.xys[:, :, :, i] = self.xys[:, :, :, i * self.DOWNSAMPLERATIO]
                         elif self.nPoints > self.bufPoints:
                             # Extend the buffer
                             newLen = self.bufPoints * 2     # The new buffer length
@@ -117,6 +120,7 @@ class PlotLive:
                                 print ("Extended plotting buffer, {0} -> {1}".format(self.bufPoints, newLen))
                             self.bufPoints = newLen
                         # ____Store data
+                        k = self.nPoints - 1
                         for i in range(self.nrows):
                             for j in range(self.ncols):
                                 self.xys[i, j, 0, k] = x = dataPoint[i][j][0]
