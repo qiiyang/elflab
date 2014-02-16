@@ -1,6 +1,7 @@
 """ Class definition of the Galileo utility
     written for Python 3.3.4
 """
+
 # Imports
 import os
 import time
