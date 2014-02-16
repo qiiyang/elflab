@@ -94,7 +94,7 @@ class Galileo:
         self.plotLabels = plotLabels
         
         # initialize the pipes and locks
-        self.mainConn, self.plotConn = multiprocessing.Pipe()
+        self.plotConn, self.mainConn = multiprocessing.Pipe(duplex=False)
         self.pipeLock = threading.RLock()
         self.bufferLock = threading.RLock()
         self.processLock = multiprocessing.RLock()
@@ -128,17 +128,15 @@ class Galileo:
                 logThread.start()
                 
                 # Blow data to the plotting service only if requested
-                with pipeLock:
-                    if mainConn.poll():
-                        # Update flag_plotAlive and empty incoming flow
-                        while mainConn.poll():
-                            self.flag_plotAlive = mainConn.recv()
-                        # Blow data
-                        for i in range(self.NROWS):
-                            for j in range(self.NCOLS):
-                                for k in (0, 1):
-                                    xys[i][j][k] = self.experiment.buffer[self.plotXYs[i][j][k]]
+                if self.plotStatus["request_data"].is_set():
+                    # Blow data
+                    for i in range(self.NROWS):
+                        for j in range(self.NCOLS):
+                            for k in (0, 1):
+                                xys[i][j][k] = self.experiment.buffer[self.plotXYs[i][j][k]]
+                    with pipeLock:
                         mainConn.send(("data", xys))
+                    self.plotStatus["request_data"].clear()
             # Wait if not stopping    
             if not self.flag_stop:
                 time.sleep(self.MEASUREMENT_INTERVAL)
@@ -179,7 +177,7 @@ class Galileo:
         plotProc.start()
         
         # Wait for the first data requesting signal
-        #self.plotStatus["request_data"].wait()
+        self.plotStatus["request_data"].wait()
         print("    [Galileo:] Live data plotting service has started.\n\n    [Galileo:] Starting measurements......")
 
                     

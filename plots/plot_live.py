@@ -80,12 +80,9 @@ class PlotLive:
     # Communication with the parent process                    
     def listen(self):
         while not self.flag_quit:
-            if not self.flag_stop:  # If the data-collection is still alive
-                # Inquire data from the pipe
-                self.plotConn.send("i")     # Doesn't matter what to send
-                # Wait until something is coming from the pipe
-                while not self.plotConn.poll():
-                    time.sleep(self.listenInterval)
+            # Setting the request-data signal
+            if not self.flag_stop:
+                self.status["request_data"].set()
             
             # parsing the pipe flow
             while self.plotConn.poll() and not self.flag_quit:
