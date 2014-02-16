@@ -185,6 +185,7 @@ class Galileo:
         
         print(self.HELP_INFO)
         
+        # User interaction
         while not self.flag_quit:
             command = input(self.PROMPT).strip().lower()
             if (command == "help") or (command == "h"):
@@ -192,9 +193,7 @@ class Galileo:
             elif command == "quit":
                 if not self.flag_stop:
                     print("    [Galileo:] Terminating measurements......")
-                    with self.pipeLock:
-                        self.flag_stop = True
-                        self.mainConn.send(("stop", []))
+                    self.flag_stop = True
                     measureThread.join()
                     print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
                 print("    [Galileo:] Terminating data plotting......")
@@ -234,7 +233,30 @@ class Galileo:
                     self.plotStatus["plot_shown"].wait()
                     time.sleep(self.UI_LAG)
                     print("    [Galileo:] A plot window should have opened.\n")
-                    
+            elif (command == "autoscale on") or (command == "+a"):
+                self.plotStatus["command_done"].clear()
+                print("    [Galileo:] Turning auto-scale on......")
+                with self.pipeLock:
+                    self.mainConn.send(("autoscale_on",[]))
+                self.plotStatus["command_done"].wait()
+                time.sleep(self.UI_LAG)
+                print("    [Galileo:] Auto-scale is on.\n")
+            elif (command == "autoscale off") or (command == "-a"):
+                self.plotStatus["command_done"].clear()
+                print("    [Galileo:] Turning auto-scale off......")
+                with self.pipeLock:
+                    self.mainConn.send(("autoscale_off",[]))
+                self.plotStatus["command_done"].wait()
+                time.sleep(self.UI_LAG)
+                print("    [Galileo:] Auto-scale is off.\n")
+            elif command == "clear plot":
+                self.plotStatus["command_done"].clear()
+                print("    [Galileo:] Clearing plotting buffer......")
+                with self.pipeLock:
+                    self.mainConn.send(("clear",[]))
+                self.plotStatus["command_done"].wait()
+                time.sleep(self.UI_LAG)
+                print("    [Galileo:] Done.\n")
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")

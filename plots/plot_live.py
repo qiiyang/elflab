@@ -91,14 +91,28 @@ class PlotLive:
                         self.flag_quit = True
                         plt.close("all")
                         self.status["command_done"].set()
-                    elif command == "autoscale on":
-                        self.flag_autoscale = True
-                        self.status["command_done"].set()
-                    elif command == "autoscale off":
-                        self.flag_autoscale = False
-                        self.status["command_done"].set()
                     elif command == "replot":
                         self.flag_replot = True
+                    elif command == "autoscale_on":
+                        self.flag_autoscale = True
+                        self.status["command_done"].set()
+                    elif command == "autoscale_off":
+                        self.flag_autoscale = False
+                        self.status["command_done"].set()
+                    elif command == "clear":
+                        self.xys[:, :, :, 0:2] = self.xys[:, :, :, self.nPoints-2 : self.nPoints]
+                        for i in range(self.nrows):
+                            for j in range(self.ncols):
+                                xMin = min(self.xys[i, j, 0, 0:2])
+                                xMax = max(self.xys[i, j, 0, 0:2])
+                                yMin = min(self.xys[i, j, 1, 0:2])
+                                yMax = max(self.xys[i, j, 1, 0:2])
+                                
+                                self.xyLims[i, j, 0] = xMin, xMax
+                                self.xyLims[i, j, 1] = yMin, yMax
+                                
+                        self.flag_newData = True
+                        self.nPoints = 2
                         self.status["command_done"].set()
                     elif command == "data":
                         # Store data in buffer
@@ -188,7 +202,7 @@ class PlotLive:
     def rescale(self):
         for i in range(self.nrows):
             for j in range(self.ncols):
-                xMin, xMax = self.xyLims[i, j, 0] 
+                xMin, xMax = self.xyLims[i, j, 0]
                 yMin, yMax = self.xyLims[i, j, 1]   
                 
                 delX = self.OVERRANGE * (xMax - xMin + self.SMALL)

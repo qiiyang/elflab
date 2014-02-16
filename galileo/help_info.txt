@@ -15,5 +15,7 @@ Available commands:
     
     Plotting commands:
         "plot"                  :   Open a live-plot window.
+        "autoscale on"  or "+a" :   Turning on auto-scale in the live plotting.
+        "autoscale off"  or "-a":   Turning off auto-scale in the live plotting.
 
 Type a command after the prompt "?>", and press "Enter" to execute.
