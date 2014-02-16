@@ -29,11 +29,12 @@ class PlotLive:
     COLOURPOOL = ["b", "g", "r", "k", "y", "m"]     # pools of colours
     
     # flags
-    flag_stop = False   # True if Measurements stopped
     flag_quit = False       # True if user commanded quit
     flag_replot = True     # True if asked to replot
     flag_alive = False      # True if there's an open plot window
     flag_autoscale = True
+    flag_newData = False    # True if there are new data to be updated to the plot
+    flag_stop = False       # True if measurements are already finished
         
         
     # The constructor
@@ -72,33 +73,30 @@ class PlotLive:
         self.xyLims[:,:,:,1].fill(float("-inf"))
                 
         # Initialize listener threading
-        self.threadLock = threading.RLock()
+        self.dataLock = threading.RLock()
         self.listenThread = threading.Thread(target = self.listen, name = "Galileo: plot listener")
 
     # Communication with the parent process                    
     def listen(self):
         while not self.flag_quit:
-            # Inquire data from the pipe
+            # Send self-status and inquire data from the pipe
             self.plotConn.send(self.flag_alive)     # True if plot window exits
-            while not self.plotConn.poll():
-                time.sleep(self.listenInterval)
-                
+            
+            # Get data if already available
             while self.plotConn.poll() and not self.flag_quit:
                 command, dataPoint = self.plotConn.recv()      # Command and value
                 # Update flags
-                with self.threadLock:
+                with self.dataLock:
                     if command == "quit":
                         self.flag_quit = True
                         plt.close()
-                    elif command == "stop":
-                        self.flag_stop = True
                     elif command == "autoscale on":
                         self.flag_autoscale = True
                     elif command == "autoscale off":
                         self.flag_autoscale = False
                     elif command == "replot":
                         self.flag_replot = True
-                    elif (command == "data") and not self.flag_stop:
+                    elif command == "data":
                         # Store data in buffer
                         self.nPoints += 1
                         # ____Check buffer size
@@ -136,6 +134,7 @@ class PlotLive:
                                 
                                 self.xyLims[i, j, 0] = xMin, xMax
                                 self.xyLims[i, j, 1] = yMin, yMax
+                        self.flag_newData = True
             # Wait
             if not self.flag_quit:
                 time.sleep(self.listenInterval)
@@ -148,32 +147,35 @@ class PlotLive:
     # Function to update the plots
     def update(self, updating):
                     # dataPoint[i][j] = (x, y) for sub-plot(i,j)
-        k = self.nPoints - 1
-        flag_rescale = False
+        with self.dataLock:
+            if self.flag_newData:
+                self.flag_newData = False
+                k = self.nPoints - 1
+                flag_rescale = False
 
-        for i in range(self.nrows):
-            for j in range(self.ncols):
-                # Check wherther need to rescale
-                if (not flag_rescale) and self.flag_autoscale:
-                    xMin, xMax = self.xyLims[i, j, 0] 
-                    yMin, yMax = self.xyLims[i, j, 1]  
-                    # Test whether x, y are out of range
-                    # ____Get the scales of each axis
-                    xScale = self.subs[i][j].get_xlim()
-                    yScale = self.subs[i][j].get_ylim()
-                    if (xMin < xScale[0]) or (xMax > xScale[1]) or (yMin < yScale[0]) or (yMax > yScale[1]):
-                        flag_rescale = True
+                for i in range(self.nrows):
+                    for j in range(self.ncols):
+                        # Check wherther need to rescale
+                        if (not flag_rescale) and self.flag_autoscale:
+                            xMin, xMax = self.xyLims[i, j, 0] 
+                            yMin, yMax = self.xyLims[i, j, 1]  
+                            # Test whether x, y are out of range
+                            # ____Get the scales of each axis
+                            xScale = self.subs[i][j].get_xlim()
+                            yScale = self.subs[i][j].get_ylim()
+                            if (xMin < xScale[0]) or (xMax > xScale[1]) or (yMin < yScale[0]) or (yMax > yScale[1]):
+                                flag_rescale = True
 
-                # Update the subplot    
-                self.lines[i*self.ncols+j].set_data(self.xys[i, j, 0, :k+1], self.xys[i, j, 1, :k+1])
-                
-        # Rescale if necessary
-        if flag_rescale:
-            self.rescale()
-            if self.BLIT:
-                self.fig.canvas.draw()
-            if DEBUG_INFO:
-                print ("rescalling")
+                        # Update the subplot    
+                        self.lines[i*self.ncols+j].set_data(self.xys[i, j, 0, :k+1], self.xys[i, j, 1, :k+1])
+                        
+                # Rescale if necessary
+                if flag_rescale:
+                    self.rescale()
+                    if self.BLIT:
+                        self.fig.canvas.draw()
+                    if DEBUG_INFO:
+                        print ("rescalling")
         return self.lines
     
     # Function to rescale the plot
@@ -214,7 +216,7 @@ class PlotLive:
             if self.flag_replot:
                 while self.nPoints < 2:
                     time.sleep(self.refreshInterval)
-                with self.threadLock:
+                with self.dataLock:
                     self.replot()
                     self.flag_replot = False
                     self.flag_alive = True
