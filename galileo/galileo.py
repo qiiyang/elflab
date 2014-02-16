@@ -147,16 +147,6 @@ class Galileo:
         logThread.join()
         self.experiment.terminate()  # Finish up any loose ends
         print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
-    
-    # for checking the plot status when measurements are not active
-    def plotCheck(self, mainConn, pipeLock):
-        while (not self.flag_quit) and (self.flag_stop or self.flag_pause):
-            with pipeLock:
-                # Update flag_plotAlive and empty incoming flow
-                while mainConn.poll():
-                    self.flag_plotAlive = mainConn.recv()                
-            if (not self.flag_quit) and (self.flag_stop or self.flag_pause):
-                time.sleep(self.PLOT_LISTEN_INTERVAL)
         
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
@@ -186,10 +176,6 @@ class Galileo:
         measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.procLock, self.pipeLock, self.bufferLock))
         measureThread.start()
         
-        # Start a dummy plotCheck thread
-        checkerThread = threading.Thread(target=None)
-        checkerThread.start()
-        
         time.sleep(1.)
         print(self.HELP_INFO)
         
@@ -209,23 +195,17 @@ class Galileo:
                     self.flag_quit = True
                     self.mainConn.send(("quit", []))
                 plotProc.join()
-                checkerThread.join()
             elif (command == "pause") or (command == "p"):
                 if self.flag_stop:
                     print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot pause!")
                 else:
                     self.flag_pause = True
                     print("    [Galileo:] Measurements are paused. Enter \"resume\" to resume.")
-                    # Start the bare bone plot status checker if not already on
-                    if not checkerThread.is_alive():
-                        checkerThread = threading.Thread(target=self.plotCheck, name="Galileo: plotCheck", args=(self.mainConn, self.pipeLock))
-                        checkerThread.start()
             elif (command == "resume") or (command == "r"):
                 if self.flag_stop:
                     print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot resume!")
                 else:
                     self.flag_pause = False
-                    checkerThread.join()
                     print("    [Galileo:] Measurements have been resumes.")
             elif command == "stop":
                 if self.flag_stop:
@@ -236,10 +216,6 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()
-                    # Start the bare bone plot status checker if not already on
-                    if not checkerThread.is_alive():
-                        checkerThread = threading.Thread(target=self.plotCheck, name="Galileo: plotCheck", args=(self.mainConn, self.pipeLock))
-                        checkerThread.start()
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")
