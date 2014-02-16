@@ -216,6 +216,9 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()
+            elif command == "replot":
+                with self.pipeLock:
+                    self.mainConn.send(("replot",[]))
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")

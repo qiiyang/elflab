@@ -19,7 +19,7 @@ class PlotLive:
     INITFLOATS = 1000    # Initial buffer size, as number of float stored
     DOWNSAMPLERATIO = 10    # Down-sampling ratio, when the buffer is full
     SMALL = 1.e-9       # a very small non-zero
-    BLIT = False        # whether to blit
+    BLIT = True        # whether to blit
     
     # Graph-related constants
     LW = 2      # line width
@@ -89,13 +89,15 @@ class PlotLive:
                 with self.dataLock:
                     if command == "quit":
                         self.flag_quit = True
-                        plt.close()
+                        plt.close("all")
                     elif command == "autoscale on":
                         self.flag_autoscale = True
                     elif command == "autoscale off":
                         self.flag_autoscale = False
                     elif command == "replot":
-                        self.flag_replot = True
+                        self.fig.clf(True)
+                        plt.close("all")
+                        #self.flag_replot = True
                     elif command == "data":
                         # Store data in buffer
                         self.nPoints += 1
@@ -207,6 +209,15 @@ class PlotLive:
         if self.nPoints >= 2:
             self.rescale()
 
+    # Initialisor for animation
+    def initLines(self):
+        with self.dataLock:
+            for i in range(self.nrows):
+                for j in range(self.ncols):
+                    # Update the subplot    
+                    self.lines[i*self.ncols+j].set_data([], [])
+            self.flag_newData = True
+        return self.lines
         
     
     # Function to animate the plot
@@ -220,7 +231,7 @@ class PlotLive:
                     self.replot()
                     self.flag_replot = False
                     self.flag_alive = True
-                self.ani = animation.FuncAnimation(self.fig, self.update, self.genCheckFlags, blit=self.BLIT, interval=self.refreshInterval*1000., repeat=False)
+                self.ani = animation.FuncAnimation(self.fig, func=self.update, frames=self.genCheckFlags, init_func=self.initLines, blit=self.BLIT, interval=self.refreshInterval*1000., repeat=False)
                 plt.show()
                 self.flag_alive = False
                 time.sleep(self.refreshInterval)

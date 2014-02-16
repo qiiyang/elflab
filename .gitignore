@@ -3,6 +3,7 @@
 # No backup  files
 *.*~
 *.bak
+*.old
 
 # No collected data
 data
