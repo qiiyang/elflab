@@ -47,9 +47,9 @@ class AbstractExperiment:
 
 class Galileo:
     """The Galileo Measurement Utility"""
-    # Static constants
+    # Default "static constants"
     PROMPT = r"?>"
-    UI_LAG = 1.0
+    UI_LAG = 0.3
     # ____Help information
     with open(os.path.join(os.path.dirname(__file__), "help_info.txt"), "r") as insFile:
         HELP_INFO = insFile.read()
@@ -110,8 +110,7 @@ class Galileo:
             for j in range(self.NCOLS):
                 xys[i].append([])
                 for k in (0, 1):
-                    xys[i][j].append(0.)
-        print("    [Galileo:] Measurements have started.\n")        
+                    xys[i][j].append(0.)        
         
         while not self.flag_stop:
             if not self.flag_pause:
@@ -221,21 +220,21 @@ class Galileo:
                     print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot stop again!")
                 else:
                     print("    [Galileo:] Terminating measurements......")
-                    with self.pipeLock:
-                        self.flag_stop = True
-                        self.mainConn.send(("stop", []))
+                    self.flag_stop=True
                     measureThread.join()
                     print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
             elif command == "plot":
                 if self.plotStatus["plot_shown"].is_set():
                     print("    [Galileo:] WARNING: A plot window should had already been open. Command ignored.")
                 else:
+                    self.plotStatus["command_done"].clear()
                     print("    [Galileo:] Waiting for a plot window to open......")
                     with self.pipeLock:
                         self.mainConn.send(("replot",[]))
                     self.plotStatus["plot_shown"].wait()
-                    time.sleep(UI_LAG)
+                    time.sleep(self.UI_LAG)
                     print("    [Galileo:] A plot window should have opened.\n")
+                    
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")

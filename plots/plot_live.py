@@ -34,7 +34,6 @@ class PlotLive:
     flag_replot = True     # True if asked to replot
     flag_autoscale = True
     flag_newData = False    # True if there are new data to be updated to the plot
-    flag_stop = False       # True if measurements are already finished
         
         
     # The constructor
@@ -81,8 +80,7 @@ class PlotLive:
     def listen(self):
         while not self.flag_quit:
             # Setting the request-data signal
-            if not self.flag_stop:
-                self.status["request_data"].set()
+            self.status["request_data"].set()
             
             # parsing the pipe flow
             while self.plotConn.poll() and not self.flag_quit:
@@ -141,13 +139,15 @@ class PlotLive:
                                 self.xyLims[i, j, 0] = xMin, xMax
                                 self.xyLims[i, j, 1] = yMin, yMax
                         self.flag_newData = True
+                    else:
+                        print("[WARNING: plot_live] Unrecognised command: {}\n".format(command))
             # Wait
             if not self.flag_quit:
                 time.sleep(self.listenInterval)
     
     # Generator for animation
     def genCheckFlags(self):
-        while not (self.flag_stop or self.flag_quit):
+        while not self.flag_quit:
             yield True
                 
     # Function to update the plots

@@ -12,5 +12,8 @@ Available commands:
         "pause"     or  "p":    :   Pause the measurements (CAN resume later).
         "resume"    or  "r":    :   Resume the measurements.
         "stop"                  :   PERMANENTLY stop the measurements.
+    
+    Plotting commands:
+        "plot"                  :   Open a live-plot window.
 
 Type a command after the prompt "?>", and press "Enter" to execute.
