@@ -81,7 +81,7 @@ class PlotLive:
             # Inquire data from the pipe
             self.plotConn.send(self.flag_alive)     # True if plot window exits
             while not self.plotConn.poll():
-                time.sleep(self.listenInterval / 10.)
+                time.sleep(self.listenInterval)
                 
             while self.plotConn.poll() and not self.flag_quit:
                 command, dataPoint = self.plotConn.recv()      # Command and value
