@@ -48,11 +48,12 @@ class AbstractExperiment:
 class Galileo:
     """The Galileo Measurement Utility"""
     # Static constants
+    PROMPT = r"?>"
+    UI_LAG = 1.0
     # ____Help information
     with open(os.path.join(os.path.dirname(__file__), "help_info.txt"), "r") as insFile:
         HELP_INFO = insFile.read()
-        
-    PROMPT = r"?>"
+      
         
     # flags to be initialised
     # flag_stop = False
@@ -67,9 +68,6 @@ class Galileo:
         self.flag_stop = False
         self.flag_quit = False
         self.flag_pause = False
-        
-        self.flag_plotAlive = False
-        self.flag_replot = False
         
         # save the "constants"
         self.experiment = experiment
@@ -144,8 +142,6 @@ class Galileo:
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
         self.experiment.terminate()  # Finish up any loose ends
-        with self.processLock:
-            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
         
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
@@ -201,6 +197,7 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()
+                    print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
                 print("    [Galileo:] Terminating data plotting......")
                 with self.pipeLock:
                     self.flag_quit = True
@@ -228,15 +225,17 @@ class Galileo:
                         self.flag_stop = True
                         self.mainConn.send(("stop", []))
                     measureThread.join()
+                    print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
             elif command == "plot":
                 if self.plotStatus["plot_shown"].is_set():
-                    print("    [Galileo:] A plot window should had already been open. Command ignored.")
+                    print("    [Galileo:] WARNING: A plot window should had already been open. Command ignored.")
                 else:
                     print("    [Galileo:] Waiting for a plot window to open......")
                     with self.pipeLock:
                         self.mainConn.send(("replot",[]))
                     self.plotStatus["plot_shown"].wait()
-                    print("    [Galileo:] A plot window should have opened.")
+                    time.sleep(UI_LAG)
+                    print("    [Galileo:] A plot window should have opened.\n")
             elif not (command == ''):
                 print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
         print("    [Galileo:] I quit, yet it moves.\n")
