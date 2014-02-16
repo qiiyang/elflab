@@ -1,0 +1,21 @@
+
+
+
+********************** Galileo Measurement Utility ****************************
+    'Measure what is measurable, and make measurable what is not so.'
+                                                --- Galileo Galilei
+*******************************************************************************
+Available commands:
+    System commands:
+        "help"      or  "h":        Display this screen again.
+        "quit"      or  "q"         Quit Galileo and return to command line
+                                    console.
+        Ctrl+Break                  Force quit.
+            
+    Measurement commands:
+        "pause"     or  "p":        Pause the measurements (CAN resume later).
+        "resume"    or  "r":        Resume the measurements.
+        "stop"      or  "s":        Stop the measurements (can NOT resume later
+                                    ), while keeping the graph available.
+
+Type a command after the prompt "?>", and press "Enter" to execute.

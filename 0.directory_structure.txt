@@ -1,0 +1,10 @@
+.    # This folder: ElfLab root folder
+
+    .\galileo   # The main package, containing the class defining the Galileo utility
+    
+    .\experiments   # Scripts to run various experiments, using instances of the Galileo class.
+    
+    .\devices   # implementations of various devices   
+        .\devices\[type]    # subcategories of devices
+
+    .\plots      # classes for plotting services

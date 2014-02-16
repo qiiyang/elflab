@@ -5,6 +5,7 @@
 *.bak
 
 # No collected data
+data
 *.dat
 
 # No testing codes
