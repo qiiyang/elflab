@@ -1,9 +1,12 @@
+"""Defines a series of conceptual classes for the galileo utility"""
+
+
 class ExperimentBase:
     """A minimal abstraction of an experiment"""
     
     # "Public" Variables
-    dataPoint = None   # = {"name": "value"}
-    namesAndUnits = None    # = {e.g "H": "$H$ (T / $\mu_0$)"}
+    currentValues = None   # = {"name": "value"}
+    varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     title = None    # Title of the Experiment
     
@@ -19,10 +22,33 @@ class ExperimentBase:
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
 
-class MeasurerBase:
+        
+class ML_Experiment(ExperimentBase):
+    """An experiment defined by a Measurer object and a Logger object"""
+    def __init__(self, title, measurer, logger):
+        self.title = title
+        self.measurer = measurer
+        self.logger = logger
+        self.currentValues = measurer.currentValues
+        self.varTitles = measurer.varTitles
+        
+    def measure(self):
+        self.measurer.measure()
+        
+    def log(self, dataLock):
+        with dataLock:
+            dataToLog = self.currentValues.copy()
+        self.logger.log(dataToLog)
+        
+    def finish(self):
+        self.measurer.finish()
+        self.logger.finish()        
+        
+        
+class Measurer:
     """A minimal abstraction of a measurement"""
-    dataPoint = None # = {"name": "value"}
-    namesAndUnits = None # = {e.g "H": "$H$ (T / $\mu_0$)"}
+    currentValues = None   # = {"name": "value"}
+    varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Measurer initialisation not implemented!!!")
@@ -32,10 +58,10 @@ class MeasurerBase:
         
     def finish(self):
         raise Exception("!!Galileo ERROR!! Measurer finishing not implemented!!!")
-
         
+  
 
-class LoggerBase:
+class Logger:
     """A minimal abstraction of data-logging"""
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Data-Logger initialisation not implemented!!!")
@@ -45,27 +71,3 @@ class LoggerBase:
         
     def finish(self):
         raise Exception("!!Galileo ERROR!! Data-Logging finishing not implemented!!!")
-
-
-        
-class MeasurerAndLogger(ExperimentBase):
-    """An experiment defined by a Measurer object and a Logger object"""
-    def __init__(self, title, measurer, logger):
-        self.title = title
-        self.measurer = measurer
-        self.logger = logger
-        self.dataPoint = measurer.dataPoint
-        self.namesAndUnits = measurer.namesAndUnits
-        
-    def measure(self):
-        self.measurer.measure()
-        
-    def log(self, dataLock):
-        with dataLock:
-            dataToLog = self.dataPoint.copy()
-        self.logger.log(dataToLog)
-        
-    def finish(self):
-        self.measurer.finish()
-        self.logger.finish()
-        

@@ -1,10 +1,16 @@
+All "public" classes should be available at package levels.
+
 .    # This folder: ElfLab root folder
 
-    .\galileo   # The main package, containing the class defining the Galileo utility
+    .\galileo.py		# class Galileo, the Galileo measurement utility
+	.\abstracts.py		# Abstractly define how the following classes should be implemented
     
-    .\experiments   # Scripts to run various experiments, using instances of the Galileo class.
+    .\projects   # Scripts to run various experiments, using instances of the Galileo class.
     
     .\devices   # implementations of various devices   
         .\devices\[type]    # subcategories of devices
 
-    .\plots      # classes for plotting services
+    .\plotters      # classes for plotting services
+	
+	.\dataloggers		# Various modules for logging data
+	

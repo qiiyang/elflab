@@ -27,25 +27,15 @@ XYVARS = [
 # Import other modules
 import importlib
 import time
-import elflab.galileo.galileo as galileo
-import elflab.galileo.model_experiments as modelexp
+from elflab import galileo, abstracts
+from elflab.dataloggers import nologger
 import mi_common as mi
 
-class NullLogger(modelexp.LoggerBase):
-    """A minimal abstraction of data-logging"""
-    def __init__(self):
-        pass
-    
-    def log(self, dataPoint):  # To write down a data point
-        pass
-        
-    def finish(self):
-        pass
 
-class SimMIMeasurer(modelexp.MeasurerBase):
+class SimMIMeasurer(abstracts.Measurer):
     def __init__(self):
-        self.dataPoint = mi.initialData.copy()
-        self.namesAndUnits = mi.dataLabels
+        self.currentValues = mi.initialData.copy()
+        self.varTitles = mi.dataLabels
         self.n = 0
         time.perf_counter()
         ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
@@ -58,11 +48,11 @@ class SimMIMeasurer(modelexp.MeasurerBase):
         self.lockin = LockinClass()
         
     def measure(self):
-        self.dataPoint["n"] += 1
-        self.dataPoint["t"] = time.perf_counter()
-        (self.dataPoint["I_therm"], self.dataPoint["V_therm"], self.dataPoint["T"]) = self.therm.read()
-        (self.dataPoint["I_mag"], self.dataPoint["H"]) = self.magnet.read()
-        (self.dataPoint["X"], self.dataPoint["Y"]) = self.lockin.readXY()
+        self.currentValues["n"] += 1
+        self.currentValues["t"] = time.perf_counter()
+        (self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
+        (self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
+        (self.currentValues["X"], self.currentValues["Y"]) = self.lockin.readXY()
         
     def finish(self):
         pass
@@ -70,7 +60,7 @@ class SimMIMeasurer(modelexp.MeasurerBase):
 # The main procedure
 if __name__ == '__main__':
     measurer = SimMIMeasurer()
-    logger = NullLogger()
-    sim = modelexp.MeasurerAndLogger("MI Simulator (No File)", measurer, logger)
+    logger = nologger.Logger()
+    sim = abstracts.ML_Experiment("MI Simulator (No File)", measurer, logger)
     gali = galileo.Galileo(experiment=sim, measurement_interval=MEASUREMENT_PERIOD, plotXYs=XYVARS)
     gali.start()

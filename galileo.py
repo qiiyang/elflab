@@ -8,7 +8,7 @@ import time
 import multiprocessing
 import threading
 import random
-from ..plots import plot_live
+from elflab.plotters import plot_live
 
 # Constants
 
@@ -29,10 +29,10 @@ class Galileo:
     PROMPT = r"?>"
     UI_LAG = 0.3
     # ____Help information
-    with open(os.path.join(os.path.dirname(__file__), "help_info.txt"), "r") as inpFile:
+    with open(os.path.join(os.path.dirname(__file__), "misc", "galileo_help_info.txt"), "r") as inpFile:
         HELP_INFO = inpFile.read()
     QUESTIONS = []
-    with open(os.path.join(os.path.dirname(__file__), "questions.txt"), "r") as inpFile:
+    with open(os.path.join(os.path.dirname(__file__), "misc", "galileo_questions.txt"), "r") as inpFile:
         for line in inpFile:
             QUESTIONS.append(line.strip())
       
@@ -74,7 +74,7 @@ class Galileo:
             for j in range(self.NCOLS):
                 plotLabels[i].append([])
                 for k in (0, 1):
-                    plotLabels[i][j].append(experiment.namesAndUnits[plotXYs[i][j][k]])
+                    plotLabels[i][j].append(experiment.varTitles[plotXYs[i][j][k]])
         self.plotLabels = plotLabels
         
         # initialize the pipes and locks
@@ -120,7 +120,7 @@ class Galileo:
                     for i in range(self.NROWS):
                         for j in range(self.NCOLS):
                             for k in (0, 1):
-                                xys[i][j][k] = self.experiment.dataPoint[self.plotXYs[i][j][k]]
+                                xys[i][j][k] = self.experiment.currentValues[self.plotXYs[i][j][k]]
                     with pipeLock:
                         mainConn.send(("data", xys))
                     self.plotStatus["request_data"].clear()
