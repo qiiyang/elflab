@@ -7,6 +7,7 @@ import os
 import time
 import multiprocessing
 import threading
+import random
 from ..plots import plot_live
 
 # Default values for timing parameters
@@ -51,8 +52,12 @@ class Galileo:
     PROMPT = r"?>"
     UI_LAG = 0.3
     # ____Help information
-    with open(os.path.join(os.path.dirname(__file__), "help_info.txt"), "r") as insFile:
-        HELP_INFO = insFile.read()
+    with open(os.path.join(os.path.dirname(__file__), "help_info.txt"), "r") as inpFile:
+        HELP_INFO = inpFile.read()
+    QUESTIONS = []
+    with open(os.path.join(os.path.dirname(__file__), "questions.txt"), "r") as inpFile:
+        for line in inpFile:
+            QUESTIONS.append(line.strip())
       
         
     # flags to be initialised
@@ -96,6 +101,9 @@ class Galileo:
         self.pipeLock = threading.RLock()
         self.bufferLock = threading.RLock()
         self.processLock = multiprocessing.RLock()
+        
+        # Initialise RNG
+        random.seed()
        
        
     def keepMeasuring(self, mainConn, processLock, pipeLock, bufferLock):
@@ -187,7 +195,7 @@ class Galileo:
         
         # User interaction
         while not self.flag_quit:
-            command = input(self.PROMPT).strip().lower()
+            command = input(self.QUESTIONS[random.randrange(len(self.QUESTIONS))] + self.PROMPT).strip().lower()
             if (command == "help") or (command == "h"):
                 print(self.HELP_INFO)
             elif command == "quit":
