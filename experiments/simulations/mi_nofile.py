@@ -18,8 +18,8 @@ PLOT_REFRESH_PERIOD = 0.5     # Interval between plot refreshes
 PLOT_LISTEN_PERIOD = 0.003    # Interval between listening events
 
 XYVARS = [
-            [("n", "X")],
-            [("n", "Y")]
+            [("t", "X")],
+            [("t", "Y")]
          ]      # Names of variable pairs to plot in each sub-plot
             
 
@@ -28,13 +28,14 @@ XYVARS = [
 import importlib
 import time
 import elflab.galileo.galileo as galileo
+import elflab.galileo.experiments_base as experiments_base
 import mi_common as mi
 
     
-class SimMI(galileo.AbstractExperiment):
+class SimMI(experiments_base.AbstractExperiment):
     def __init__(self):
-        self.buffer = mi.initialData.copy()
-        self.dataLabels = mi.dataLabels
+        self.dataPoint = mi.initialData.copy()
+        self.namesAndUnits = mi.dataLabels
         self.n = 0
         time.perf_counter()
         ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
@@ -47,16 +48,16 @@ class SimMI(galileo.AbstractExperiment):
         self.lockin = LockinClass()
         
     def measure(self):
-        self.buffer["n"] += 1
-        self.buffer["t"] = time.perf_counter()
-        (self.buffer["I_therm"], self.buffer["V_therm"], self.buffer["T"]) = self.therm.read()
-        (self.buffer["I_mag"], self.buffer["H"]) = self.magnet.read()
-        (self.buffer["X"], self.buffer["Y"]) = self.lockin.readXY()
+        self.dataPoint["n"] += 1
+        self.dataPoint["t"] = time.perf_counter()
+        (self.dataPoint["I_therm"], self.dataPoint["V_therm"], self.dataPoint["T"]) = self.therm.read()
+        (self.dataPoint["I_mag"], self.dataPoint["H"]) = self.magnet.read()
+        (self.dataPoint["X"], self.dataPoint["Y"]) = self.lockin.readXY()
         
     def log(self):
         pass
    
-    def terminate(self):
+    def finish(self):
         pass
     
 # The main procedure

@@ -24,28 +24,6 @@ DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 # Default sub-plots, defined as pairs of ("x", "y")
 # DEFULT_xyNames = [("t", "n")]
 
-class AbstractExperiment:
-    """Abstract / Base defining an experiment
-    An Experiment class should completely define the quantities to be measure and the measuring procedure.
-    """
-    # minimum variables to be override by initialiser:
-    buffer = None   # = {"name": "value"}
-    dataLabels = None    # = {e.g "H": "$H$ (T / $\mu_0$)"}
-    
-    def __init__(self):
-        raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")
-    
-    def measure(self):  # Trigger a measurement
-        raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
-        
-    def log(self, bufferLock):  # Write the data to storage; bufferLock is a thread-level Lock object (not RLock)
-        raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
-        
-    def terminate(self):   # To be executed when measurements are terminated, for closing files etc
-        raise Exception("!!Galileo ERROR!! Measurement termination not implemented!!!")
-        
-        
-
 class Galileo:
     """The Galileo Measurement Utility"""
     # Default "static constants"
@@ -67,7 +45,7 @@ class Galileo:
     # flag_plotAlive = False
 
     def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
-              # (self, experiment object, XYs for the sub-plots, ...) 
+              # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......\n")
         # set flags
         self.flag_stop = False
@@ -93,20 +71,20 @@ class Galileo:
             for j in range(self.NCOLS):
                 plotLabels[i].append([])
                 for k in (0, 1):
-                    plotLabels[i][j].append(experiment.dataLabels[plotXYs[i][j][k]])
+                    plotLabels[i][j].append(experiment.namesAndUnits[plotXYs[i][j][k]])
         self.plotLabels = plotLabels
         
         # initialize the pipes and locks
         self.plotConn, self.mainConn = multiprocessing.Pipe(duplex=False)
         self.pipeLock = threading.RLock()
-        self.bufferLock = threading.RLock()
+        self.dataLock = threading.RLock()
         self.processLock = multiprocessing.RLock()
         
         # Initialise RNG
         random.seed()
        
        
-    def keepMeasuring(self, mainConn, processLock, pipeLock, bufferLock):
+    def keepMeasuring(self, mainConn, processLock, pipeLock, dataLock):
         # Start and finish a dummy thread
         logThread = threading.Thread(target=None)
         logThread.start()
@@ -120,9 +98,10 @@ class Galileo:
                 for k in (0, 1):
                     xys[i][j].append(0.)        
         
+        # Measure
         while not self.flag_stop:
             if not self.flag_pause:
-                with bufferLock:
+                with dataLock:
                     self.experiment.measure()   # Take a measurement
                 
                 # Wait for any data logging to finish
@@ -138,7 +117,7 @@ class Galileo:
                     for i in range(self.NROWS):
                         for j in range(self.NCOLS):
                             for k in (0, 1):
-                                xys[i][j][k] = self.experiment.buffer[self.plotXYs[i][j][k]]
+                                xys[i][j][k] = self.experiment.dataPoint[self.plotXYs[i][j][k]]
                     with pipeLock:
                         mainConn.send(("data", xys))
                     self.plotStatus["request_data"].clear()
@@ -148,7 +127,7 @@ class Galileo:
                 
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
-        self.experiment.terminate()  # Finish up any loose ends
+        self.experiment.finish()  # Finish up any loose ends
         
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
@@ -179,13 +158,13 @@ class Galileo:
 
         plotProc.start()
         
-        # Wait for the first data requesting signal
+        # Wait for the plotting service to give its first data inquiring signal
         self.plotStatus["request_data"].wait()
         print("    [Galileo:] Live data plotting service has started.\n\n    [Galileo:] Starting measurements......")
 
                     
-        # Start data logging
-        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.bufferLock))
+        # Start Measurements / Logging
+        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.dataLock))
         measureThread.start()
         
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
@@ -193,7 +172,7 @@ class Galileo:
         
         print(self.HELP_INFO)
         
-        # User interaction
+        # User interaction: command parsing etc.
         while not self.flag_quit:
             command = input(self.QUESTIONS[random.randrange(len(self.QUESTIONS))] + self.PROMPT).strip().lower()
             if (command == "help") or (command == "h"):
