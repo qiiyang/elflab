@@ -28,11 +28,21 @@ XYVARS = [
 import importlib
 import time
 import elflab.galileo.galileo as galileo
-import elflab.galileo.experiments_base as experiments_base
+import elflab.galileo.model_experiments as modelexp
 import mi_common as mi
 
+class NullLogger(modelexp.LoggerBase):
+    """A minimal abstraction of data-logging"""
+    def __init__(self):
+        pass
     
-class SimMI(experiments_base.AbstractExperiment):
+    def log(self, dataPoint):  # To write down a data point
+        pass
+        
+    def finish(self):
+        pass
+
+class SimMIMeasurer(modelexp.MeasurerBase):
     def __init__(self):
         self.dataPoint = mi.initialData.copy()
         self.namesAndUnits = mi.dataLabels
@@ -54,14 +64,13 @@ class SimMI(experiments_base.AbstractExperiment):
         (self.dataPoint["I_mag"], self.dataPoint["H"]) = self.magnet.read()
         (self.dataPoint["X"], self.dataPoint["Y"]) = self.lockin.readXY()
         
-    def log(self):
-        pass
-   
     def finish(self):
         pass
     
 # The main procedure
 if __name__ == '__main__':
-    sim = SimMI()
+    measurer = SimMIMeasurer()
+    logger = NullLogger()
+    sim = modelexp.MeasurerAndLogger("MI Simulator (No File)", measurer, logger)
     gali = galileo.Galileo(experiment=sim, measurement_interval=MEASUREMENT_PERIOD, plotXYs=XYVARS)
     gali.start()

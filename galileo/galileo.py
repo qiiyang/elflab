@@ -10,10 +10,9 @@ import threading
 import random
 from ..plots import plot_live
 
-# Default values for timing parameters
-# MEASUREMENT_INTERVAL = 0.001    # interval between single measurements, in s
+# Constants
 
-# Caller can omit plotting timings, by using these default
+# ____Caller can omit plotting timings, by using these default
 DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
 DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 
@@ -46,7 +45,11 @@ class Galileo:
 
     def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
-        print("    [Galileo:] Initialising Galileo......\n")
+        print("""\
+    [Galileo:] Initialising Galileo - starting the following experiment:
+            +----------------------------------------+
+            |{0:^40}|
+            +----------------------------------------+\n""".format(experiment.title))
         # set flags
         self.flag_stop = False
         self.flag_quit = False
@@ -108,7 +111,7 @@ class Galileo:
                 logThread.join()
                 
                 # start another logging thread
-                logThread = threading.Thread(target=self.experiment.log(), name="Galileo:data-logging")
+                logThread = threading.Thread(target=self.experiment.log, name="Galileo:data-logging", kwargs={"dataLock":self.dataLock})
                 logThread.start()
                 
                 # Blow data to the plotting service only if requested

@@ -1,9 +1,11 @@
-class AbstractExperiment:
+class ExperimentBase:
     """A minimal abstraction of an experiment"""
     
     # "Public" Variables
     dataPoint = None   # = {"name": "value"}
     namesAndUnits = None    # = {e.g "H": "$H$ (T / $\mu_0$)"}
+    
+    title = None    # Title of the Experiment
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")
@@ -17,7 +19,7 @@ class AbstractExperiment:
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
 
-class AbstractMeasurer:
+class MeasurerBase:
     """A minimal abstraction of a measurement"""
     dataPoint = None # = {"name": "value"}
     namesAndUnits = None # = {e.g "H": "$H$ (T / $\mu_0$)"}
@@ -30,10 +32,10 @@ class AbstractMeasurer:
         
     def finish(self):
         raise Exception("!!Galileo ERROR!! Measurer finishing not implemented!!!")
-        
+
         
 
-class AbstractLogger:
+class LoggerBase:
     """A minimal abstraction of data-logging"""
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Data-Logger initialisation not implemented!!!")
@@ -46,9 +48,10 @@ class AbstractLogger:
 
 
         
-class MeasurerAndLogger(AbstractExperiment):
+class MeasurerAndLogger(ExperimentBase):
     """An experiment defined by a Measurer object and a Logger object"""
-    def __init__(self, measurer, logger):
+    def __init__(self, title, measurer, logger):
+        self.title = title
         self.measurer = measurer
         self.logger = logger
         self.dataPoint = measurer.dataPoint
@@ -59,7 +62,7 @@ class MeasurerAndLogger(AbstractExperiment):
         
     def log(self, dataLock):
         with dataLock:
-            dataToLog = dataPoint.copy()
+            dataToLog = self.dataPoint.copy()
         self.logger.log(dataToLog)
         
     def finish(self):
