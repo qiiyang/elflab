@@ -64,7 +64,7 @@ class SimMIMeasurer(abstracts.Measurer):
 if __name__ == '__main__':
     
     timeString = time.strftime("%Y%m%d_%H.%M.%S")
-    filename = r"D:\downloads\temp{}.dat".format(timeString)
+    filename = r"D:\downloads\temp{}.csv".format(timeString)
     measurer = SimMIMeasurer()
     logger = csvlogger.Logger(filename, mi.indicesData, mi.dataLabels, mi.formatStrings)
     sim = abstracts.ML_Experiment("MI Simulator - csv logging", measurer, logger)
