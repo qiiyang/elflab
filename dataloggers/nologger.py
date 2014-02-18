@@ -9,7 +9,7 @@ class Logger(abstracts.Logger):
     def start(self):
         pass
     
-    def log(self, dataPoint):  # To write down a data point
+    def log(self, dataToLog):  # To write down a data point
         pass
         
     def finish(self):

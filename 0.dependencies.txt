@@ -2,3 +2,4 @@ Required installations
 
 Python 3.3.4
 SciPy stack 13.10.11
+PyVisa 1.5 dev0

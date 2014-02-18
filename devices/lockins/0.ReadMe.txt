@@ -1,7 +1,0 @@
-Contains classes defining lock-in amplifiers
-
-Available methods:
-
-in class LockinBase:
-	readXY():
-		return (X, Y) in volts

@@ -1,6 +1,7 @@
 """ Simulated Thermometers """
 
-from .therm_base import ThermBase
+from elflab.devices.thermometers.therm_base import ThermBase
+import time
 
 class StepTherm(ThermBase):
     """ A fake thermometer returns stepped increasing temperature and zero I, V """
@@ -10,8 +11,7 @@ class StepTherm(ThermBase):
     
     def read(self):
         self.T += self.step
-        return (0., 0., self.T)
+        t = time.perf_counter()
+        return (t, 0., 0., self.T)
 
-        
-def f():
-    return 0.
+    

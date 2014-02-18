@@ -107,7 +107,9 @@ class Galileo:
                 logThread.join()
                 
                 # start another logging thread
-                logThread = threading.Thread(target=self.experiment.log, name="Galileo:data-logging", kwargs={"dataLock":self.dataLock})
+                with dataLock:
+                    dataToLog = self.experiment.currentValues.copy()
+                logThread = threading.Thread(target=self.experiment.log, name="Galileo:data-logging", kwargs={"dataToLog":dataToLog})
                 logThread.start()
                 
                 # Blow data to the plotting service only if requested
@@ -122,6 +124,7 @@ class Galileo:
                     self.plotStatus["request_data"].clear()
             # Wait if not stopping    
             if not self.flag_stop:
+                self.experiment.control() # Let the control sequence to update equipment settings, etc
                 time.sleep(self.MEASUREMENT_INTERVAL)
                 
         # Now the flag_stop must have been triggered, finishing up

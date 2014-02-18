@@ -30,35 +30,8 @@ import importlib
 from elflab import galileo, abstracts
 from elflab.dataloggers import csvlogger
 import mi_common as mi
+from mi_nofile import SimMIMeasurer
 
-
-class SimMIMeasurer(abstracts.Measurer):
-    def __init__(self):
-        self.currentValues = mi.initialData.copy()
-        self.varTitles = mi.dataLabels
-        self.n = 0
-        time.perf_counter()
-        ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
-        self.therm = ThermClass()
-        
-        MagnetClass = getattr(importlib.import_module(MAGNET[0]), MAGNET[1])
-        self.magnet = MagnetClass()
-        
-        LockinClass = getattr(importlib.import_module(LOCKIN[0]), LOCKIN[1])
-        self.lockin = LockinClass()
-    
-    def start(self):
-        pass
-    
-    def measure(self):
-        self.currentValues["n"] += 1
-        self.currentValues["t"] = time.perf_counter()
-        (self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
-        (self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
-        (self.currentValues["X"], self.currentValues["Y"]) = self.lockin.readXY()
-        
-    def finish(self):
-        pass
     
 # The main procedure
 if __name__ == '__main__':

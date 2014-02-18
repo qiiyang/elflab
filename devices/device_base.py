@@ -1,5 +1,3 @@
 class DeviceBase:
-    def read(self):
-        pass
-        
-        
+    def read():
+        raise Exception("device not implemented.")

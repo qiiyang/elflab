@@ -19,15 +19,18 @@ class ExperimentBase:
     def measure(self):  # Trigger a measurement
         raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
         
-    def log(self, dataLock):  # Write the data to storage; dataLock is a thread-level Lock object
+    def log(self, dataToLog):  # Write the data to storage; dataToLog is the data to log
         raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
+        
+    def control(self):   # Control sequence that is run whenever the data is updated
+        raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
         
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
 
         
 class ML_Experiment(ExperimentBase):
-    """An experiment defined by a Measurer object and a Logger object"""
+    """An experiment defined by a Measurer object and a Logger object, without a control sequence"""
     def __init__(self, title, measurer, logger):
         self.title = title
         self.measurer = measurer
@@ -42,10 +45,11 @@ class ML_Experiment(ExperimentBase):
     def measure(self):
         self.measurer.measure()
         
-    def log(self, dataLock):
-        with dataLock:
-            dataToLog = self.currentValues.copy()
+    def log(self, dataToLog):
         self.logger.log(dataToLog)
+        
+    def control(self):
+        pass
         
     def finish(self):
         self.logger.finish()  

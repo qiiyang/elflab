@@ -50,11 +50,14 @@ class SimMIMeasurer(abstracts.Measurer):
     def measure(self):
         self.currentValues["n"] += 1
         self.currentValues["t"] = time.perf_counter()
-        (self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
-        (self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
+        (t, self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
+        (t, self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
         (self.currentValues["X"], self.currentValues["Y"]) = self.lockin.readXY()
         
     def finish(self):
+        pass
+        
+    def start(self):
         pass
     
 # The main procedure

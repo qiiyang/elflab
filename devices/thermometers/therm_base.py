@@ -1,11 +1,20 @@
 """ Thermometer base """
 
-from ..device_base import DeviceBase
+class ThermBase:
+    # Default read finction, returns (t, I, V, T)
+    def read(self):     
+        raise Exception("thermometer not implemented")
+        
+    # Only returns T
+    def readT(self):
+        (t, I, V, T) = self.read()
+        return T
+        
+    # Interpolate T from the calibration
+    def IVtoT(self, I, V):
+        raise Exception("thermometer not implemented")
+        
+        
 
-class ThermBase(DeviceBase):
-    """ returns 0. as I, V, T """
-    
-    def read(self):
-        return (0., 0., 0.)
 
         

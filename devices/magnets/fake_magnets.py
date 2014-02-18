@@ -1,6 +1,7 @@
 """ Simulated Thermometers """
 
 from .magnet_base import MagnetBase
+import time
 
 class StepMagnet(MagnetBase):
     """ A fake magnet returns stepped increasing H and zero I, V """
@@ -10,6 +11,6 @@ class StepMagnet(MagnetBase):
     
     def read(self):
         self.H += self.step
-        return (0., self.H)
+        return (time.perf_counter(), 0., self.H)
 
         
