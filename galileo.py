@@ -45,11 +45,7 @@ class Galileo:
 
     def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
-        print("""\
-    [Galileo:] Initialising Galileo - starting the following experiment:
-            +----------------------------------------+
-            |{0:^40}|
-            +----------------------------------------+\n""".format(experiment.title))
+        print("    [Galileo:] Initialising Galileo......")
         # set flags
         self.flag_stop = False
         self.flag_quit = False
@@ -163,10 +159,17 @@ class Galileo:
         
         # Wait for the plotting service to give its first data inquiring signal
         self.plotStatus["request_data"].wait()
-        print("    [Galileo:] Live data plotting service has started.\n\n    [Galileo:] Starting measurements......")
-
-                    
-        # Start Measurements / Logging
+        print("    [Galileo:] Live data plotting service has started.\n")
+        
+                # start the experiment
+        print("""\
+        starting the following experiment:
+            +----------------------------------------+
+            |{0:^40}|
+            +----------------------------------------+\n""".format(self.experiment.title))
+            
+        self.experiment.start()
+        
         measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.dataLock))
         measureThread.start()
         

@@ -59,3 +59,18 @@ initialData = { "n": 0,     # data point index
                 "V_therm": 0.,   # thermometer voltage
                 "I_mag": 0.     # magnet current
                 }
+                
+                
+formatStrings = { "n": "{:d}",     # data point index
+                "t": "{:f}",     # time stamp in s
+                "T": "{:.10e}",     # temperature in K
+                "H": "{:.10e}",     # magnetic field in T
+                "f": "{:.10e}",     # Frequency in Hz
+                "X": "{:.10e}",     # lock-in X in V
+                "dX": "{:.10e}",    # error of X in V
+                "Y": "{:.10e}",     # lock-in Y in V
+                "dX": "{:.10e}",    # error of Y in V
+                "I_therm": "{:.10e}",   # thermometer current
+                "V_therm": "{:.10e}",   # thermometer voltage
+                "I_mag": "{:.10e}"     # magnet current
+                }

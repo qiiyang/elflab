@@ -12,6 +12,9 @@ class ExperimentBase:
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")
+        
+    def start(self):    # Start the experiment
+        raise Exception("!!Galileo ERROR!! Experiment start() not implemented!!!")
     
     def measure(self):  # Trigger a measurement
         raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
@@ -32,6 +35,10 @@ class ML_Experiment(ExperimentBase):
         self.currentValues = measurer.currentValues
         self.varTitles = measurer.varTitles
         
+    def start(self):
+        self.measurer.start()
+        self.logger.start()
+        
     def measure(self):
         self.measurer.measure()
         
@@ -41,8 +48,8 @@ class ML_Experiment(ExperimentBase):
         self.logger.log(dataToLog)
         
     def finish(self):
-        self.measurer.finish()
-        self.logger.finish()        
+        self.logger.finish()  
+        self.measurer.finish()      
         
         
 class Measurer:
@@ -52,6 +59,9 @@ class Measurer:
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Measurer initialisation not implemented!!!")
+        
+    def start(self):
+        raise Exception("!!Galileo ERROR!! Measurer start() not implemented!!!")
     
     def measure(self):  # Trigger a measurement
         raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
@@ -65,8 +75,11 @@ class Logger:
     """A minimal abstraction of data-logging"""
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Data-Logger initialisation not implemented!!!")
+        
+    def start(self):
+        raise Exception("!!Galileo ERROR!! Logger start() not implemented!!!")
     
-    def log(self, dataPoint):  # To write down a data point
+    def log(self, dataToLog):  # To write down a data point
         raise Exception("!!Galileo ERROR!! Data-Logging method not implemented!!!")
         
     def finish(self):

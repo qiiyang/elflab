@@ -25,16 +25,17 @@ XYVARS = [
 
     
 # Import other modules
-import importlib
 import time
-import elflab.galileo.galileo as galileo
+import importlib
+from elflab import galileo, abstracts
+from elflab.dataloggers import csvlogger
 import mi_common as mi
 
-    
-class SimMI(galileo.AbstractExperiment):
+
+class SimMIMeasurer(abstracts.Measurer):
     def __init__(self):
-        self.buffer = mi.initialData.copy()
-        self.dataLabels = mi.dataLabels
+        self.currentValues = mi.initialData.copy()
+        self.varTitles = mi.dataLabels
         self.n = 0
         time.perf_counter()
         ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
@@ -45,22 +46,27 @@ class SimMI(galileo.AbstractExperiment):
         
         LockinClass = getattr(importlib.import_module(LOCKIN[0]), LOCKIN[1])
         self.lockin = LockinClass()
-        
-    def measure(self):
-        self.buffer["n"] += 1
-        self.buffer["t"] = time.perf_counter()
-        (self.buffer["I_therm"], self.buffer["V_therm"], self.buffer["T"]) = self.therm.read()
-        (self.buffer["I_mag"], self.buffer["H"]) = self.magnet.read()
-        (self.buffer["X"], self.buffer["Y"]) = self.lockin.readXY()
-        
-    def log(self):
+    
+    def start(self):
         pass
-   
-    def terminate(self):
+    
+    def measure(self):
+        self.currentValues["n"] += 1
+        self.currentValues["t"] = time.perf_counter()
+        (self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
+        (self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
+        (self.currentValues["X"], self.currentValues["Y"]) = self.lockin.readXY()
+        
+    def finish(self):
         pass
     
 # The main procedure
 if __name__ == '__main__':
-    sim = SimMI()
+    
+    timeString = time.strftime("%Y%m%d_%H.%M.%S")
+    filename = r"D:\downloads\temp{}.dat".format(timeString)
+    measurer = SimMIMeasurer()
+    logger = csvlogger.Logger(filename, mi.indicesData, mi.dataLabels, mi.formatStrings)
+    sim = abstracts.ML_Experiment("MI Simulator - csv logging", measurer, logger)
     gali = galileo.Galileo(experiment=sim, measurement_interval=MEASUREMENT_PERIOD, plotXYs=XYVARS)
     gali.start()
