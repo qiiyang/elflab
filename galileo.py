@@ -55,9 +55,9 @@ class Galileo:
         self.experiment = experiment
         
         # ____the timing "constants", all in seconds
-        self.MEASUREMENT_INTERVAL = measurement_interval
-        self.PLOT_REFRESH_INTERVAL = plot_refresh_interval
-        self.PLOT_LISTEN_INTERVAL = plot_listen_interval
+        self.measurement_interval = measurement_interval
+        self.plot_refresh_interval = plot_refresh_interval
+        self.plot_listen_interval = plot_listen_interval
         
         # Save and calculate plotting informations
         self.NROWS = len(plotXYs)
@@ -88,7 +88,7 @@ class Galileo:
         logThread = threading.Thread(target=None)
         logThread.start()
         
-        # Initialize plotting flow
+        # Initialize plotting data
         xys = []        # the container to blow to the plotting service
         for i in range(self.NROWS):
             xys.append([])
@@ -125,7 +125,7 @@ class Galileo:
             # Wait if not stopping    
             if not self.flag_stop:
                 self.experiment.control() # Let the control sequence to update equipment settings, etc
-                time.sleep(self.MEASUREMENT_INTERVAL)
+                time.sleep(self.measurement_interval)
                 
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
@@ -134,10 +134,107 @@ class Galileo:
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
         pl.start()         
+    
+    def help(self):
+        print(self.HELP_INFO)
+        self.prompt()
+    
+    def pause(self):
+        if self.flag_stop:
+            print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot pause!")
+        else:
+            self.flag_pause = True
+            print("    [Galileo:] Measurements are paused. Enter \"resume\" to resume.")
+        self.prompt()
+            
+    def resume(self):
+        if self.flag_stop:
+            print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot resume!")
+        else:
+            self.flag_pause = False
+            print("    [Galileo:] Measurements have been resumes.")
+        self.prompt()
+            
+    def stop(self):
+        if self.flag_stop:
+            print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot stop again!")
+        else:
+            print("    [Galileo:] Terminating measurements......")
+            self.flag_stop=True
+            self.measureThread.join()
+            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
+        self.prompt()
+    
+    def quit(self):
+        if not self.flag_stop:
+            print("    [Galileo:] Terminating measurements......")
+            self.flag_stop = True
+            self.measureThread.join()
+            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
+        print("    [Galileo:] Terminating data plotting......")
+        with self.pipeLock:
+            self.flag_quit = True
+            self.mainConn.send(("quit", []))
+        self.plotProc.join()
+        print("    [Galileo:] Live plotting service is terminated.\n")
+        self.prompt()
+        
+    def plot(self):
+        if self.plotStatus["plot_shown"].is_set():
+            print("    [Galileo:] WARNING: A plot window should had already been open. Command ignored.")
+        else:
+            self.plotStatus["command_done"].clear()
+            print("    [Galileo:] Waiting for a plot window to open......")
+            with self.pipeLock:
+                self.mainConn.send(("replot",[]))
+            self.plotStatus["plot_shown"].wait()
+            time.sleep(self.UI_LAG)
+            print("    [Galileo:] A plot window should have opened.\n")
+        self.prompt()
+            
+    def autoscaleOn(self):
+        self.plotStatus["command_done"].clear()
+        print("    [Galileo:] Turning auto-scale on......")
+        with self.pipeLock:
+            self.mainConn.send(("autoscale_on",[]))
+        self.plotStatus["command_done"].wait()
+        time.sleep(self.UI_LAG)
+        print("    [Galileo:] Auto-scale is on.\n")
+        self.prompt()
+        
+    def autoscaleOff(self):    
+        self.plotStatus["command_done"].clear()
+        print("    [Galileo:] Turning auto-scale off......")
+        with self.pipeLock:
+            self.mainConn.send(("autoscale_off",[]))
+        self.plotStatus["command_done"].wait()
+        time.sleep(self.UI_LAG)
+        print("    [Galileo:] Auto-scale is off.\n")
+        self.prompt()
+        
+    def clearPlot(self):
+        self.plotStatus["command_done"].clear()
+        print("    [Galileo:] Clearing plotting buffer......")
+        with self.pipeLock:
+            self.mainConn.send(("clear",[]))
+        self.plotStatus["command_done"].wait()
+        time.sleep(self.UI_LAG)
+        print("    [Galileo:] Done.\n")
+        self.prompt()
+    
+    def wrongCommand(self, command):
+        print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
+        self.prompt()
+    
+    def prompt(self):
+        print("{0}{1}".format(self.QUESTIONS[random.randrange(len(self.QUESTIONS))], self.PROMPT), end="")
+
+
         
     def start(self):
         # Start the plotting service
         print("    [Galileo:] Starting the live data plotting service......")
+        
         # Initialize the plot status indicators and send through the pipe
         self.plotStatus = {"plot_shown": multiprocessing.Event(),
                            "command_done": multiprocessing.Event(),
@@ -147,18 +244,18 @@ class Galileo:
         self.plotStatus["command_done"].clear()
         self.plotStatus["request_data"].clear()
         
-        plotProc = multiprocessing.Process(target=self.plottingProc, name="Galileo: Data plotting",
+        self.plotProc = multiprocessing.Process(target=self.plottingProc, name="Galileo: Data plotting",
                                            kwargs={"status": self.plotStatus,
                                                    "plotConn": self.plotConn,
                                                    "processLock": self.processLock,
                                                    "xyVars": self.plotXYs,
                                                    "xyLabels": self.plotLabels,
-                                                   "refreshInterval": self.PLOT_REFRESH_INTERVAL,
-                                                   "listenInterval": self.PLOT_LISTEN_INTERVAL
+                                                   "refreshInterval": self.plot_refresh_interval,
+                                                   "listenInterval": self.plot_listen_interval,
                                                    }
                                            )
 
-        plotProc.start()
+        self.plotProc.start()
         
         # Wait for the plotting service to give its first data inquiring signal
         self.plotStatus["request_data"].wait()
@@ -173,86 +270,34 @@ class Galileo:
             
         self.experiment.start()
         
-        measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.dataLock))
-        measureThread.start()
+        self.measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.dataLock))
+        self.measureThread.start()
         
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
         self.plotStatus["plot_shown"].wait()
         
-        print(self.HELP_INFO)
-        
+        # Map commands to methods
+        valid_commands = {
+                    "help": self.help, "h": self.help,
+                    "pause": self.pause, "p": self.pause,
+                    "resume": self.resume, "r": self.resume,
+                    "stop": self.stop,
+                    "quit": self.quit,
+                    "plot": self.plot,
+                    "autoscale on": self.autoscaleOn, "+a": self.autoscaleOn,
+                    "autoscale off": self.autoscaleOff, "-a": self.autoscaleOff,
+                    "clear plot": self.clearPlot,
+                    "": self.prompt
+                    }
+        # Print help infomation
+        self.help()
         # User interaction: command parsing etc.
         while not self.flag_quit:
-            command = input(self.QUESTIONS[random.randrange(len(self.QUESTIONS))] + self.PROMPT).strip().lower()
-            if (command == "help") or (command == "h"):
-                print(self.HELP_INFO)
-            elif command == "quit":
-                if not self.flag_stop:
-                    print("    [Galileo:] Terminating measurements......")
-                    self.flag_stop = True
-                    measureThread.join()
-                    print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
-                print("    [Galileo:] Terminating data plotting......")
-                with self.pipeLock:
-                    self.flag_quit = True
-                    self.mainConn.send(("quit", []))
-                plotProc.join()
-                print("    [Galileo:] Live plotting service is terminated.\n")
-            elif (command == "pause") or (command == "p"):
-                if self.flag_stop:
-                    print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot pause!")
-                else:
-                    self.flag_pause = True
-                    print("    [Galileo:] Measurements are paused. Enter \"resume\" to resume.")
-            elif (command == "resume") or (command == "r"):
-                if self.flag_stop:
-                    print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot resume!")
-                else:
-                    self.flag_pause = False
-                    print("    [Galileo:] Measurements have been resumes.")
-            elif command == "stop":
-                if self.flag_stop:
-                    print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot stop again!")
-                else:
-                    print("    [Galileo:] Terminating measurements......")
-                    self.flag_stop=True
-                    measureThread.join()
-                    print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
-            elif command == "plot":
-                if self.plotStatus["plot_shown"].is_set():
-                    print("    [Galileo:] WARNING: A plot window should had already been open. Command ignored.")
-                else:
-                    self.plotStatus["command_done"].clear()
-                    print("    [Galileo:] Waiting for a plot window to open......")
-                    with self.pipeLock:
-                        self.mainConn.send(("replot",[]))
-                    self.plotStatus["plot_shown"].wait()
-                    time.sleep(self.UI_LAG)
-                    print("    [Galileo:] A plot window should have opened.\n")
-            elif (command == "autoscale on") or (command == "+a"):
-                self.plotStatus["command_done"].clear()
-                print("    [Galileo:] Turning auto-scale on......")
-                with self.pipeLock:
-                    self.mainConn.send(("autoscale_on",[]))
-                self.plotStatus["command_done"].wait()
-                time.sleep(self.UI_LAG)
-                print("    [Galileo:] Auto-scale is on.\n")
-            elif (command == "autoscale off") or (command == "-a"):
-                self.plotStatus["command_done"].clear()
-                print("    [Galileo:] Turning auto-scale off......")
-                with self.pipeLock:
-                    self.mainConn.send(("autoscale_off",[]))
-                self.plotStatus["command_done"].wait()
-                time.sleep(self.UI_LAG)
-                print("    [Galileo:] Auto-scale is off.\n")
-            elif command == "clear plot":
-                self.plotStatus["command_done"].clear()
-                print("    [Galileo:] Clearing plotting buffer......")
-                with self.pipeLock:
-                    self.mainConn.send(("clear",[]))
-                self.plotStatus["command_done"].wait()
-                time.sleep(self.UI_LAG)
-                print("    [Galileo:] Done.\n")
-            elif not (command == ''):
-                print("    [Galileo:] WARNING: Unrecognised command: \"{}\".\n".format(command))
+            command = input().strip().lower()
+            if command in valid_commands:
+                valid_commands[command]()
+            else:
+                self.wrongCommand(command)
+        
+        
         print("    [Galileo:] I quit, yet it moves.\n")
