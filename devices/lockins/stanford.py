@@ -27,6 +27,7 @@ class SR830(LockinBase):
         idn = str(self.gpib.ask("*idn?".encode("ASCII")), encoding="ASCII")
         if not ("SR830" in idn):
             raise Exception("SR830 lock-in amplifier idn string does not match")
+        self.gpib.write("*CLS?".encode("ASCII"))
         print("        SR830 lock-in amplifier, GPIB={:n}.".format(self.address))        
         self.connected = True
     
@@ -40,11 +41,20 @@ class SR830(LockinBase):
         sens = self.sensList[i]
         overloaded = int(self.gpib.ask("LIAS?".encode("ASCII"))) % 8
         
-        if (i < 26) and (overloaded or (R / sens > self.highSens)):
+        if (i < 26) and (overloaded or (abs(R) / sens > self.highSens)):
             self.gpib.write("sens {:n}".format(i+1).encode("ASCII"))
-        elif (i > 0) and (overloaded or (R / sens < self.lowSens)):
+        elif (i > 0) and (overloaded or (abs(R) / sens < self.lowSens)):
             self.gpib.write("sens {:n}".format(i-1).encode("ASCII"))
-            
+    
+    def setf(self, f):
+        self.gpib.write("FREQ {.4f}".format(f).encode("ASCII"))
+        fnew = float(self.gpib.ask("FREQ?".encode("ASCII")))
+        
+        if (abs(fnew - f) / f <= 1.e-4) or (abs(fnew - f) <= 0.0001):
+            return True
+        else:
+            return False
+    
     def read(self):     # return (t, X, Y, R, theta, f, Vout)
         snap = str(self.gpib.ask("SNAP?1,2,3,4,9".encode("ASCII")), encoding="ASCII")
         t = time.perf_counter()

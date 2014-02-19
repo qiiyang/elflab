@@ -20,7 +20,7 @@ Thermometer Current = 10uA
 
 TITLE = "MI RT test"
 save_path = r"D:\Dropbox\work\MI_data"
-filename = r"EuS11"
+filename = r"EuS11_Tscan"
 
 THERMOMETER_CALI = r"D:\Dropbox\codes\elflab\devices\thermometers\calibrations\qi_dt01_raw.csv"
 
