@@ -22,7 +22,7 @@ class ExperimentBase:
     def log(self, dataToLog):  # Write the data to storage; dataToLog is the data to log
         raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
         
-    def control(self):   # Control sequence that is run whenever the data is updated
+    def sequence(self):   # a python generator serves as a control sequence, called before each measurements
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
         
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
@@ -48,8 +48,10 @@ class ML_Experiment(ExperimentBase):
     def log(self, dataToLog):
         self.logger.log(dataToLog)
         
-    def control(self):
-        pass
+    # No control
+    def sequence(self):
+        while True:
+            yield True
         
     def finish(self):
         self.logger.finish()  

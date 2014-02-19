@@ -98,8 +98,8 @@ class Galileo:
                     xys[i][j].append(0.)        
         
         # Measure
-        while not self.flag_stop:
-            if not self.flag_pause:
+        for token in self.experiment.sequence():
+            if not self.flag_stop:
                 with dataLock:
                     self.experiment.measure()   # Take a measurement
                 
@@ -122,14 +122,22 @@ class Galileo:
                     with pipeLock:
                         mainConn.send(("data", xys))
                     self.plotStatus["request_data"].clear()
-            # Wait if not stopping    
-            if not self.flag_stop:
-                self.experiment.control() # Let the control sequence to update equipment settings, etc
+            # Pause if asked to
+            while self.flag_pause and not self.flag_stop:
+                time.sleep(self.measurement_interval)
+            # Check whether to stop now.
+            if self.flag_stop:
+                break
+            else:
                 time.sleep(self.measurement_interval)
                 
         # Now the flag_stop must have been triggered, finishing up
         logThread.join()
         self.experiment.finish()  # Finish up any loose ends
+        # Print messages
+        print("\n    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
+        self.prompt()
+        
         
     def plottingProc(self, *args, **kwargs):
         pl = plot_live.PlotLive(*args, **kwargs)
@@ -158,26 +166,23 @@ class Galileo:
     def stop(self):
         if self.flag_stop:
             print("    [Galileo:] WARNING: Measurements have already been permanently terminated, cannot stop again!")
+            self.prompt()
         else:
             print("    [Galileo:] Terminating measurements......")
             self.flag_stop=True
             self.measureThread.join()
-            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
-        self.prompt()
     
     def quit(self):
         if not self.flag_stop:
             print("    [Galileo:] Terminating measurements......")
             self.flag_stop = True
             self.measureThread.join()
-            print("    [Galileo:] Measurements have been terminated. Enter \"quit\" to quit Galileo.\n")
         print("    [Galileo:] Terminating data plotting......")
         with self.pipeLock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))
         self.plotProc.join()
         print("    [Galileo:] Live plotting service is terminated.\n")
-        self.prompt()
         
     def plot(self):
         if self.plotStatus["plot_shown"].is_set():
