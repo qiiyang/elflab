@@ -177,7 +177,7 @@ class Galileo:
             print("    [Galileo:] Terminating measurements......")
             self.flag_stop = True
             self.measureThread.join()
-        print("    [Galileo:] Terminating data plotting......")
+        print("\n    [Galileo:] Terminating data plotting......")
         with self.pipeLock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))

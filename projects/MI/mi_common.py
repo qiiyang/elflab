@@ -1,13 +1,16 @@
 """ Common definitions / whatever shared for all MI-probe related scripts
 """
+import time
+import elflab.abstracts as abstracts
+import elflab.dataloggers.csvlogger as csvlogger
 
 # Conversion between data names and indices and labels etc.
 
-var_list = ["n", "t", "T", "H", "X", "Y", "t_therm", "t_magnet", "t_lockin", "I_therm", "V_therm", "I_mag", "f", "V_in"]
+VAR_LIST = ["n", "t", "T", "H", "X", "Y", "t_therm", "t_magnet", "t_lockin", "I_therm", "V_therm", "I_mag", "f", "V_in"]
 
 # Everything in SI
 
-var_desc = {
+VAR_DESC = {
             "n": "no. of data points",
             "t": "timestamp, absolute, in s",
             "T": "temperature / K",
@@ -24,7 +27,7 @@ var_desc = {
             "V_in": "input voltage"
             }
             
-var_titles = {
+VAR_TITLES = {
             "n": "n",
             "t": "t / s",
             "T": "T / K",
@@ -41,7 +44,7 @@ var_titles = {
             "V_in": "V_in / V"
             }
             
-var_formats = {
+VAR_FORMATS = {
             "n": "{:n}",
             "t": "{:.8f}",
             "T": "{:.10e}",
@@ -58,7 +61,7 @@ var_formats = {
             "V_in": "{:.10e}",
             }
             
-var_init = {
+VAR_INIT = {
             "n": 0,
             "t": 0.,
             "T": 0.,
@@ -74,5 +77,55 @@ var_init = {
             "f": 0.,
             "V_in": 0.,
             }
-            
-            
+                 
+
+SENS_RANGE = (0.1, 0.8)
+                 
+class MI_JustMeasure(abstracts.ExperimentBase):
+    title = "Mutual Inductance: keep measuring"
+    def __init__(self, thermometer, magnet, lockin, logfilename):
+        # Save parameters
+        self.thermometer = thermometer
+        self.magnet = magnet
+        self.lockin = lockin
+        
+        # Initialise variables
+        self.currentValues = VAR_INIT.copy()
+        self.varTitles = VAR_TITLES.copy()
+        
+        # create a csv logger
+        self.logger = csvlogger.Logger(logfilename, VAR_LIST, VAR_TITLES, VAR_FORMATS)
+        
+    
+    def start(self):
+        # Connect to instruments
+        self.thermometer.connect()
+        self.lockin.connect()
+        self.lockin.setAutoSens(*SENS_RANGE)
+        # Reset counter and timer
+        self.n = 0
+        self.t0 = time.time()
+        time.perf_counter()
+        # Start the csv logger
+        self.logger.start()
+        
+    def measure(self):
+        self.currentValues["n"] += 1
+        self.currentValues["t"] = self.t0 + time.perf_counter()
+        (self.currentValues["t_therm"], self.currentValues["T"], self.currentValues["I_therm"], self.currentValues["V_therm"]) = self.thermometer.read()
+        (self.currentValues["t_mag"], self.currentValues["H"], self.currentValues["I_mag"]) = self.magnet.read()
+        (self.currentValues["t_lockin"], self.currentValues["X"], self.currentValues["Y"], R, theta, self.currentValues["f"], self.currentValues["V_in"]) = self.lockin.read()
+        
+    def log(self, dataToLog):
+        self.logger.log(dataToLog)
+        
+    # A perpetual sequence
+    def sequence(self):
+        while True:
+            yield True
+        
+    def finish(self):
+        self.logger.finish()
+        del self.thermometer
+        del self.magnet
+        del self.lockin

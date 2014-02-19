@@ -23,11 +23,42 @@ class ExperimentBase:
         raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
         
     def sequence(self):   # a python generator serves as a control sequence, called before each measurements
-        raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
+        raise Exception("!!Galileo ERROR!! Experiment control sequence not implemented!!!")
         
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
 
+class ExperimentWithLogger(ExperimentBase):
+    """An experiment with a pre-defined Logger object"""
+    def __init__(self, logger):
+        self.logger = logger
+        
+    def start(self):
+        self.logger.start()
+        
+    def measure(self):  # Trigger a measurement
+        raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
+        
+    def log(self, dataToLog):
+        self.logger.log(dataToLog)
+        
+    def sequence(self):   # a python generator serves as a control sequence, called before each measurements
+        raise Exception("!!Galileo ERROR!! Experiment control sequence not implemented!!!")
+        
+    def finish(self):
+        self.logger.finish()
+
+    
+
+        
+    def log(self, dataToLog):  # Write the data to storage; dataToLog is the data to log
+        raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
+        
+    def sequence(self):   # a python generator serves as a control sequence, called before each measurements
+        raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")
+        
+    def finish(self):   # To be executed when measurements are terminated, for closing files etc
+        raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")        
         
 class ML_Experiment(ExperimentBase):
     """An experiment defined by a Measurer object and a Logger object, without a control sequence"""
