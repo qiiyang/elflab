@@ -6,29 +6,26 @@ sample: EuS11 / Al2O3(0001)
 Lock-In: SR830
 Pre-amplifier: SR554 buffer on
 
-time constant = 30ms
+time constant = 10ms
 filter = 24db
 normal reserve
 
 Couple: AC
 ground: ground
 
-expansion: Y: 10x
+expansion: none
 
 phase = 0
-f=102kHz
-sine-out = 1.04V
+sine-out = 5V
 Resistor in series: 10.4kOhms
-=> I_in ~ 10uA
+=> I_in ~ 481uA
 
 Thermometer: Lakeshore Si-Diode
 Thermometer Current = 10uA
-
-Grounded lockin, dewar and preamp together to AC earth
 """
 
 save_path = r"D:\Dropbox\work\MI_data"
-filename = r"EuS11_Tscan_102kHz_warming"
+filename = r"EuS11_fscan_8K"
 
 THERMOMETER_CALI = r"D:\Dropbox\codes\elflab\devices\thermometers\calibrations\qi_dt01_raw.csv"
 
@@ -36,9 +33,14 @@ SAMPLING_INTERVAL = 0.05
 PLOT_LISTEN = 0.01
 PLOT_REFRESH = 1.0
 
+# Frequency scan parameters
+F_MIN = 10e3
+F_MAX = 102e3
+F_STEP = 0.1e3
+
 PLOT_VARS = [
-            [("T", "X"), ("t", "T")],
-            [("T", "Y"), ("t", "n")]
+            [("f", "X"), ("f", "T")],
+            [("f", "Y"), ("t", "f")]
             ]
 
 from elflab.devices.dmms import keithley
@@ -53,9 +55,24 @@ from elflab.dataloggers import csvlogger
 import mi_common as mi
 
 
-class MI_Tscan(mi.MI_JustMeasure):
-    title = "Mutual Inductance: Measuring against T"
-
+class MI_fscan(mi.MI_JustMeasure):
+    title = "Mutual Inductance: Scaning over f"
+    
+    def __init__(self, thermometer, magnet, lockin, logfilename, f_min, f_max, f_step):
+        self.f_min = f_min
+        self.f_max = f_max
+        self.f_step = f_step
+        super(MI_fscan, self).__init__(thermometer, magnet, lockin, logfilename)
+    
+    def sequence(self):
+        while True:
+            f = self.f_min
+            while f <= self.f_max:
+                yield self.lockin.setf(f)
+                f += self.f_step
+            while f >= self.f_min:
+                yield self.lockin.setf(f)
+                f -= self.f_step
         
 # The main procedure
 if __name__ == '__main__':        
@@ -71,7 +88,7 @@ if __name__ == '__main__':
     
     magnet = fake_magnets.ConstMagnet()
     
-    experiment = MI_Tscan(thermometer, magnet, lockin, logfilename)
+    experiment = MI_fscan(thermometer, magnet, lockin, logfilename, F_MIN, F_MAX, F_STEP)
     
     with open(notesfilename, "w") as notesfile:
         notesfile.write("experiment: \"{}\"\n".format(experiment.title))

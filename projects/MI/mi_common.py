@@ -6,7 +6,7 @@ import elflab.dataloggers.csvlogger as csvlogger
 
 # Conversion between data names and indices and labels etc.
 
-VAR_LIST = ["n", "t", "T", "H", "X", "Y", "t_therm", "t_magnet", "t_lockin", "I_therm", "V_therm", "I_mag", "f", "V_in"]
+VAR_LIST = ["n", "t", "T", "H", "X", "Y", "t_therm", "t_magnet", "t_lockin", "I_therm", "V_therm", "I_mag", "f", "V_in", "R", "theta"]
 
 # Everything in SI
 
@@ -24,7 +24,9 @@ VAR_DESC = {
             "V_therm": "thermometer voltage",
             "I_mag": "magnet current",
             "f": "lock-in frequency",
-            "V_in": "input voltage"
+            "V_in": "input voltage",
+            "R": "R on the lock-in",
+            "theta": "theta on the lock-in"
             }
             
 VAR_TITLES = {
@@ -41,7 +43,9 @@ VAR_TITLES = {
             "V_therm": "V_therm / V",
             "I_mag": "I_mag / A",
             "f": "f / Hz",
-            "V_in": "V_in / V"
+            "V_in": "V_in / V",
+            "R": "R / V",
+            "theta": "theta / degree"
             }
             
 VAR_FORMATS = {
@@ -59,6 +63,8 @@ VAR_FORMATS = {
             "I_mag": "{:.10e}",
             "f": "{:.10e}",
             "V_in": "{:.10e}",
+            "R": "{:.10e}",
+            "theta": "{:.2f}"
             }
             
 VAR_INIT = {
@@ -76,10 +82,12 @@ VAR_INIT = {
             "I_mag": 0.,
             "f": 0.,
             "V_in": 0.,
+            "R": 0.,
+            "theta": 0.
             }
                  
 
-SENS_RANGE = (0.1, 0.8)
+SENS_RANGE = (0.2, 0.8)
                  
 class MI_JustMeasure(abstracts.ExperimentBase):
     title = "Mutual Inductance: keep measuring"
@@ -114,7 +122,7 @@ class MI_JustMeasure(abstracts.ExperimentBase):
         self.currentValues["t"] = self.t0 + time.perf_counter()
         (self.currentValues["t_therm"], self.currentValues["T"], self.currentValues["I_therm"], self.currentValues["V_therm"]) = self.thermometer.read()
         (self.currentValues["t_mag"], self.currentValues["H"], self.currentValues["I_mag"]) = self.magnet.read()
-        (self.currentValues["t_lockin"], self.currentValues["X"], self.currentValues["Y"], R, theta, self.currentValues["f"], self.currentValues["V_in"]) = self.lockin.read()
+        (self.currentValues["t_lockin"], self.currentValues["X"], self.currentValues["Y"], self.currentValues["R"], self.currentValues["theta"], self.currentValues["f"], self.currentValues["V_in"]) = self.lockin.read()
         
     def log(self, dataToLog):
         self.logger.log(dataToLog)

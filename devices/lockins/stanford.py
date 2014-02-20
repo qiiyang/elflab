@@ -47,7 +47,7 @@ class SR830(LockinBase):
             self.gpib.write("sens {:n}".format(i-1).encode("ASCII"))
     
     def setf(self, f):
-        self.gpib.write("FREQ {.4f}".format(f).encode("ASCII"))
+        self.gpib.write("FREQ {:.4f}".format(f).encode("ASCII"))
         fnew = float(self.gpib.ask("FREQ?".encode("ASCII")))
         
         if (abs(fnew - f) / f <= 1.e-4) or (abs(fnew - f) <= 0.0001):
