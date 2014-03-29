@@ -1,6 +1,6 @@
-"""Defines a series of conceptual classes for the galileo utility"""
+"""Defines a series of conceptual classes"""
 
-
+# classes to define experiments taken with Galileo Utility
 class ExperimentBase:
     """A minimal abstraction of an experiment"""
     
@@ -105,9 +105,8 @@ class Measurer:
         
     def finish(self):
         raise Exception("!!Galileo ERROR!! Measurer finishing not implemented!!!")
-        
-  
 
+        
 class Logger:
     """A minimal abstraction of data-logging"""
     def __init__(self):
@@ -121,3 +120,8 @@ class Logger:
         
     def finish(self):
         raise Exception("!!Galileo ERROR!! Data-Logging finishing not implemented!!!")
+
+# classes for data sets
+class DataSet(dict):
+    """base class for a dataset"""
+    pass

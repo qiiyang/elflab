@@ -2,6 +2,7 @@ All "public" classes should be available at package levels.
 
 .    # This folder: ElfLab root folder
 
+	.\constants.py		# Mathematical and Physical constants
     .\galileo.py		# class Galileo, the Galileo measurement utility
 	.\abstracts.py		# Abstractly define how the following classes should be implemented
     
@@ -14,3 +15,5 @@ All "public" classes should be available at package levels.
 	
 	.\dataloggers		# Various modules for logging data
 	
+    .\analysis          # Data analysis related
+        .\analysis\transport.py     # calculations on transport results

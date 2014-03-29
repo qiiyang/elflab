@@ -17,7 +17,7 @@ expansion:
 
 phase = 0
 f=13.594kHz
-sine-out = 1.04V
+sine-out = 2.08V
 Resistor in series: 10.4kOhms
 => I_in ~ 100uA
 
@@ -27,8 +27,8 @@ Thermometer Current = 10uA
 Grounded lockin, dewar and preamp together to AC earth
 """
 
-save_path = r"D:\Dropbox\work\MI_data"
-filename = r"MgB2_Tscan_13.6kHz_warming"
+save_path = r"D:\Dropbox\work\2014, MI\data"
+filename = r"YBCO_Tscan_13.6kHz_no_preamp_cooling"
 
 THERMOMETER_CALI = r"D:\Dropbox\codes\elflab\devices\thermometers\calibrations\qi_dt01_raw.csv"
 

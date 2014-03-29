@@ -29,7 +29,7 @@ F_MIN = 5e3
 F_MAX = 102e3
 F_STEP = 0.1e3
 
-save_path = r"D:\Dropbox\work\MI_data"
+save_path = r"D:\Dropbox\work\2014, MI\data"
 filename = r"MgB2_fscan_13K_nopreamp"
 
 THERMOMETER_CALI = r"D:\Dropbox\codes\elflab\devices\thermometers\calibrations\qi_dt01_raw.csv"
