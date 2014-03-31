@@ -122,6 +122,14 @@ class Logger:
         raise Exception("!!Galileo ERROR!! Data-Logging finishing not implemented!!!")
 
 # classes for data sets
-class DataSet(dict):
-    """base class for a dataset"""
-    pass
+class DataSetBase(dict):
+    """base class for a dataset, defined as {"key": 1D numpy_array} """
+    sorted_views = None
+    def empty(self):
+        raise Exception("DataSet class not implemented!!!")
+    def duplicate(self):
+        raise Exception("DataSet class not implemented!!!")
+    def sort(self, key):
+        raise Exception("DataSet class not implemented!!!")
+    def interpolator(self, x, y):
+        raise Exception("DataSet class not implemented!!!")    
