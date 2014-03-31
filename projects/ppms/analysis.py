@@ -22,13 +22,37 @@ def import_dc(filename):
         for row in reader:   
             lT.append(row[3])
             lH.append(row[4])
-            lch1R.append(row[19])
-            lch2R.append(row[20])
-            lch3R.append(row[21])
+            try:
+                lch1R.append(float(row[19]))
+            except ValueError:
+                lch1R.append(np.nan)
+                
+            try:
+                lch2R.append(float(row[20]))
+            except ValueError:
+                lch2R.append(np.nan)
+            
+            try:
+                lch3R.append(float(row[21]))
+            except ValueError:
+                lch3R.append(np.nan)
+            
             # Calculating the standard errors assuming the stupid default resistivity calculation made by PPMS
-            lch1err.append(float(row[14]) * 1.e3 / float(row[18])**0.5)
-            lch2err.append(float(row[15]) * 1.e3 / float(row[18])**0.5)
-            lch3err.append(float(row[16]) * 1.e3 / float(row[18])**0.5)
+            try:
+                lch1err.append(float(row[14]) * 1.e3 / float(row[18])**0.5)
+            except ValueError:
+                lch1err.append(np.nan)
+            
+            try:
+                lch2err.append(float(row[15]) * 1.e3 / float(row[18])**0.5)
+            except ValueError:
+                lch2err.append(np.nan)
+                
+            try:
+                lch3err.append(float(row[16]) * 1.e3 / float(row[18])**0.5)
+            except ValueError:
+                lch3err.append(np.nan)
+                
     # Convert lists to datasets (dicts of 1D numpy arrays)
     ch1 = datasets.DataSet([
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
