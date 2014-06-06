@@ -7,6 +7,7 @@ import elflab.datasets as datasets
 # Import PPMS dc data    
 def import_dc(filename):
     # initialize lists for reading
+    ltime = []
     lT = []
     lH = []
     lch1R = []
@@ -19,7 +20,8 @@ def import_dc(filename):
     with open(filename, "r", newline='') as f:
         reader = csv.reader(f)
         next(reader)
-        for row in reader:   
+        for row in reader:
+            ltime.append(row[1])
             lT.append(row[3])
             lH.append(row[4])
             try:
@@ -55,18 +57,21 @@ def import_dc(filename):
                 
     # Convert lists to datasets (dicts of 1D numpy arrays)
     ch1 = datasets.DataSet([
+                            ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
                             ("R", np.array(lch1R, dtype=np.float_, copy=True)),
                             ("err_R", np.array(lch1err, dtype=np.float_, copy=True))
                             ])
     ch2 = datasets.DataSet([
+                            ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
                             ("R", np.array(lch2R, dtype=np.float_, copy=True)),
                             ("err_R", np.array(lch2err, dtype=np.float_, copy=True))
                             ])
     ch3 = datasets.DataSet([
+                            ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
                             ("R", np.array(lch3R, dtype=np.float_, copy=True)),

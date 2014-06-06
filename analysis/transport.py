@@ -49,6 +49,24 @@ def van_der_Pauw_set(set1, set2, param):
         result["R"][i] = Rs
         result["err_R"][i] = dR1 + dR2  # Very approximately
     return result
+
+# Split MR into down and up sweeps
+def split_MR_down_up(data):
+    # Find the minimum
+    minimum = 9.e20
+    index = 0
+    for i in range(len(data["H"])):
+        if data["H"][i] < minimum:
+            index = i
+            minimum = data["H"][i]
+    up = data.empty()
+    down = data.empty()
+    for key in data:
+        down[key] = data[key][:index].copy()
+        up[key] = data[key][index:].copy()
+    return (down, up)    
+    
+
     
 # Symmetrise / Antisymmetrise magnetoresistance data, by default using linear interpolation
 def symmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
