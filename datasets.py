@@ -70,13 +70,9 @@ def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True
     If use_header == True, then the headers will be read as the full titles of the variables
     error_column > 0 if the file contains error information on the values, and stored starting at error_column in the same order of value columns."""              
     # prepare the temporary lists for reading the data
-    data_lists = {}
-    for (i,key) in indices:
-        data_lists[key] = []
+    data_lists = {key:[] for (i,key) in indices}
     if error_column:
-        error_lists = {}
-        for (i,key) in indices:
-            error_lists[key] = []        
+        error_lists = {key:[] for (i,key) in indices}       
     # read the file
     with open(filepath, "r", newline='') as f:  
         reader = csv.reader(f,**csv_params)
@@ -111,10 +107,43 @@ def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True
         data_set.errors = {key: np.array(error_lists[key], dtype=np.float) for (i, key) in indices}
     return data_set
     
-def save_csv(filepath, indices, data_columns=0, write_header=True, **csv_params):
+def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0, write_header=True, **csv_params):
     """write data to a csv file, assuming no error values are recorded
     indices = [(row_index1,variable1), ...], not including errors
     N is the total number of data columns, excluding errors. It's automatically determined if N == 0.
     header is the header row in list format, including the errors"""
-    pass
+    N = max([i for (i,key) in indices]) + 1
+    if data_columns > 0:
+        if data_columns < N:
+            print("[elflab.datasets.save_csv()] WARNING: data_columns supplied is too small to contain all the entries, readjusting column numbers.")
+        else:
+            N = data_columns
     
+    # create an empty row
+    if dataset.errors is None:
+        row = ['' for i in range(N)]
+    else:
+        row = ['' for i in range(2*N)]
+        
+    # write to file
+    with open(filepath, "w", newline='') as f:  
+        writer = csv.writer(f, **csv_params)
+        # write header line
+        if write_header:
+            if dataset.titles is None:
+                dataset.titles = {key:key for key in dataset}
+            for (i, key) in indices:
+                row[i] = dataset.titles[key]
+            if dataset.errors is not None:
+                for (i, key) in indices:
+                    row[i+N] = "error({})".format(dataset.titles[key])
+            writer.writerow(row)
+        # write data lines
+        n_rows = dataset[indices[0][1]].shape[0]
+        for i in range(n_rows):
+            for (j,key) in indices:
+                row[j] = format_string.format(dataset[key][i])
+            if dataset.errors is not None:
+                for (j,key) in indices:
+                    row[j+N] = format_string.format(dataset.errors[key][i])
+            writer.writerow(row)
