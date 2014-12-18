@@ -1,3 +1,7 @@
+######################################################################################################
+# Defines the DataSet class and various creation / manipulation methods
+######################################################################################################
+
 import csv
 
 import numpy as np
@@ -9,6 +13,7 @@ class DataSet(abstracts.DataSetBase):
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
         self.sorted_views = {}
+        self.titles={key:key for key in self}
         
     # Create an empty dataset with identical variables
     def empty(self):
@@ -19,6 +24,7 @@ class DataSet(abstracts.DataSetBase):
             new_set[key] = None
             if self.error is not None:
                 new_set.error[key] = None
+        new_set.titles = self.titles.copy()
         return new_set
         
     # Define how exactly a dataset is to be copied, while not over-writing the copy() method
@@ -27,9 +33,8 @@ class DataSet(abstracts.DataSetBase):
         for key in self:
             new_set[key] = self[key].copy()
         if self.errors is not None:
-            newset.errors = {}
-            for key in self:
-                new_set.errors[key] = self.errors[key].copy()
+            newset.errors = {key: self.errors[key].copy() for key in self}
+        new_set.titles = self.titles.copy()
         return new_set
         
     # return a sorted copy
@@ -59,20 +64,31 @@ class DataSet(abstracts.DataSetBase):
         else:
             return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
         
-def load_csv(filepath, indices=[], has_header=True, use_header=False, **csv_params):
-# read data from a csv file, assuming no error values are recorded
-# indices = [(row_index1,variable1), ...]
-    with open(filepath, "r", newline='') as f:
-        reader = csv.reader(f,csv_params)
+def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True, **csv_params):
+    """read data from a csv file, assuming no error values are recorded
+    indices = [(row_index1,variable_name1), ...], has to be specified by user
+    If use_header == True, then the headers will be read as the full titles of the variables
+    error_column > 0 if the file contains error information on the values, and stored starting at error_column in the same order of value columns."""              
+    # prepare the temporary lists for reading the data
+    data_lists = {}
+    for (i,key) in indices:
+        data_lists[key] = []
+    if error_column:
+        error_lists = {}
+        for (i,key) in indices:
+            error_lists[key] = []        
+    # read the file
+    with open(filepath, "r", newline='') as f:  
+        reader = csv.reader(f,**csv_params)
         # Read the header row if applicable
         if has_header:
             row = next(reader)
             if use_header:
-                indices=enumerate(row)
-        # prepare the temporary lists for reading the data
-        data_lists={}
-        for (i,key) in indices:
-            data_lists[key] = []
+                titles = {key: row[i] for (i, key) in indices}
+            else:
+                titles = {key: key for (i, key) in indices}
+        else:
+            titles = {key: key for (i, key) in indices}
         # now read the data
         for row in reader:
             for (i,key) in indices:            
@@ -80,10 +96,25 @@ def load_csv(filepath, indices=[], has_header=True, use_header=False, **csv_para
                     data_lists[key].append(float(row[i]))
                 except ValueError:
                     data_lists[key].append(np.nan)
+                
+                if error_column > 0:
+                    try:
+                        error_lists[key].append(float(row[i+error_column]))
+                    except ValueError:
+                        error_lists[key].append(np.nan)
+                    
     
     # Convert data to the dataset format
-    data_set = DataSet()
-    for (i,key) in indices:
-        data_set[key]=np.array(data_lists[key], dtype=np.float, copy=True)
-    
+    data_set = DataSet([(key, np.array(data_lists[key], dtype=np.float) ) for (i, key) in indices])
+    data_set.titles = titles
+    if error_column > 0:
+        data_set.errors = {key: np.array(error_lists[key], dtype=np.float) for (i, key) in indices}
     return data_set
+    
+def save_csv(filepath, indices, data_columns=0, write_header=True, **csv_params):
+    """write data to a csv file, assuming no error values are recorded
+    indices = [(row_index1,variable1), ...], not including errors
+    N is the total number of data columns, excluding errors. It's automatically determined if N == 0.
+    header is the header row in list format, including the errors"""
+    pass
+    

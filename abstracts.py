@@ -125,7 +125,8 @@ class Logger:
 class DataSetBase(dict):
     """base class for a dataset, defined as {"key": 1D numpy_array} """
     sorted_views = None
-    errors = None
+    errors = None   # errors stored as a dict of numpy arrays
+    titles = None   # full titles of the variables
     def empty(self):
         raise Exception("DataSet class not implemented!!!")
     def duplicate(self):
