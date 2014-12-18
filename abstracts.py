@@ -124,6 +124,7 @@ class Logger:
 # classes for data sets
 class DataSetBase(dict):
     """base class for a dataset, defined as {"key": 1D numpy_array} """
+    length = None
     sorted_views = None
     errors = None   # errors stored as a dict of numpy arrays
     titles = None   # full titles of the variables

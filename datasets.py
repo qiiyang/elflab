@@ -13,25 +13,30 @@ class DataSet(abstracts.DataSetBase):
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
         self.sorted_views = {}
+        if len(self) > 0:
+            self.length = -1
+            for key in self:
+                n = self[key].shape[0]
+                if (self.length > -1) and (n != self.length):
+                    raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
+                else:
+                    self.length = n
+        else:
+            self.length = 0
         self.titles={key:key for key in self}
         
     # Create an empty dataset with identical variables
     def empty(self):
-        new_set = DataSet()
-        if self.errors is not None: # only true if the dataset has error values set
-            new_set.errors = {}
-        for key in self:
-            new_set[key] = None
-            if self.error is not None:
-                new_set.error[key] = None
+        new_set = DataSet([(key, np.empty((0,), dtype=np.float)) for key in self])
+        if self.error is not None:
+            new_set.errors = {key:np.empty((0,), dtype=np.float) for key in self}
         new_set.titles = self.titles.copy()
+        new_set.length = 0
         return new_set
         
     # Define how exactly a dataset is to be copied, while not over-writing the copy() method
     def duplicate(self):
-        new_set = DataSet()
-        for key in self:
-            new_set[key] = self[key].copy()
+        new_set = DataSet([(key,self[key].copy()) for key in self])
         if self.errors is not None:
             newset.errors = {key: self.errors[key].copy() for key in self}
         new_set.titles = self.titles.copy()
@@ -44,15 +49,12 @@ class DataSet(abstracts.DataSetBase):
             sorted = self.sorted_views[key]
         else:
             indices = np.argsort(self[key], kind='quicksort')
-            sorted = DataSet()
-            for k in self:
-                sorted[k] = self[k][indices]
+            sorted = DataSet([(k,self[k][indices]) for k in self])
             if self.errors is not None:
-                sorted.errors = {}
-                for k in self:
-                    sorted.errors[k] = self.errors[k][indices]
+                sorted.errors = {k:self.errors[k][indices] for k in self}
             self.sorted_views[key] = sorted
             sorted.sorted_views = self.sorted_views
+            sorted.titles = self.titles
         return sorted
         
     # return an interpolator: interpolate y from x
@@ -139,8 +141,7 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
                     row[i+N] = "error({})".format(dataset.titles[key])
             writer.writerow(row)
         # write data lines
-        n_rows = dataset[indices[0][1]].shape[0]
-        for i in range(n_rows):
+        for i in range(dataset.length):
             for (j,key) in indices:
                 row[j] = format_string.format(dataset[key][i])
             if dataset.errors is not None:
