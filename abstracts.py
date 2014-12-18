@@ -1,4 +1,6 @@
-"""Defines a series of conceptual classes"""
+######################################################################################################
+# Defines the abstracts
+######################################################################################################
 
 # classes to define experiments taken with Galileo Utility
 class ExperimentBase:
@@ -135,4 +137,4 @@ class DataSetBase(dict):
     def sort(self, key):
         raise Exception("DataSet class not implemented!!!")
     def interpolator(self, x, y):
-        raise Exception("DataSet class not implemented!!!")    
+        raise Exception("DataSet class not implemented!!!")

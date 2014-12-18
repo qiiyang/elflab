@@ -148,3 +148,25 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
                 for (j,key) in indices:
                     row[j+N] = format_string.format(dataset.errors[key][i])
             writer.writerow(row)
+            
+def median_vote(dataset, size=3):
+    """Down sampling the dateset by median voting, to eliminate abnormal values
+    size is the voting window size
+    return the down-sampled dataset"""
+    # prepare the new set
+    new_length = dataset.length // size
+    newset = DataSet([(key, np.empty((new_length,), dtype=np.float)) for key in dataset])
+    for key in dataset:
+        for i in range(new_length-1):
+            newset[key][i] = np.median(dataset[key][i*size:(i+1)*size])
+        newset[key][new_length-1] = np.median(dataset[key][(new_length-1)*size:dataset.length])
+    if dataset.errors is not None:
+        newset.errors = {key: np.empty((new_length,), dtype=np.float) for key in dataset}
+        for key in dataset:
+            for i in range(new_length-1):
+                newset.errors[key][i] = np.median(dataset.errors[key][i*size:(i+1)*size])
+            newset.errors[key][new_length-1] = np.median(dataset.errors[key][(new_length-1)*size:dataset.length])
+    newset.titles=dataset.titles.copy()
+    return newset
+    
+        
