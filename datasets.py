@@ -1,11 +1,13 @@
+import csv
+
 import numpy as np
 
 import elflab.abstracts as abstracts
 import scipy.interpolate as interpolate
 
 class DataSet(abstracts.DataSetBase):
-    def __init__(self, args=[]):
-        super(DataSet, self).__init__(args)
+    def __init__(self, *args, **kwargs):
+        super(DataSet, self).__init__(*args, **kwargs)
         self.sorted_views = {}
         
     # Create an empty dataset with identical variables
@@ -57,3 +59,31 @@ class DataSet(abstracts.DataSetBase):
         else:
             return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
         
+def load_csv(filepath, indices=[], has_header=True, use_header=False, **csv_params):
+# read data from a csv file, assuming no error values are recorded
+# indices = [(row_index1,variable1), ...]
+    with open(filepath, "r", newline='') as f:
+        reader = csv.reader(f,csv_params)
+        # Read the header row if applicable
+        if has_header:
+            row = next(reader)
+            if use_header:
+                indices=enumerate(row)
+        # prepare the temporary lists for reading the data
+        data_lists={}
+        for (i,key) in indices:
+            data_lists[key] = []
+        # now read the data
+        for row in reader:
+            for (i,key) in indices:            
+                try:
+                    data_lists[key].append(float(row[i]))
+                except ValueError:
+                    data_lists[key].append(np.nan)
+    
+    # Convert data to the dataset format
+    data_set = DataSet()
+    for (i,key) in indices:
+        data_set[key]=np.array(data_lists[key], dtype=np.float, copy=True)
+    
+    return data_set
