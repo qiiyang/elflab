@@ -1,4 +1,6 @@
 ######
+# No .pyc
+*.pyc
 
 # No backup  files
 *.*~
