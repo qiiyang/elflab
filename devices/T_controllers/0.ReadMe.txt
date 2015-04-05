@@ -1,0 +1,3 @@
+Contains classes defining temperature controllers.
+
+Each T_controller class has a read() method, which will return (t, T) in SI.
