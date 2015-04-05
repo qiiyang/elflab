@@ -13,6 +13,7 @@ data
 
 # No testing codes
 test/
+script*.*
 
 # No python cache
 __pycache__
