@@ -99,7 +99,7 @@ VAR_INIT = {
 
 SENS_RANGE = (0.1, 0.8)
                  
-class He3_JustMeasure(abstracts.ExperimentBase):
+class He3JustMeasure(abstracts.ExperimentBase):
     title = "He-3: keep measuring"
     def __init__(self, lockin1, R_series1, lockin2, R_series2, magnet, logfilename):
         # Define the temperature controllers
@@ -142,12 +142,12 @@ class He3_JustMeasure(abstracts.ExperimentBase):
     def measure(self):
         self.currentValues["n"] += 1
         self.currentValues["t"] = self.t0 + time.perf_counter()
-        self.currentValues["T_flow"] = self.cryocon.read("A")
-        self.currentValues["T_sample"] = self.cryocon.read("B")
-        self.currentValues["T_sorb"] = self.lakeshore.read("A")
-        (, self.currentValues["H"],) = self.magnet.read()
-        (, self.currentValues["X1"], self.currentValues["Y1"], , , self.currentValues["f1"], self.currentValues["Vex1"]) = self.lockin1.read()
-        (, self.currentValues["X2"], self.currentValues["Y2"], , , self.currentValues["f2"], self.currentValues["Vex2"]) = self.lockin2.read()
+        t,self.currentValues["T_flow"] = self.cryocon.read("A")
+        t,self.currentValues["T_sample"] = self.cryocon.read("B")
+        t,self.currentValues["T_sorb"] = self.lakeshore.read("A")
+        t,self.currentValues["H"],t = self.magnet.read()
+        t,self.currentValues["X1"],self.currentValues["Y1"],t,t,self.currentValues["f1"],self.currentValues["Vex1"] = self.lockin1.read()
+        t,self.currentValues["X2"],self.currentValues["Y2"],t,t,self.currentValues["f2"],self.currentValues["Vex2"] = self.lockin2.read()
         self.currentValues["R1"] = self.currentValues["X1"] / self.currentValues["Vex1"] * self.R_series1
         self.currentValues["R2"] = self.currentValues["X2"] / self.currentValues["Vex2"] * self.R_series2
         
@@ -161,9 +161,11 @@ class He3_JustMeasure(abstracts.ExperimentBase):
         
     def finish(self):
         self.logger.finish()
-        del self.thermometer
+        del self.lakeshore
+        del self.cryocon
         del self.magnet
-        del self.lockin
+        del self.lockin1
+        del self.lockin2
 
 
 # load a csv file and return the data as a dict of np arrays

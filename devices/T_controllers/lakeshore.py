@@ -22,5 +22,8 @@ class Lakeshore332(TControllerBase):
     def read(self, ch):     # return (t, T) for the specified channel
         reading = str(self.gpib.ask("KRDG? {}".format(ch).encode("ASCII")), encoding="ASCII")
         t = time.perf_counter()
-        T = float(reading)
+        try:
+            T = float(reading)
+        except ValueError:
+            T = float("nan")
         return (t, T)
