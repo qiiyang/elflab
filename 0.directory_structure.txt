@@ -5,17 +5,18 @@ All "public" classes should be available at package levels.
 	.\constants.py		# Mathematical and Physical constants
 	.\abstracts.py		# All abstract classes
     .\errors.py         # contains methods for estimating errors
-    .\datasets.py       # Define various dataset classes
-    .\galileo.py		# class Galileo, the Galileo measurement utility
+    .\datasets.py       # Defines various dataset classes
+    .\galileo.py		# Defines the class Galileo: the data acquisition / logging utility
     
-    .\projects   # Scripts to run various experiments, using instances of the Galileo class.
+    .\projects   # Contains actual implementations of individual experimental projects, including measurements with the Galileo utility, and data analysis with the various tools as defined in the .\analysis package 
+	
     
-    .\devices   # implementations of various devices   
+    .\devices   # "drivers" for devices   
         .\devices\[type]    # subcategories of devices
 
     .\plotters      # classes for plotting services
 	
 	.\dataloggers		# Various modules for logging data
 	
-    .\analysis          # Data analysis related
+    .\analysis          # Data analysis related tools
         .\analysis\transport.py     # calculations on transport results
