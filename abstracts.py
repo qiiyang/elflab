@@ -1,6 +1,17 @@
 ######################################################################################################
-# Defines the abstracts
+# Define the base classes
 ######################################################################################################
+
+# Base classes for UI
+
+class UIBase:
+    """Base class for user interface"""
+    def __init__(self, galileo):
+        raise Exception("!!Galileo ERROR!! UI class not implemented!!!")
+        
+    def start(self):    # starting the UI
+        raise Exception("!!Galileo ERROR!! UI start() not implemented!!!")
+        
 
 # classes to define experiments taken with Galileo Utility
 class ExperimentBase:
@@ -131,10 +142,10 @@ class DataSetBase(dict):
     errors = None   # errors stored as a dict of numpy arrays
     titles = None   # full titles of the variables
     def empty(self):
-        raise Exception("DataSet class not implemented!!!")
+        raise Exception("!!Elflab ERROR!! DataSet class not implemented!!!")
     def duplicate(self):
-        raise Exception("DataSet class not implemented!!!")
+        raise Exception("!!Elflab ERROR!! DataSet class not implemented!!!")
     def sort(self, key):
-        raise Exception("DataSet class not implemented!!!")
+        raise Exception("!!Elflab ERROR!! DataSet class not implemented!!!")
     def interpolator(self, x, y):
-        raise Exception("DataSet class not implemented!!!")
+        raise Exception("!!Elflab ERROR!! DataSet class not implemented!!!")
