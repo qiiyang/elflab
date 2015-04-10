@@ -1,18 +1,1 @@
-Buongiorno
-Come state
-E lei
-Cosa c'e di nuovo
-Buona sera
-Posso aiutarla
-Ciao
-Signorina
-Beer
-Coffee
-Gelato
-Whisky
-Banana
-Baboy
-Muak
-Bee Do
-Bable
-Bello~~
+command
