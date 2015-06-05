@@ -56,7 +56,7 @@ import mi_common as mi
 
 
 class MI_fscan(mi.MI_JustMeasure):
-    title = "Mutual Inductance: Scaning over f"
+    title = "Mutual Inductance: Scanning over f"
     
     def __init__(self, thermometer, magnet, lockin, logfilename, f_min, f_max, f_step):
         self.f_min = f_min
