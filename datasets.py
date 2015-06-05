@@ -29,7 +29,7 @@ class DataSet(abstracts.DataSetBase):
     # Create an empty dataset with identical variables
     def empty(self):
         new_set = DataSet([(key, np.empty((0,), dtype=np.float)) for key in self])
-        if self.error is not None:
+        if self.errors is not None:
             new_set.errors = {key:np.empty((0,), dtype=np.float) for key in self}
         new_set.titles = self.titles.copy()
         new_set.length = 0
