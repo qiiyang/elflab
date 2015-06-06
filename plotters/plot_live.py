@@ -252,5 +252,4 @@ class PlotLive:
                 self.status["plot_shown"].set()
                 plt.show()
                 self.status["plot_shown"].clear()
-            
         self.listenThread.join()

@@ -9,6 +9,7 @@ import multiprocessing
 import threading
 import random
 from elflab.plotters import plot_live
+import elflab.ui
 
 # Constants
 
@@ -43,7 +44,7 @@ class Galileo:
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval, plotXYs, ui=elflab.ui.Text, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
@@ -173,11 +174,12 @@ class Galileo:
             self.measureThread.join()
     
     def quit(self):
+        print("a\n")
         if not self.flag_stop:
             print("    [Galileo:] Terminating measurements......")
             self.flag_stop = True
             self.measureThread.join()
-        print("\n    [Galileo:] Terminating data plotting......")
+        print("    [Galileo:] Terminating data plotting......\n")
         with self.pipeLock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))
@@ -281,28 +283,4 @@ class Galileo:
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
         self.plotStatus["plot_shown"].wait()
         
-        # Map commands to methods
-        valid_commands = {
-                    "help": self.help, "h": self.help,
-                    "pause": self.pause, "p": self.pause,
-                    "resume": self.resume, "r": self.resume,
-                    "stop": self.stop,
-                    "quit": self.quit,
-                    "plot": self.plot,
-                    "autoscale on": self.autoscaleOn, "+a": self.autoscaleOn,
-                    "autoscale off": self.autoscaleOff, "-a": self.autoscaleOff,
-                    "clear plot": self.clearPlot,
-                    "": self.prompt
-                    }
-        # Print help infomation
-        self.help()
-        # User interaction: command parsing etc.
-        while not self.flag_quit:
-            command = input().strip().lower()
-            if command in valid_commands:
-                valid_commands[command]()
-            else:
-                self.wrongCommand(command)
-        
-        
-        print("    [Galileo:] I quit, yet it moves.\n")
+        ui.start()
