@@ -6,6 +6,7 @@ DEBUG_INFO = False
 
 # import modules
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
@@ -89,7 +90,7 @@ class PlotLive:
                 with self.dataLock:
                     if command == "quit":
                         self.flag_quit = True
-                        plt.close("all")
+                        plt.close('all')
                         self.status["command_done"].set()
                     elif command == "replot":
                         self.flag_replot = True
@@ -253,3 +254,4 @@ class PlotLive:
                 plt.show()
                 self.status["plot_shown"].clear()
         self.listenThread.join()
+        

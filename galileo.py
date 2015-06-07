@@ -44,7 +44,7 @@ class Galileo:
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, ui=elflab.ui.Text, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval, plotXYs, UI=elflab.ui.Text, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
@@ -54,6 +54,7 @@ class Galileo:
         
         # save the "constants"
         self.experiment = experiment
+        self.ui = UI(self)
         
         # ____the timing "constants", all in seconds
         self.measurement_interval = measurement_interval
@@ -183,7 +184,11 @@ class Galileo:
         with self.pipeLock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))
-        self.plotProc.join()
+        self.plotProc.join(3)
+        if self.plotProc.is_alive():
+            print("    [Galileo:] WARNING: Data plotting time-out, forcibly terminating......\n")
+            with self.pipeLock:
+                self.plotProc.terminate()
         print("    [Galileo:] Live plotting service is terminated.\n")
         
     def plot(self):
@@ -283,4 +288,5 @@ class Galileo:
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
         self.plotStatus["plot_shown"].wait()
         
-        ui.start()
+        self.ui.start()
+        print("    [Galileo:] I quit, yet it moves.\n")  

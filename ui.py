@@ -13,27 +13,26 @@ class Text:
     def start(self):
         # Map commands to methods
         valid_commands = {
-                    "help": master.help, "h": master.help,
-                    "pause": master.pause, "p": master.pause,
-                    "resume": master.resume, "r": master.resume,
-                    "stop": master.stop,
-                    "quit": master.quit,
-                    "plot": master.plot,
-                    "autoscale on": master.autoscaleOn, "+a": master.autoscaleOn,
-                    "autoscale off": master.autoscaleOff, "-a": master.autoscaleOff,
-                    "clear plot": master.clearPlot,
-                    "": master.prompt
+                    "help": self.master.help, "h": self.master.help,
+                    "pause": self.master.pause, "p": self.master.pause,
+                    "resume": self.master.resume, "r": self.master.resume,
+                    "stop": self.master.stop,
+                    "quit": self.master.quit,
+                    "plot": self.master.plot,
+                    "autoscale on": self.master.autoscaleOn, "+a": self.master.autoscaleOn,
+                    "autoscale off": self.master.autoscaleOff, "-a": self.master.autoscaleOff,
+                    "clear plot": self.master.clearPlot,
+                    "": self.master.prompt
                     }
         # Print help infomation
-        master.help()
+        self.master.help()
         # User interaction: command parsing etc.
-        while not master.flag_quit:
+        while not self.master.flag_quit:
             command = input().strip().lower()
             if command in valid_commands:
                 valid_commands[command]()
             else:
-                master.wrongCommand(command)
-        print("    [Galileo:] I quit, yet it moves.\n")                                
+                self.master.wrongCommand(command)                              
 
 class PrototypeGUI(elflab.abstracts.UIBase):
     def __init__(self, master):
