@@ -36,10 +36,11 @@ class Text:
 
 class PrototypeGUI(elflab.abstracts.UIBase):
     def __init__(self, master):
-        self.gali = master
+        self.master = master
         
-    def quit():
-        pass
+    def quit(self):
+        self.master.quit()
+        self.root.quit()
     
     def start(self):
         self.root = tk.Tk()
@@ -71,7 +72,7 @@ class PrototypeGUI(elflab.abstracts.UIBase):
         self.buttonClear = ttk.Button(self.mainframe, text="clear plots", command=self.master.clearPlot)
         self.buttonClear.grid(column=2, row=4, sticky=tk.W)
         
-        self.buttonQuit = ttk.Button(self.mainframe, text="quit")
+        self.buttonQuit = ttk.Button(self.mainframe, text="quit", command=self.quit)
         self.buttonQuit.grid(column=1, row=5, sticky=tk.W)
         
         for child in self.mainframe.winfo_children():
