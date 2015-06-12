@@ -39,8 +39,8 @@ class PrototypeGUI(elflab.abstracts.UIBase):
         self.master = master
         
     def quit(self):
+        self.root.destroy()
         self.master.quit()
-        self.root.quit()
     
     def start(self):
         self.root = tk.Tk()
@@ -79,4 +79,3 @@ class PrototypeGUI(elflab.abstracts.UIBase):
             child.grid_configure(padx=5, pady=5)
         
         self.root.mainloop()
-        self.master.start()
