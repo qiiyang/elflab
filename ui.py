@@ -39,7 +39,7 @@ class PrototypeGUI(elflab.abstracts.UIBase):
         self.master = master
         
     def quit(self):
-        self.root.destroy()
+        self.root.quit()
         self.master.quit()
     
     def start(self):

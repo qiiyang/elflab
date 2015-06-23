@@ -289,4 +289,4 @@ class Galileo:
         self.plotStatus["plot_shown"].wait()
         
         self.ui.start()
-        print("    [Galileo:] I quit, yet it moves.\n")  
+        print("    [Galileo:] Yet it moves.\n")  
