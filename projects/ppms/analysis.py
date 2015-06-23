@@ -21,9 +21,21 @@ def import_dc(filename):
         reader = csv.reader(f)
         next(reader)
         for row in reader:
-            ltime.append(row[1])
-            lT.append(row[3])
-            lH.append(row[4])
+            try:
+                ltime.append(float(row[1]))
+            except ValueError:
+                ltime.append(np.nan)
+                
+            try:
+                lT.append(float(row[3]))
+            except ValueError:
+                lT.append(np.nan)
+                
+            try:
+                lH.append(float(row[4]))
+            except ValueError:
+                lH.append(np.nan)
+                
             try:
                 lch1R.append(float(row[19]))
             except ValueError:
