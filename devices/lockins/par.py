@@ -15,7 +15,7 @@ class PAR124A(AnalogueLockinBase):
     
     def connect(self):
         self.dmm.connect()
-        print("        SR830 lock-in amplifier, read through dmm")        
+        print("        PAR 124A lock-in amplifier: reading through dmm")        
         self.connected = True
     
     def read(self):     # return (t, X, Y, R, theta, f, Vout)
