@@ -7,7 +7,6 @@ class Cryocon32B(TControllerBase):
         self.address = address
         
         self.connected = False
-        self.autosense = False
     
     def connect(self):
         rm = visa.ResourceManager()
