@@ -170,7 +170,7 @@ class JanisHe3TwoLockins(abstracts.ExperimentBase):
         del self.lockin2
 
 
-# load a csv file and return the data as a dict of np arrays
+# load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
 def loadfile(filename):
     with open(filename, mode="r") as f:
         reader = csv.reader(f)
