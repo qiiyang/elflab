@@ -3,7 +3,7 @@
 from .lockin_base import LockinBase
 from math import sin, cos
 
-class SinCosLockin(LockinBase):
+class SinCosLockin(AnalogueLockinBase):
     """ X=sin(wn), Y = cos(wn) """
     def __init__(self, w=0.0003):
         self.w = w      # angular frequency
@@ -15,8 +15,7 @@ class SinCosLockin(LockinBase):
         self.phi += self.w
         return (x, y)
 
-class ConstLockin(LockinBase):
-    """ X=sin(wn), Y = cos(wn) """
+class ConstLockin(DigitalLockinBase):
     def __init__(self, reading=0.):
         self.reading = reading
     

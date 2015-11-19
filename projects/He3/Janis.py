@@ -129,8 +129,10 @@ class JanisHe3TwoDigital(abstracts.ExperimentBase):
         self.lockin2.connect()
         self.magnet.connect()
         
-        self.lockin1.setAutoSens(*SENS_RANGE)
-        self.lockin2.setAutoSens(*SENS_RANGE)
+        if self.lockin1.is_digital:
+            self.lockin1.setAutoSens(*SENS_RANGE)
+        if self.lockin2.is_digital:
+            self.lockin2.setAutoSens(*SENS_RANGE)
         
         # Reset counter and timer
         self.n = 0
