@@ -20,6 +20,8 @@ class Cryocon32B(TControllerBase):
         self.connected = True
     
     def read(self, ch):     # return (t, T) for the specified channel
+        if not self.connected:
+            self.connect()
         reading = str(self.gpib.ask("INPUT? {}".format(ch).encode("ASCII")), encoding="ASCII")
         t = time.perf_counter()
         try:
