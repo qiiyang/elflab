@@ -16,7 +16,8 @@ class LockinBase(DeviceBase):
         raise Exception("Lockin function not implemented.")
         
         
-class DigitalLockinBase(LockinBase):  
+class DigitalLockinBase(LockinBase): 
+    is_digital = True
     def __init__(self, address):
         raise Exception("Lockin function not implemented.")
     
@@ -38,6 +39,7 @@ class DigitalLockinBase(LockinBase):
         raise Exception("Lockin function not implemented.")
         
 class AnalogueLockinBase(LockinBase):  
+    is_digital = False
     def __init__(self, dmm):
         raise Exception("Lockin function not implemented.")
     
