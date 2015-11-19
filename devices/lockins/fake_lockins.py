@@ -1,6 +1,6 @@
 """ Simulated Lockin Amplifiers """
 
-from .lockin_base import LockinBase
+from .lockin_base import *
 from math import sin, cos
 
 class SinCosLockin(AnalogueLockinBase):
