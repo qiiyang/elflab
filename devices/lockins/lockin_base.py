@@ -50,7 +50,7 @@ class AnalogueLockinBase(LockinBase):
     def adjustSens(self, R): # R: current R value
         raise Exception("Cannot read R for an analogue lock in")
             
-    def read(self):     # return current reading
+    def read(self):     # return (t, X, nan, nan, theta, f, Vout)
         raise Exception("Lockin function not implemented.")
         
     def setf(self, f):

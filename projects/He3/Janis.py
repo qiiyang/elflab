@@ -1,4 +1,4 @@
-""" Common definitions / whatever shared for all He-3 related scripts
+""" Common definitions / whatever shared for all Janis He-3 related scripts
 """
 import time
 import csv
@@ -99,7 +99,7 @@ VAR_INIT = {
 
 SENS_RANGE = (0.1, 0.8)
                  
-class He3JustMeasure(abstracts.ExperimentBase):
+class JanisHe3TwoDigital(abstracts.ExperimentBase):
     title = "He-3: keep measuring"
     def __init__(self, lockin1, R_series1, lockin2, R_series2, magnet, logfilename):
         # Define the temperature controllers
