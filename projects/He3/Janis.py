@@ -100,7 +100,7 @@ VAR_INIT = {
 SENS_RANGE = (0.1, 0.8)
                  
 class JanisHe3TwoLockins(abstracts.ExperimentBase):
-    title = "He-3: keep measuring"
+    title = "Janis He-3: Measurements With Two Lock In Amplifiers"
     def __init__(self, lockin1, R_series1, lockin2, R_series2, magnet, logfilename):
         # Define the temperature controllers
         self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
@@ -171,7 +171,7 @@ class JanisHe3TwoLockins(abstracts.ExperimentBase):
 
 
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
-def loadfile(filename):
+def loadfile(filename): 
     with open(filename, mode="r") as f:
         reader = csv.reader(f)
         next(reader)
@@ -185,4 +185,3 @@ def loadfile(filename):
         for i in range(0, len(VAR_LIST)):
             datadict[VAR_LIST[i]] = np.array(datalist[i], dtype=np.float_)
         return datadict
-        
