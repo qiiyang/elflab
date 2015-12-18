@@ -36,15 +36,10 @@ class Text:
             else:
                 self.kernel.wrongCommand(command)                              
 
+# A prototype gui, which emulates the text ui
 class PrototypeGUI(elflab.abstracts.UIBase):
     def __init__(self, kernel):
         self.kernel = kernel
-        
-    def quit(self):
-        self.root.quit()
-        self.kernel.quit()
-    
-    def start(self):
         self.root = tk.Tk()
         self.root.title("Galileo")
         
@@ -80,4 +75,10 @@ class PrototypeGUI(elflab.abstracts.UIBase):
         for child in self.mainframe.winfo_children():
             child.grid_configure(padx=5, pady=5)
         
+    def quit(self):
+        self.root.quit()
+        self.kernel.quit()
+    
+    def start(self):
+        self.kernel.start()        
         self.root.mainloop()
