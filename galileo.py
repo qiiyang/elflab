@@ -1,7 +1,7 @@
 """ Class definition of the Galileo utility
+    Handles coordinating parallelism of measurements, controlling, data-loggin etc.
     written for Python 3.3.4
 """
-
 
 # Imports
 import os
@@ -45,7 +45,7 @@ class Galileo:
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, UI=elflab.ui.Text, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
@@ -53,9 +53,8 @@ class Galileo:
         self.flag_quit = False
         self.flag_pause = False
         
-        # save the "constants"
+        # save the variables
         self.experiment = experiment
-        self.ui = UI(self)
         
         # ____the timing "constants", all in seconds
         self.measurement_interval = measurement_interval
@@ -191,6 +190,7 @@ class Galileo:
             with self.pipeLock:
                 self.plotProc.terminate()
         print("    [Galileo:] Live plotting service is terminated.\n")
+        print("    [Galileo:] Yet it moves.\n") 
         
     def plot(self):
         if self.plotStatus["plot_shown"].is_set():
@@ -287,7 +287,5 @@ class Galileo:
         self.measureThread.start()
         
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
-        self.plotStatus["plot_shown"].wait()
-        
-        self.ui.start()
-        print("    [Galileo:] Yet it moves.\n")  
+        self.plotStatus["plot_shown"].wait() 
+        self.prompt()

@@ -99,8 +99,8 @@ VAR_INIT = {
 
 SENS_RANGE = (0.1, 0.8)
                  
-class JanisHe3TwoLockins(abstracts.ExperimentBase):
-    title = "Janis He-3: Measurements With Two Lock In Amplifiers"
+class Janis001He3TwoLockins(abstracts.ExperimentBase):
+    title = "Janis 001 He-3: Measurements With Two Lock In Amplifiers"
     def __init__(self, lockin1, R_series1, lockin2, R_series2, magnet, logfilename):
         # Define the temperature controllers
         self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
