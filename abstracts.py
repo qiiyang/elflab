@@ -6,7 +6,7 @@
 
 class UIBase:
     """Base class for user interface"""
-    def __init__(self, galileo):
+    def __init__(self):
         raise Exception("!!Galileo ERROR!! UI class not implemented!!!")
         
     def start(self):    # starting the UI

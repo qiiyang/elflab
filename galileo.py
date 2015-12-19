@@ -28,6 +28,7 @@ DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 class Galileo:
     """The Galileo Measurement Utility"""
     # Default "static constants"
+    title = "Galileo"
     PROMPT = r"?>"
     UI_LAG = 0.3
     # ____Help information
