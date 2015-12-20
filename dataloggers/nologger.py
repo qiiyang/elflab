@@ -1,9 +1,9 @@
 from elflab import abstracts
 
         
-class Logger(abstracts.Logger):
+class Logger(abstracts.LoggerBase):
     """Not Logging at All"""
-    def __init__(self):
+    def __init__(self, filename=None):
         pass
         
     def start(self):

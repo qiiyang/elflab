@@ -14,8 +14,11 @@ import elflab.abstracts
 
 class DummyKernel(elflab.abstracts.KernelBase):
     """A Kernel that does nothing"""
+    title = "Dummy Kernel"
     def __init__(self):
-        pass
+        self.flag_stop = False
+        self.flag_quit = False
+        self.flag_pause = False
     def start(self):
         pass
     def stop(self):

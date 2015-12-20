@@ -4,7 +4,11 @@
 
 class KernelBase:
     """Base class for kernels"""
+    title = None
     def __init__(self):
+        self.flag_stop = None
+        self.flag_quit = None
+        self.flag_pause = None
         raise Exception("!!ERROR!! kernel class not implemented!!!")
     def start(self):
         raise Exception("!!ERROR!! kernel class not implemented!!!")
@@ -35,7 +39,7 @@ class UIBase:
     def start(self):    # starting the UI
         raise Exception("!!ERROR!! UI start() not implemented!!!")
         
-
+        
 # classes to define experiments taken with Galileo Utility
 class ExperimentBase:
     """A minimal abstraction of an experiment"""
@@ -96,9 +100,9 @@ class ExperimentWithLogger(ExperimentBase):
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")        
         
-class Logger:
+class LoggerBase:
     """A minimal abstraction of data-logging"""
-    def __init__(self):
+    def __init__(self, filename=None, comments=None):
         raise Exception("!!Galileo ERROR!! Data-Logger initialisation not implemented!!!")
         
     def start(self):
@@ -110,6 +114,11 @@ class Logger:
     def finish(self):
         raise Exception("!!Galileo ERROR!! Data-Logging finishing not implemented!!!")
 
+class ControllerBase:
+    """Controller Base Class"""
+    def __init__(self):
+        raise Exception("controller class not implimented")
+        
 # classes for data sets
 class DataSetBase(dict):
     """base class for a dataset, defined as {"key": 1D numpy_array} """

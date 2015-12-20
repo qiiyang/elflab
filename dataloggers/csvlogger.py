@@ -1,11 +1,10 @@
-# Constants
-DEFAULT_SAVE_EVERY = 10.    # in s
+
 
 import time
 import csv
 from elflab import abstracts
 
-class Logger(abstracts.Logger):
+class Logger(abstracts.LoggerBase):
     """Implementing a Logger writing a CSV file"""
     
     # self.Variables:
@@ -14,7 +13,10 @@ class Logger(abstracts.Logger):
     # file
     # csvwriter: a Python cvs writer that writes to file
     
-    def __init__(self, filename, varList, varTitles, formatStrings, saveEvery=DEFAULT_SAVE_EVERY, openKwargs={}, csvKwargs={}):
+    # Constants
+    DEFAULT_SAVE_EVERY = 10.    # in s
+    
+    def __init__(self, filename, varList, varTitles, formatStrings, saveEvery=self.DEFAULT_SAVE_EVERY, openKwargs={}, csvKwargs={}):
                 #(self, file path/name, ["var names"], {"names": "full titles"}, {"names": "format strings"}, saving interval, additional keyword argument dictionary for python open(), additional keyword arguments dictionary for python csv writer)
         print("        [CSV Logger:] Data will be logged in the file:\n>>>>>>>>>>>>\"{}\"<<<<<<<<<<<<\n".format(filename))
         # Save parameters
