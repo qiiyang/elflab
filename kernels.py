@@ -60,14 +60,8 @@ class Galileo(elflab.abstracts.KernelBase):
         for line in inpFile:
             QUESTIONS.append(line.strip())
       
-        
-    # flags to be initialised
-    # flag_stop = False
-    # flag_quit = False
-    # flag_pause = False
-    # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval=None, plotXYs=None, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL, dataLock=None):
+    def __init__(self, experiment, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL, dataLock=None):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
@@ -77,14 +71,8 @@ class Galileo(elflab.abstracts.KernelBase):
         
         # save the variables
         self.experiment = experiment
-        if measurement_interval is None:
-            self.measurement_interval = experiment.measurement_interval
-        else:
-            self.measurement_interval = measurement_interval
-        if plotXYs is None:
-            self.plotXYs = experiment.plotXYs
-        else:            
-            self.plotXYs = plotXYs
+        self.measurement_interval = experiment.measurement_interval
+        self.plotXYs = experiment.plotXYs
         
         # ____the timing "constants", all in seconds
         self.plot_refresh_interval = plot_refresh_interval
@@ -105,9 +93,9 @@ class Galileo(elflab.abstracts.KernelBase):
         
         # initialize the pipes and locks
         self.plotConn, self.mainConn = multiprocessing.Pipe(duplex=False)
-        self.pipeLock = threading.Lock()
+        self.pipeLock = multiprocessing.Lock()
         if dataLock is None:
-            self.dataLock = threading.Lock()
+            self.dataLock = multiprocessing.Lock()
         else:
             self.dataLock = dataLock
         
@@ -171,8 +159,8 @@ class Galileo(elflab.abstracts.KernelBase):
         self.prompt()
         
         
-    def plottingProc(self, *args, **kwargs):
-        pl = plot_live.PlotLive(*args, **kwargs)
+    def plottingProc(self, **kwargs):
+        pl = plot_live.PlotLive(**kwargs)
         pl.start()         
     
     def help(self):

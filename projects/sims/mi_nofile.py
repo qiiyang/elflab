@@ -31,9 +31,11 @@ XYVARS = [
 
 class SimMI(abstracts.ExperimentWithLogger):
     title = "simulated MI"
-    measurement_interval = 0.1
-    def __init__(self):
     
+    param_list = ["sample_interval"]
+    
+    def __init__(self, params={"sample_interval":0.1}):
+        self.measurement_interval = float(params["sample_interval"])
         self.currentValues = mi.initialData.copy()
         self.varTitles = mi.dataLabels
         self.plotXYs = XYVARS
@@ -64,4 +66,5 @@ class SimMI(abstracts.ExperimentWithLogger):
         pass
         
     def sequence(self):
-        yield True
+        while True:
+            yield True

@@ -49,7 +49,8 @@ class ExperimentBase:
     varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     title = None    # Title of the Experiment
-    plot_XYs = None
+    plotXYs = None
+    parameters = None
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")
@@ -88,12 +89,6 @@ class ExperimentWithLogger(ExperimentBase):
         
     def finish(self):
         self.logger.finish()
-
-    
-
-        
-    def log(self, dataToLog):  # Write the data to storage; dataToLog is the data to log
-        raise Exception("!!Galileo ERROR!! Data logging method not implemented!!!")
         
     def sequence(self):   # a python generator serves as a control sequence, called before each measurements
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")

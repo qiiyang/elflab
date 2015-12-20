@@ -2,7 +2,7 @@
 # A prototype GUI
 ######################################################################################################
 import time
-import threading
+import multiprocessing
 
 import elflab.abstracts
 
@@ -119,12 +119,12 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         # Declare other variables
         self.controller_time = time.perf_counter()
-        self.dataLock = threading.Lock()
-        self.uiLock = threading.Lock()
+        self.dataLock = multiprocessing.Lock()
+        self.uiLock = multiprocessing.Lock()
         self.kernel_kwargs = {
             "plot_refresh_interval": self.DEFAULT_PLOT_REFRESH_INTERVAL,
             "plot_listen_interval": self.DEFAULT_PLOT_LISTEN_INTERVAL,
-            "dataLock": self.dataLock
+            "dataLock": self.dataLock,
         }
         
         # Define styles
@@ -291,7 +291,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             if self.kernel is not None:
                 self.kernel.quit()
             self.experiment = self.Experiment()
-            self.kernel = self.Kernel(self.experiment, self.kernel_kwargs)
+            self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
         except Exception as err:
             messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
