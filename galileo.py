@@ -18,13 +18,6 @@ import elflab.ui
 DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
 DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 
-# Default measurable lists
-# DEFAULT_dataNames = ["t", "n"]
-# DEFAULT_dataUnits = ["s", ""]
-
-# Default sub-plots, defined as pairs of ("x", "y")
-# DEFULT_xyNames = [("t", "n")]
-
 class Galileo:
     """The Galileo Measurement Utility"""
     # Default "static constants"
