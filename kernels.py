@@ -10,20 +10,44 @@ import multiprocessing
 import threading
 import random
 from elflab.plotters import plot_live
-import elflab.ui
+import elflab.abstracts
 
-# Constants
+class DummyKernel(elflab.abstracts.KernelBase):
+    """A Kernel that does nothing"""
+    def __init__(self):
+        pass
+    def start(self):
+        pass
+    def stop(self):
+        pass
+    def quit(self):
+        pass
+    def pause(self):
+        pass
+    def resume(self):
+        pass
+    def plot(self):
+        pass
+    def autoScaleOn(self):
+        pass
+    def autoScaleOff(self):
+        pass
+    def clearPlot(self):
+        pass
 
-# ____Caller can omit plotting timings, by using these default
-DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
-DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 
-class Galileo:
+class Galileo(elflab.abstracts.KernelBase):
     """The Galileo Measurement Utility"""
     # Default "static constants"
     title = "Galileo"
     PROMPT = r"?>"
     UI_LAG = 0.3
+    
+    # Constants
+    # ____Caller can omit plotting timings, by using these default
+    DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
+    DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
+    
     # ____Help information
     with open(os.path.join(os.path.dirname(__file__), "misc", "galileo_help_info.txt"), "r") as inpFile:
         HELP_INFO = inpFile.read()
@@ -39,7 +63,7 @@ class Galileo:
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=self.DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=self.DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags

@@ -2,15 +2,38 @@
 # Define the base classes
 ######################################################################################################
 
+class KernelBase:
+    """Base class for kernels"""
+    def __init__(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def start(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def stop(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def quit(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def pause(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def resume(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def plot(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def autoScaleOn(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def autoScaleOff(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+    def clearPlot(self):
+        raise Exception("!!ERROR!! kernel class not implemented!!!")
+
 # Base classes for UI
 
 class UIBase:
     """Base class for user interface"""
     def __init__(self):
-        raise Exception("!!Galileo ERROR!! UI class not implemented!!!")
+        raise Exception("!!ERROR!! UI class not implemented!!!")
         
     def start(self):    # starting the UI
-        raise Exception("!!Galileo ERROR!! UI start() not implemented!!!")
+        raise Exception("!!ERROR!! UI start() not implemented!!!")
         
 
 # classes to define experiments taken with Galileo Utility
@@ -72,53 +95,6 @@ class ExperimentWithLogger(ExperimentBase):
         
     def finish(self):   # To be executed when measurements are terminated, for closing files etc
         raise Exception("!!Galileo ERROR!! Experiment finishing not implemented!!!")        
-        
-class ML_Experiment(ExperimentBase):
-    """An experiment defined by a Measurer object and a Logger object, without a control sequence"""
-    def __init__(self, title, measurer, logger):
-        self.title = title
-        self.measurer = measurer
-        self.logger = logger
-        self.currentValues = measurer.currentValues
-        self.varTitles = measurer.varTitles
-        
-    def start(self):
-        self.measurer.start()
-        self.logger.start()
-        
-    def measure(self):
-        self.measurer.measure()
-        
-    def log(self, dataToLog):
-        self.logger.log(dataToLog)
-        
-    # No control
-    def sequence(self):
-        while True:
-            yield True
-        
-    def finish(self):
-        self.logger.finish()  
-        self.measurer.finish()      
-        
-        
-class Measurer:
-    """A minimal abstraction of a measurement"""
-    currentValues = None   # = {"name": "value"}
-    varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
-    
-    def __init__(self):
-        raise Exception("!!Galileo ERROR!! Measurer initialisation not implemented!!!")
-        
-    def start(self):
-        raise Exception("!!Galileo ERROR!! Measurer start() not implemented!!!")
-    
-    def measure(self):  # Trigger a measurement
-        raise Exception("!!Galileo ERROR!! Measurement triggering method not implemented!!!")
-        
-    def finish(self):
-        raise Exception("!!Galileo ERROR!! Measurer finishing not implemented!!!")
-
         
 class Logger:
     """A minimal abstraction of data-logging"""
