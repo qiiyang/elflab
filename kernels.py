@@ -20,25 +20,25 @@ DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
 class DummyKernel(elflab.abstracts.KernelBase):
     """A Kernel that does nothing"""
     title = "Dummy Kernel"
-    def __init__(self):
-        self.flag_stop = False
+    def __init__(self, experiment=None, **kargs):
+        self.flag_stop = True
         self.flag_quit = False
         self.flag_pause = False
     def start(self):
-        pass
+        self.flag_stop = False
     def stop(self):
-        pass
+        self.flag_stop = True
     def quit(self):
-        pass
+        self.flag_quit = True
     def pause(self):
-        pass
+        self.flag_pause = True
     def resume(self):
-        pass
+        self.flag_pause = False
     def plot(self):
         pass
-    def autoScaleOn(self):
+    def autoscaleOn(self):
         pass
-    def autoScaleOff(self):
+    def autoscaleOff(self):
         pass
     def clearPlot(self):
         pass
@@ -67,47 +67,55 @@ class Galileo(elflab.abstracts.KernelBase):
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval=None, plotXYs=None, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL, dataLock=None):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
-        self.flag_stop = False
+        self.flag_stop = True
         self.flag_quit = False
         self.flag_pause = False
         
         # save the variables
         self.experiment = experiment
+        if measurement_interval is None:
+            self.measurement_interval = experiment.measurement_interval
+        else:
+            self.measurement_interval = measurement_interval
+        if plotXYs is None:
+            self.plotXYs = experiment.plotXYs
+        else:            
+            self.plotXYs = plotXYs
         
         # ____the timing "constants", all in seconds
-        self.measurement_interval = measurement_interval
         self.plot_refresh_interval = plot_refresh_interval
         self.plot_listen_interval = plot_listen_interval
         
         # Save and calculate plotting informations
-        self.NROWS = len(plotXYs)
-        self.NCOLS = len(plotXYs[0])
+        self.NROWS = len(self.plotXYs)
+        self.NCOLS = len(self.plotXYs[0])
         
-        self.plotXYs = plotXYs
         plotLabels = []
         for i in range(self.NROWS):
             plotLabels.append([])
             for j in range(self.NCOLS):
                 plotLabels[i].append([])
                 for k in (0, 1):
-                    plotLabels[i][j].append(experiment.varTitles[plotXYs[i][j][k]])
+                    plotLabels[i][j].append(experiment.varTitles[self.plotXYs[i][j][k]])
         self.plotLabels = plotLabels
         
         # initialize the pipes and locks
         self.plotConn, self.mainConn = multiprocessing.Pipe(duplex=False)
-        self.pipeLock = threading.RLock()
-        self.dataLock = threading.RLock()
-        self.processLock = multiprocessing.RLock()
+        self.pipeLock = threading.Lock()
+        if dataLock is None:
+            self.dataLock = threading.Lock()
+        else:
+            self.dataLock = dataLock
         
         # Initialise RNG
         random.seed()
        
        
-    def keepMeasuring(self, mainConn, processLock, pipeLock, dataLock):
+    def keepMeasuring(self, mainConn, pipeLock, dataLock):
         # Start and finish a dummy thread
         logThread = threading.Thread(target=None)
         logThread.start()
@@ -267,6 +275,7 @@ class Galileo(elflab.abstracts.KernelBase):
 
         
     def start(self):
+        self.flag_stop = False
         # Start the plotting service
         print("    [Galileo:] Starting the live data plotting service......")
         
@@ -278,11 +287,9 @@ class Galileo(elflab.abstracts.KernelBase):
         self.plotStatus["plot_shown"].clear()
         self.plotStatus["command_done"].clear()
         self.plotStatus["request_data"].clear()
-        
         self.plotProc = multiprocessing.Process(target=self.plottingProc, name="Galileo: Data plotting",
                                            kwargs={"status": self.plotStatus,
                                                    "plotConn": self.plotConn,
-                                                   "processLock": self.processLock,
                                                    "xyVars": self.plotXYs,
                                                    "xyLabels": self.plotLabels,
                                                    "refreshInterval": self.plot_refresh_interval,
@@ -291,7 +298,6 @@ class Galileo(elflab.abstracts.KernelBase):
                                            )
 
         self.plotProc.start()
-        
         # Wait for the plotting service to give its first data inquiring signal
         self.plotStatus["request_data"].wait()
         print("    [Galileo:] Live data plotting service has started.\n")
@@ -305,7 +311,7 @@ class Galileo(elflab.abstracts.KernelBase):
             
         self.experiment.start()
         
-        self.measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.processLock, self.pipeLock, self.dataLock))
+        self.measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.pipeLock, self.dataLock))
         self.measureThread.start()
         
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")

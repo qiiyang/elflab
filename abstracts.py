@@ -49,6 +49,7 @@ class ExperimentBase:
     varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     title = None    # Title of the Experiment
+    plot_XYs = None
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")

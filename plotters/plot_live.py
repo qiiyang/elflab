@@ -38,12 +38,11 @@ class PlotLive:
         
         
     # The constructor
-    def __init__(self, status, plotConn, processLock, xyVars, xyLabels, refreshInterval=DEFAULT_PERIOD, listenInterval=DEFAULT_PERIOD):
+    def __init__(self, status, plotConn, xyVars, xyLabels, refreshInterval=DEFAULT_PERIOD, listenInterval=DEFAULT_PERIOD):
                 # self, (one end of a Pipe), process lock,, (list of variables to plot in each subplots), (list of labels), refresh interval in s, sampling interval in s
         
         # Save constants
         self.status = status
-        self.processLock = processLock
         self.plotConn = plotConn
         self.xyVars = xyVars
         self.xyLabels = xyLabels

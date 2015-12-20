@@ -1,5 +1,11 @@
 """ The main script to run the measurements with a mutual inductance probe
 """
+# Import other modules
+import importlib
+import time
+from elflab import abstracts
+from elflab.dataloggers import nologger
+import elflab.projects.sims.mi_common as mi
 
 DEBUG_INFO = False
 
@@ -23,19 +29,14 @@ XYVARS = [
          ]      # Names of variable pairs to plot in each sub-plot
             
 
-    
-# Import other modules
-import importlib
-import time
-from elflab import galileo, abstracts
-from elflab.dataloggers import nologger
-import mi_common as mi
-
-
-class SimMIMeasurer(abstracts.Measurer):
+class SimMI(abstracts.ExperimentWithLogger):
+    title = "simulated MI"
+    measurement_interval = 0.1
     def __init__(self):
+    
         self.currentValues = mi.initialData.copy()
         self.varTitles = mi.dataLabels
+        self.plotXYs = XYVARS
         self.n = 0
         time.perf_counter()
         ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
@@ -46,6 +47,8 @@ class SimMIMeasurer(abstracts.Measurer):
         
         LockinClass = getattr(importlib.import_module(LOCKIN[0]), LOCKIN[1])
         self.lockin = LockinClass()
+        
+        self.logger = nologger.Logger()
         
     def measure(self):
         self.currentValues["n"] += 1
@@ -59,11 +62,6 @@ class SimMIMeasurer(abstracts.Measurer):
         
     def start(self):
         pass
-    
-# The main procedure
-if __name__ == '__main__':
-    measurer = SimMIMeasurer()
-    logger = nologger.Logger()
-    sim = abstracts.ML_Experiment("MI Simulator (No File)", measurer, logger)
-    gali = galileo.Galileo(experiment=sim, measurement_interval=MEASUREMENT_PERIOD, plotXYs=XYVARS)
-    gali.start()
+        
+    def sequence(self):
+        yield True
