@@ -12,6 +12,11 @@ import random
 from elflab.plotters import plot_live
 import elflab.abstracts
 
+# Constants
+# ____Caller can omit plotting timings, by using these default
+DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
+DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
+
 class DummyKernel(elflab.abstracts.KernelBase):
     """A Kernel that does nothing"""
     title = "Dummy Kernel"
@@ -38,6 +43,7 @@ class DummyKernel(elflab.abstracts.KernelBase):
     def clearPlot(self):
         pass
 
+        
 
 class Galileo(elflab.abstracts.KernelBase):
     """The Galileo Measurement Utility"""
@@ -45,11 +51,6 @@ class Galileo(elflab.abstracts.KernelBase):
     title = "Galileo"
     PROMPT = r"?>"
     UI_LAG = 0.3
-    
-    # Constants
-    # ____Caller can omit plotting timings, by using these default
-    DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
-    DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
     
     # ____Help information
     with open(os.path.join(os.path.dirname(__file__), "misc", "galileo_help_info.txt"), "r") as inpFile:
@@ -66,7 +67,7 @@ class Galileo(elflab.abstracts.KernelBase):
     # flag_pause = False
     # flag_plotAlive = False
 
-    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=self.DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=self.DEFAULT_PLOT_LISTEN_INTERVAL):
+    def __init__(self, experiment, measurement_interval, plotXYs, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags

@@ -88,13 +88,13 @@ class PrototypeGUI(elflab.abstracts.UIBase):
 class GenericGUI(elflab.abstracts.UIBase):
     PATH_LENGTH = 60
     FN_LENGTH = 20
-    def __init__(self, kernel):
+    def __init__(self, Kernel, controller=None):
         
         # setting gui root
-        self.kernel = kernel
+        self.Kernel = Kernel
         self.root = tk.Tk()
         try:
-            title = kernel.title
+            title = Kernel.title
         except Exception:
             title = "Undefined Kernel Title"
         self.root.title(title)
