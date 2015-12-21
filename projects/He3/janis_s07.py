@@ -2,6 +2,7 @@
 """
 import time
 import math
+import threading
 
 from elflab.devices.T_controllers.lakeshore import Lakeshore340
 
@@ -109,8 +110,29 @@ VAR_INIT = {
                  
 
 SENS_RANGE = (0.1, 0.8)
-                 
-class JanisS07TwoLockin(abstracts.ExperimentBase):
+
+class JanisS07Controller(abstracts.ControllerBase):
+    """Controller for s07 Janis"""
+    T_MIN = 0.0
+    R_MIN = 0.1
+    def __init__(self, kernel):
+        self.kernel = kernel
+        self.lakeshore = kernel.experiment.lakeshore
+        self.instrument_lock = kernel.instrument_lock
+        self.data_lock = kernel.data_lock
+        
+    def heater_off(self, loop):
+        self.lakeshore.set_setp(loop, T_MIN)
+        self.lakeshore.set_ramp(loop, 0, R_MIN)
+    
+    def step(self, loop, T):
+        self.lakeshore.set_setp(loop, T_MIN)
+        self.lakeshore.set_ramp(loop, 0, R_MIN)
+        
+    def terminate(self):
+        raise Exception("controller class not implimented")
+                
+class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     # "Public" Variables
     title = "Janis S07 He-3: with Two Lock In Amplifiers"
     
@@ -194,12 +216,8 @@ class JanisS07TwoLockin(abstracts.ExperimentBase):
         
     def finish(self):
         self.logger.finish()
-        del self.lakeshore
-        del self.magnet
-        del self.lockin1
-        del self.lockin2
 
-class JanisS07PAR124MI(JanisS07TwoLockin):
+class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
     # "Public" Variables
     title = "Janis S07 He-3: MI measurements with PAR 124"
     
@@ -237,4 +255,4 @@ class JanisS07PAR124MI(JanisS07TwoLockin):
         
         magnet = fake_magnets.ConstMagnet()
         
-        super().__init__(params, lockin1, lockin2, magnet)
+        super().__init__(params, filename, lockin1, lockin2, magnet)

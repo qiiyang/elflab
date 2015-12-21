@@ -153,11 +153,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             "instrument_lock": self.instrument_lock
         }
         
-        self.controller_kwargs = {
-            "data_lock": self.data_lock,
-            "instrument_lock": self.instrument_lock,
-            "controller_lock": self.controller_lock
-        }
+        self.controller_kwargs = {}
         
         # Define styles
         style = ttk.Style()

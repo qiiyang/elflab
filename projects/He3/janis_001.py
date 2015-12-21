@@ -136,8 +136,7 @@ class Janis001He3TwoLockins(abstracts.ExperimentBase):
         
         # Reset counter and timer
         self.n = 0
-        self.t0 = time.time()
-        time.perf_counter()
+        self.t0 = time.time() - time.perf_counter()
         # Start the csv logger
         self.logger.start()
         
