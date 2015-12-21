@@ -56,7 +56,7 @@ class ExperimentBase:
     
     var_order = None    # order of variables
     var_titles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
-    current_values = None   # = {"name": "value"}
+    #current_values = None   # = {"name": "value"}
     format_strings = None   # Format strings for the variables
     
     plotXYs = None

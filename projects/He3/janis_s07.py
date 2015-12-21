@@ -1,14 +1,18 @@
 """ Common definitions / whatever shared for all Janis He-3 related scripts
 """
 import time
-import csv
-import numpy as np
+import math
 
 from elflab.devices.T_controllers.lakeshore import Lakeshore340
 
 import elflab.abstracts as abstracts
 import elflab.dataloggers.csvlogger as csvlogger
 
+from elflab.devices.lockins import fake_lockins, par
+from elflab.devices.magnets import fake_magnets
+from elflab.devices.dmms import keithley
+
+T_RUO = 20. # Temperature below which to use RuO readings
 
 GPIB_LAKESHORE340 = 11
 GPIB_DMM = 19
@@ -109,35 +113,41 @@ SENS_RANGE = (0.1, 0.8)
 class JanisS07TwoLockin(abstracts.ExperimentBase):
     # "Public" Variables
     title = "Janis S07 He-3: with Two Lock In Amplifiers"
-    current_values = VAR_INIT.copy()   # = {"name": "value"}
-    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
-    plotXYs = [[""]
-    ]
-    default_params = None
+    default_params = {
+        "R_series1 / Ohm": 'no entry',
+        "R_series2 / Ohm": 'no entry'
+    }
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_sample"), ("t", "T_1K")]
+            ]
+    
     default_comments = ""
-    def __init__(self, lockin1, R_series1, lockin2, R_series2, magnet, logfilename):
+    def __init__(self, params, filename, lockin1, lockin2, magnet):
         # Define the temperature controllers
         self.lakeshore = Lakeshore340(GPIB_LAKESHORE340)
     
         # Save parameters
         self.lockin1 = lockin1
-        self.R_series1 = R_series1
+        self.R_series1 = float(params["R_series1 / Ohm"])
         self.lockin2 = lockin2
-        self.R_series2 = R_series2
+        self.R_series2 = float(params["R_series2 / Ohm"])
         self.magnet = magnet
         
         # Initialise variables
-        self.currentValues = VAR_INIT.copy()
-        self.varTitles = VAR_TITLES.copy()
-        
+        self.current_values = VAR_INIT.copy()   # = {"name": "value"}
         # create a csv logger
-        self.logger = csvlogger.Logger(logfilename, VAR_LIST, VAR_TITLES, VAR_FORMATS)
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
         
     
     def start(self):
         # Connect to instruments
-        self.cryocon.connect()
         self.lakeshore.connect()
         self.lockin1.connect()
         self.lockin2.connect()
@@ -150,17 +160,24 @@ class JanisS07TwoLockin(abstracts.ExperimentBase):
         
         # Reset counter and timer
         self.n = 0
-        self.t0 = time.time()
-        time.perf_counter()
+        self.t0 = time.perf_counter()
         # Start the csv logger
         self.logger.start()
         
     def measure(self):
         self.currentValues["n"] += 1
-        self.currentValues["t"] = self.t0 + time.perf_counter()
-        t,self.currentValues["T_flow"] = self.cryocon.read("A")
-        t,self.currentValues["T_sample"] = self.cryocon.read("B")
-        t,self.currentValues["T_sorb"] = self.lakeshore.read("A")
+        t,self.currentValues["T_A"] = self.lakeshore.read("A")
+        t,self.currentValues["T_B"] = self.lakeshore.read("B")
+        t,self.currentValues["T_sorb"] = self.lakeshore.read("C")
+        t,self.currentValues["T_1K"] = self.lakeshore.read("D")
+        
+        self.currentValues["t"] = t - self.t0
+        
+        if math.isnan(self.currentValues["T_B"]) or (self.currentValues["T_B"] < T_RUO):
+            self.currentValues["T_sample"] = self.currentValues["T_A"]
+        else:
+            self.currentValues["T_sample"] = self.currentValues["T_B"]
+        
         t,self.currentValues["H"],t = self.magnet.read()
         t,self.currentValues["X1"],self.currentValues["Y1"],t,t,self.currentValues["f1"],self.currentValues["Vex1"] = self.lockin1.read()
         t,self.currentValues["X2"],self.currentValues["Y2"],t,t,self.currentValues["f2"],self.currentValues["Vex2"] = self.lockin2.read()
@@ -178,24 +195,46 @@ class JanisS07TwoLockin(abstracts.ExperimentBase):
     def finish(self):
         self.logger.finish()
         del self.lakeshore
-        del self.cryocon
         del self.magnet
         del self.lockin1
         del self.lockin2
 
-
-# load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
-def loadfile(filename): 
-    with open(filename, mode="r") as f:
-        reader = csv.reader(f)
-        next(reader)
-        datalist = []
-        for var in VAR_LIST:
-            datalist.append([])
-        for row in reader:
-            for i in range(0, len(VAR_LIST)):
-                datalist[i].append(row[i])
-        datadict = {}
-        for i in range(0, len(VAR_LIST)):
-            datadict[VAR_LIST[i]] = np.array(datalist[i], dtype=np.float_)
-        return datadict
+class JanisS07PAR124MI(JanisS07TwoLockin):
+    # "Public" Variables
+    title = "Janis S07 He-3: MI measurements with PAR 124"
+    
+    default_params = {
+        "R_series1 / Ohm": 'no entry',
+        "R_series2 / Ohm": 'no entry',
+        "sens / V": 'no entry',
+        "theta / degrees": 'no entry',
+        "f / Hz": 'no entry',
+        "Vout / V": 'no entry',
+        "transformer mode": '0 for False'
+    }
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "X1"), ("t", "T_sample")],
+            [("t", "T_1K"), ("t", "T_sorb")]
+            ]
+    
+    default_comments = ""
+    
+    def __init__(self, params, filename):   
+        sens = float(params["sens / V"])
+        theta = float(params["theta / degrees"])
+        f = float(params["f / Hz"])
+        Vout = float(params["Vout / V"])
+        transformer = (int(params["transformer mode"]) != 0)
+        
+        dmm = keithley.Keithley196(GPIB_DMM)
+        lockin1 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=True)
+        lockin2 = fake_lockins.ConstLockin(float("nan"))
+        
+        magnet = fake_magnets.ConstMagnet()
+        
+        super().__init__(params, lockin1, lockin2, magnet)
