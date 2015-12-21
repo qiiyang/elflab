@@ -341,6 +341,8 @@ class GenericGUI(elflab.abstracts.UIBase):
             self.buttonAutoOn.configure(state=s2)
             self.buttonAutoOff.configure(state=s2)
             self.buttonClear.configure(state=s2)
+            for child in self.controlFrame.winfo_children():
+                child.configure(state=s2)
             
             # update state label
             if state == 0:
