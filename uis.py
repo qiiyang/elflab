@@ -225,9 +225,11 @@ class GenericGUI(elflab.abstracts.UIBase):
             r += 2
         
             # Comments box
+        self.comment_button = ttk.Button(self.commentFrame, text="update", command=self.update_comment, state="disabled")
+        self.comment_button.grid(row=0, column=0, sticky="nw")
         self.comment_box = ScrolledText(self.commentFrame, width=40, height=10)
         self.comment_box.insert(0., Experiment.default_comments)
-        self.comment_box.pack()
+        self.comment_box.grid(row=1, column=0, sticky="nw")
         
             # commands
         self.kernelLabel = ttk.Label(self.commandFrame, text="stopped", justify=tk.CENTER, background="", relief="groove")
@@ -306,6 +308,15 @@ class GenericGUI(elflab.abstracts.UIBase):
             folder_txt = "...{}".format(self.folder_str[-self.PATH_LENGTH+3:l])
         self.folder_label.config(text=folder_txt)
 
+    def update_comment(self):
+        with open(self.comments_file, "a") as f:)
+            f.write("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
+            f.write("\nUPDATE:\n")
+            f.write("Local time (YYYY/MM/DD, HH:MM:SS): {}\n".format(time.strftime("%Y/%m/%d, %H:%M:%S")))
+            f.write("____________________________________________________________\n")
+            t = self.comment_box.get(0.0, tk.END)
+            f.write(t)     
+        
     # Refresh UI according to the state
     def set_ui_state(self, state):
         with self.ui_lock:
@@ -323,9 +334,8 @@ class GenericGUI(elflab.abstracts.UIBase):
                 child.configure(state=s1)
             for child in self.paramFrame.winfo_children():
                 child.configure(state=s1)
-                
-            for child in self.controlFrame.winfo_children():
-                child.configure(state=s1)
+            
+            self.comment_button.configure(state=s2)
             self.buttonPause.configure(state=s2)
             self.buttonPlot.configure(state=s2)
             self.buttonAutoOn.configure(state=s2)
