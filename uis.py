@@ -87,9 +87,11 @@ class PrototypeGUI(elflab.abstracts.UIBase):
 # A GUI for a generic experiment, with file, comments and a controller panel
 class GenericGUI(elflab.abstracts.UIBase):
     # CONSTANTS
-    PATH_LENGTH = 60
+    PATH_LENGTH = 50
     FN_LENGTH = 20
+    
     VAR_FORMAT = "{}{}={:.5g};     "
+    PARAM_LENGTH = 15
     
     UI_REFRESH = 0.1   # Update ui every #seconds
     STATUS_REFRESH = 1.0    # Update the status frame every # seconds
@@ -108,7 +110,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.Experiment = Experiment
         self.Controller = Controller
         
-        self.param_list = Experiment.param_list
+        self.params = Experiment.default_params.copy()
         self.var_titles = Experiment.var_titles
         
         # declare objects
@@ -178,8 +180,6 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         self.paramFrame = ttk.LabelFrame(self.mainFrame, text="Parameters")
         self.paramFrame.grid(row=1, column=0, rowspan=3, sticky="nswe")
-        w = ttk.Label(self.paramFrame, text="text")
-        w.pack()
         
         self.commentFrame = ttk.LabelFrame(self.mainFrame, text="comments")
         self.commentFrame.grid(row=1, column=1, sticky="nwe")
@@ -207,6 +207,18 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.folder_label = ttk.Label(self.fileFrame, width=self.PATH_LENGTH, justify=tk.LEFT)
         self.folder_label.pack(side=tk.LEFT)
         self.set_folder(self.folder_str)
+        
+            # Parameters
+        self.param_vars = {}
+        r = 0
+        for par in self.params:
+            w = ttk.Label(self.paramFrame, text=par)
+            w.grid(column=0, row=r, sticky="nw")
+            self.param_vars[par] = tk.StringVar()
+            self.param_vars[par].set(self.params[par])
+            w = ttk.Entry(self.paramFrame, width=self.PARAM_LENGTH, textvariable=self.param_vars[par])
+            w.grid(column=0, row=r+1, sticky="nw", pady=(0,3))
+            r += 2
         
             # Comments box
         self.comment_box = tk.Text(self.commentFrame, width=40, height=10)

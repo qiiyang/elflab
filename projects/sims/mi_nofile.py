@@ -32,10 +32,10 @@ XYVARS = [
 class SimMI(abstracts.ExperimentWithLogger):
     title = "simulated MI"
     
-    param_list = ["sample_interval"]
+    default_params = {"sample_interval":'0.1', "dummy":'10'}
     var_titles = mi.dataLabels
     
-    def __init__(self, params={"sample_interval":0.1}, **kwargs):
+    def __init__(self, params=default_params, **kwargs):
         self.measurement_interval = float(params["sample_interval"])
         self.current_values = mi.initialData.copy()
         self.plotXYs = XYVARS
