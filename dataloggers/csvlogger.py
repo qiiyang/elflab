@@ -16,12 +16,12 @@ class Logger(abstracts.LoggerBase):
     # file
     # csvwriter: a Python cvs writer that writes to file
     
-    def __init__(self, filename, var_list, var_titles, format_strings, save_interval=DEFAULT_SAVE_INTERVAL, openKwargs={}, csvKwargs={}):
+    def __init__(self, filename, var_order, var_titles, format_strings, save_interval=DEFAULT_SAVE_INTERVAL, openKwargs={}, csvKwargs={}):
                 #(self, file path/name, ["var names"], {"names": "full titles"}, {"names": "format strings"}, saving interval, additional keyword argument dictionary for python open(), additional keyword arguments dictionary for python csv writer)
         print("        [CSV Logger:] Data will be logged in the file:\n>>>>>>>>>>>>\"{}\"<<<<<<<<<<<<\n".format(filename))
         # Save parameters
         self.filename = filename
-        self.var_list = var_list
+        self.var_order = var_order
         self.var_titles = var_titles
         self.format_strings = format_strings
         self.save_interval = save_interval
@@ -33,7 +33,7 @@ class Logger(abstracts.LoggerBase):
         self.file = open(self.filename, mode="at", newline='', **self.openKwargs)
         self.csvwriter = csv.writer(self.file, **self.csvKwargs)
         
-        headerrow = [self.var_titles[varName] for varName in self.var_list]
+        headerrow = [self.var_titles[varName] for varName in self.var_order]
         self.csvwriter.writerow(headerrow)
         
         # Initialise the timer and save
@@ -42,7 +42,7 @@ class Logger(abstracts.LoggerBase):
         
         
     def log(self, dataToLog):
-        row = [self.format_strings[varName].format(dataToLog[varName]) for varName in self.var_list]
+        row = [self.format_strings[varName].format(dataToLog[varName]) for varName in self.var_order]
         self.csvwriter.writerow(row)
         t = time.perf_counter()
         if (t - self.lastSaved) > self.save_interval:

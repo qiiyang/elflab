@@ -33,11 +33,15 @@ class SimMI(abstracts.ExperimentWithLogger):
     title = "simulated MI"
     
     default_params = {"sample_interval":'0.1', "dummy":'10'}
+    var_order = mi.indicesData
     var_titles = mi.dataLabels
+    format_strings = mi.formatStrings
     
-    def __init__(self, params, filename,  **kwargs):
+    def __init__(self, params, filename, **kwargs):
         self.measurement_interval = float(params["sample_interval"])
         self.current_values = mi.initialData.copy()
+        
+        
         self.plotXYs = XYVARS
         self.n = 0
         time.perf_counter()
@@ -50,7 +54,7 @@ class SimMI(abstracts.ExperimentWithLogger):
         LockinClass = getattr(importlib.import_module(LOCKIN[0]), LOCKIN[1])
         self.lockin = LockinClass()
         
-        self.logger = csvLogger.Logger()
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
         
     def measure(self):
         self.current_values["n"] += 1
@@ -63,7 +67,7 @@ class SimMI(abstracts.ExperimentWithLogger):
         pass
         
     def start(self):
-        pass
+        self.logger.start()
         
     def sequence(self):
         while True:
