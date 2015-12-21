@@ -118,7 +118,7 @@ class LoggerBase:
 
 class ControllerBase:
     """Controller Base Class"""
-    def __init__(self, kernel, instrument_lock, data_lock, controller_lock):
+    def __init__(self, kernel, controller_lock):
         raise Exception("controller class not implimented")
     
     def terminate(self):

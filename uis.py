@@ -286,11 +286,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.ybar.config(command=self.mainCanvas.yview)
         self.xbar.config(command=self.mainCanvas.xview)
         self.mainCanvas.config(xscrollcommand=self.xbar.set, yscrollcommand=self.ybar.set)
-        
-        # Starting a controller instance
-        if self.Controller is not None:
-            self.controller = self.Controller(kernel=None, **self.controller_kwargs)
-        
+                
         # Start the gui
         self.update_interface()
         self.root.mainloop()
