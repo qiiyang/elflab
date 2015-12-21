@@ -258,7 +258,10 @@ class GenericGUI(elflab.abstracts.UIBase):
             child.grid_configure(padx=5, pady=5)
         
         # Status
-        self.statusLabel = ttk.Label(self.statusFrame, text="", justify=tk.LEFT, foreground="blue")
+        st = ""
+        for var in self.var_titles:
+            st = "{}{}={};     ".format(st, self.var_titles[var], "not available")
+        self.statusLabel = ttk.Label(self.statusFrame, text=st, justify=tk.LEFT, foreground="blue")
         self.statusLabel.pack(side=tk.LEFT)
         
     def quit(self):
@@ -269,6 +272,11 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.root.quit()
     
     def start(self):
+        # Calculate the wrapping length for status
+        self.mainFrame.update()
+        w = self.commentFrame.winfo_reqwidth() + self.commandFrame.winfo_reqwidth() - 1
+        self.statusLabel.configure(wraplength=w)
+        
         # Update Frames and Define the scrolling
         self.mainFrame.update()
         self.mainCanvas.config(width=self.mainFrame.winfo_reqwidth(), height=self.mainFrame.winfo_reqheight(), scrollregion = (0, 0, self.mainFrame.winfo_reqwidth(), self.mainFrame.winfo_reqheight()))
@@ -276,10 +284,6 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.ybar.config(command=self.mainCanvas.yview)
         self.xbar.config(command=self.mainCanvas.xview)
         self.mainCanvas.config(xscrollcommand=self.xbar.set, yscrollcommand=self.ybar.set)
-
-        # Calculate the wrapping length for status
-        w = self.commentFrame.winfo_reqwidth() + self.commandFrame.winfo_reqwidth() - 1
-        self.statusLabel.configure(wraplength=w)
         
         # Starting a controller instance
         if self.Controller is not None:
