@@ -5,7 +5,7 @@ import csv
 from elflab import abstracts
 
 # Constants
-DEFAULT_SAVE_EVERY = 10.    # in s
+DEFAULT_SAVE_INTERVAL = 10.    # in s
 
 class Logger(abstracts.LoggerBase):
     """Implementing a Logger writing a CSV file"""
@@ -16,15 +16,15 @@ class Logger(abstracts.LoggerBase):
     # file
     # csvwriter: a Python cvs writer that writes to file
     
-    def __init__(self, filename, varList, varTitles, formatStrings, saveEvery=DEFAULT_SAVE_EVERY, openKwargs={}, csvKwargs={}):
+    def __init__(self, filename, var_list, var_titles, format_strings, save_interval=DEFAULT_SAVE_INTERVAL, openKwargs={}, csvKwargs={}):
                 #(self, file path/name, ["var names"], {"names": "full titles"}, {"names": "format strings"}, saving interval, additional keyword argument dictionary for python open(), additional keyword arguments dictionary for python csv writer)
         print("        [CSV Logger:] Data will be logged in the file:\n>>>>>>>>>>>>\"{}\"<<<<<<<<<<<<\n".format(filename))
         # Save parameters
         self.filename = filename
-        self.varList = varList
-        self.varTitles = varTitles
-        self.formatStrings = formatStrings
-        self.saveEvery = saveEvery
+        self.var_list = var_list
+        self.var_titles = var_titles
+        self.format_strings = format_strings
+        self.save_interval = save_interval
         self.openKwargs = openKwargs
         self.csvKwargs = csvKwargs
         
@@ -33,7 +33,7 @@ class Logger(abstracts.LoggerBase):
         self.file = open(self.filename, mode="at", newline='', **self.openKwargs)
         self.csvwriter = csv.writer(self.file, **self.csvKwargs)
         
-        headerrow = [self.varTitles[varName] for varName in self.varList]
+        headerrow = [self.var_titles[varName] for varName in self.var_list]
         self.csvwriter.writerow(headerrow)
         
         # Initialise the timer and save
@@ -42,10 +42,10 @@ class Logger(abstracts.LoggerBase):
         
         
     def log(self, dataToLog):
-        row = [self.formatStrings[varName].format(dataToLog[varName]) for varName in self.varList]
+        row = [self.format_strings[varName].format(dataToLog[varName]) for varName in self.var_list]
         self.csvwriter.writerow(row)
         t = time.perf_counter()
-        if (t - self.lastSaved) > self.saveEvery:
+        if (t - self.lastSaved) > self.save_interval:
             self.lastSaved = t
             self.file.flush()
             

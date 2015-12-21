@@ -33,6 +33,7 @@ class SimMI(abstracts.ExperimentWithLogger):
     title = "simulated MI"
     
     default_params = {"sample_interval":'0.1', "dummy":'10'}
+    var_order = mi.indicesData
     var_titles = mi.dataLabels
     
     def __init__(self, params, **kwargs):

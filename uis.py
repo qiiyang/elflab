@@ -94,7 +94,8 @@ class GenericGUI(elflab.abstracts.UIBase):
     PATH_LENGTH = 50
     FN_LENGTH = 20
     
-    VAR_FORMAT = "{}{}={:.5g};     "
+    VAR_NUM_FORMAT = "{}{}={:.5g};     "
+    VAR_STR_FORMAT = "{}{}={};     "
     PARAM_LENGTH = 15
     
     UI_REFRESH = 0.1   # Update ui every #seconds
@@ -115,6 +116,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.Controller = Controller
         
         self.params = Experiment.default_params.copy()
+        self.var_order = Experiment.var_order
         self.var_titles = Experiment.var_titles
         
         # declare objects
@@ -261,8 +263,8 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         # Status
         st = ""
-        for var in self.var_titles:
-            st = "{}{}={};     ".format(st, self.var_titles[var], "not available")
+        for var in self.var_order:
+            st = self.VAR_STR_FORMAT.format(st, self.var_titles[var], "not available")
         self.statusLabel = ttk.Label(self.statusFrame, text=st, justify=tk.LEFT, foreground="blue")
         self.statusLabel.grid(sticky="nw")
         
@@ -305,7 +307,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.folder_label.config(text=folder_txt)
 
     def update_comment(self):
-        with open(self.comments_file, "a") as f:)
+        with open(self.comments_file, "a") as f:
             f.write("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
             f.write("\nUPDATE:\n")
             f.write("Local time (YYYY/MM/DD, HH:MM:SS): {}\n".format(time.strftime("%Y/%m/%d, %H:%M:%S")))
@@ -424,8 +426,12 @@ class GenericGUI(elflab.abstracts.UIBase):
     def update_status(self):
         st = ""
         with self.data_lock:
-            for var in self.var_titles:
-                st = self.VAR_FORMAT.format(st, self.var_titles[var], self.kernel.current_values[var])
+            for var in self.var_order:
+                v = self.kernel.current_values[var]
+                if isinstance(v, float):
+                    st = self.VAR_NUM_FORMAT.format(st, self.var_titles[var], v)
+                else:
+                    st = self.VAR_STR_FORMAT.format(st, self.var_titles[var], v)
         
         with self.ui_lock:
             self.statusLabel.configure(text=st)

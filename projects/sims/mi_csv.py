@@ -1,5 +1,11 @@
 """ The main script to run the measurements with a mutual inductance probe
 """
+# Import other modules
+import importlib
+import time
+from elflab import abstracts
+from elflab.dataloggers import csvlogger
+import elflab.projects.sims.mi_common as mi
 
 DEBUG_INFO = False
 
@@ -23,23 +29,42 @@ XYVARS = [
          ]      # Names of variable pairs to plot in each sub-plot
             
 
+class SimMI(abstracts.ExperimentWithLogger):
+    title = "simulated MI"
     
-# Import other modules
-import time
-import importlib
-from elflab import galileo, abstracts
-from elflab.dataloggers import csvlogger
-import mi_common as mi
-from mi_nofile import SimMIMeasurer
-
+    default_params = {"sample_interval":'0.1', "dummy":'10'}
+    var_titles = mi.dataLabels
     
-# The main procedure
-if __name__ == '__main__':
-    
-    timeString = time.strftime("%Y%m%d_%H.%M.%S")
-    filename = r"D:\downloads\temp{}.csv".format(timeString)
-    measurer = SimMIMeasurer()
-    logger = csvlogger.Logger(filename, mi.indicesData, mi.dataLabels, mi.formatStrings)
-    sim = abstracts.ML_Experiment("MI Simulator - csv logging", measurer, logger)
-    gali = galileo.Galileo(experiment=sim, measurement_interval=MEASUREMENT_PERIOD, plotXYs=XYVARS)
-    gali.start()
+    def __init__(self, params, filename,  **kwargs):
+        self.measurement_interval = float(params["sample_interval"])
+        self.current_values = mi.initialData.copy()
+        self.plotXYs = XYVARS
+        self.n = 0
+        time.perf_counter()
+        ThermClass = getattr(importlib.import_module(THERMOMETER[0]), THERMOMETER[1])
+        self.therm = ThermClass()
+        
+        MagnetClass = getattr(importlib.import_module(MAGNET[0]), MAGNET[1])
+        self.magnet = MagnetClass()
+        
+        LockinClass = getattr(importlib.import_module(LOCKIN[0]), LOCKIN[1])
+        self.lockin = LockinClass()
+        
+        self.logger = csvLogger.Logger()
+        
+    def measure(self):
+        self.current_values["n"] += 1
+        self.current_values["t"] = time.perf_counter()
+        (t, self.current_values["I_therm"], self.current_values["V_therm"], self.current_values["T"]) = self.therm.read()
+        (t, self.current_values["I_mag"], self.current_values["H"]) = self.magnet.read()
+        (self.current_values["X"], self.current_values["Y"]) = self.lockin.readXY()
+        
+    def finish(self):
+        pass
+        
+    def start(self):
+        pass
+        
+    def sequence(self):
+        while True:
+            yield True

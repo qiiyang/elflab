@@ -51,7 +51,7 @@ class ExperimentBase:
     
     # "Public" Variables
     current_values = None   # = {"name": "value"}
-    varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    var_titles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     title = None    # Title of the Experiment
     plotXYs = None
