@@ -56,6 +56,7 @@ class ExperimentBase:
     title = None    # Title of the Experiment
     plotXYs = None
     default_params = None
+    default_comments = ""
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")

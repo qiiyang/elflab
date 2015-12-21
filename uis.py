@@ -2,12 +2,14 @@
 # A prototype GUI
 ######################################################################################################
 import time
+import os
 import multiprocessing
 
 import elflab.abstracts
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from tkinter.scrolledtext import ScrolledText
 
 class Text:
     def __init__(self, kernel):
@@ -87,6 +89,8 @@ class PrototypeGUI(elflab.abstracts.UIBase):
 # A GUI for a generic experiment, with file, comments and a controller panel
 class GenericGUI(elflab.abstracts.UIBase):
     # CONSTANTS
+    DEFAULT_FOLDER = r"d:\data_dump"
+    DEFAULT_FN = r"datalog"
     PATH_LENGTH = 50
     FN_LENGTH = 20
     
@@ -127,9 +131,9 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.root.title(title)
         
         # Declare containers
-        self.folder_str = r"C:/data"
+        self.folder_str = self.DEFAULT_FOLDER
         self.filename_var = tk.StringVar()
-        self.filename_var.set(r"logfile")
+        self.filename_var.set(self.DEFAULT_FN)
         
         # Declare other variables
         self.controller_time = self.status_time = time.perf_counter()
@@ -222,6 +226,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         
             # Comments box
         self.comment_box = tk.Text(self.commentFrame, width=40, height=10)
+        self.comment_box.insert(0., Experiment.default_comments)
         self.comment_box.pack()
         
             # commands
@@ -337,13 +342,32 @@ class GenericGUI(elflab.abstracts.UIBase):
                 
         
     def start_kernel(self):
-        try:
+        try:            
             # Read parameters
             for par in self.params:
                 self.params[par] = self.param_vars[par].get()
             if self.kernel is not None:
                 self.kernel.quit()
-            self.experiment = self.Experiment(params=self.params)
+            
+            # Parse file names, and create the comments file
+            filename = self.filename_var.get()
+            timestring = time.strftime("%Y.%m.%d_%H.%M.%S")
+            self.data_file = os.path.join(self.folder_str, "{0}_{1}.dat".format(timestring, filename))
+            self.comments_file = os.path.join(self.folder_str, "{0}_{1}_comments.txt".format(timestring, filename))
+            
+            with open(self.comments_file, "w") as f:
+                f.write("experiment: \"{}\"\n".format(self.Experiment.title))
+                f.write("Local time (YYYY/MM/DD, HH:MM:SS): {}\n".format(time.strftime("%Y/%m/%d, %H:%M:%S")))
+                f.write("____________________________________________________________\n")
+                t = self.comment_box.get(0.0, tk.END)
+                f.write(t)
+                f.write("\n\nParameters:\n")
+                for par in self.params:
+                    f.write("   {} = {}\n".format(par, self.params[par]))
+                
+                           
+            # Start the experiment and the kernel
+            self.experiment = self.Experiment(params=self.params, filename=self.data_file)
             self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
             
