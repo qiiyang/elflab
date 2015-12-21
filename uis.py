@@ -125,7 +125,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         # setting gui root
         self.root = tk.Tk()
         try:
-            title = Kernel.title
+            title = "{}: {}".format(Kernel.title, Experiment.title)
         except Exception:
             title = "Undefined Kernel Title"
         self.root.title(title)
@@ -225,7 +225,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             r += 2
         
             # Comments box
-        self.comment_box = tk.Text(self.commentFrame, width=40, height=10)
+        self.comment_box = ScrolledText(self.commentFrame, width=40, height=10)
         self.comment_box.insert(0., Experiment.default_comments)
         self.comment_box.pack()
         
@@ -262,7 +262,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         for var in self.var_titles:
             st = "{}{}={};     ".format(st, self.var_titles[var], "not available")
         self.statusLabel = ttk.Label(self.statusFrame, text=st, justify=tk.LEFT, foreground="blue")
-        self.statusLabel.pack(side=tk.LEFT)
+        self.statusLabel.grid(sticky="nw")
         
     def quit(self):
         if self.kernel is not None:
@@ -320,8 +320,6 @@ class GenericGUI(elflab.abstracts.UIBase):
                 s2 = "disable"
                 self.buttonStart.configure(text="start", style="TButton", command=self.start_kernel)
             for child in self.fileFrame.winfo_children():
-                child.configure(state=s1)
-            for child in self.commentFrame.winfo_children():
                 child.configure(state=s1)
             for child in self.paramFrame.winfo_children():
                 child.configure(state=s1)
