@@ -417,7 +417,7 @@ class GenericGUI(elflab.abstracts.UIBase):
     
     # book keeping: update the controller status
     def update_controller(self):
-        pass
+        self.controller_time = time.perf_counter()
     
     def update_status(self):
         st = ""
@@ -431,6 +431,8 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         with self.ui_lock:
             self.statusLabel.configure(text=st)
+            
+        self.status_time = time.perf_counter()
         
     # book keeping: update the interface
     def update_interface(self):
@@ -447,11 +449,9 @@ class GenericGUI(elflab.abstracts.UIBase):
         t = time.perf_counter()
         
         if (self.state > 0) and (t - self.status_time > self.STATUS_REFRESH):
-            self.status_time = t
             self.update_status()
             
         if t - self.controller_time > self.CONTROLLER_REFRESH:
-            self.controller_time = t
             self.update_controller()
             
         self.root.after(round(self.UI_REFRESH*1000.), self.update_interface)
