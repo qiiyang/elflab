@@ -111,9 +111,12 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.param_list = Experiment.param_list
         self.var_titles = Experiment.var_titles
         
-        # setting gui root
+        # declare objects
         self.kernel = None
         self.experiment = None
+        self.controller = None
+        
+        # setting gui root
         self.root = tk.Tk()
         try:
             title = Kernel.title
@@ -129,16 +132,23 @@ class GenericGUI(elflab.abstracts.UIBase):
         # Declare other variables
         self.controller_time = self.status_time = time.perf_counter()
 
-        self.instrumentLock = multiprocessing.Lock()
-        self.dataLock = multiprocessing.Lock()
-        self.uiLock = multiprocessing.Lock()
+        self.instrument_lock = multiprocessing.Lock()
+        self.data_lock = multiprocessing.Lock()
+        self.ui_lock = multiprocessing.Lock()
+        self.controller_lock = multiprocessing.Lock()
         
         
         self.kernel_kwargs = {
             "plot_refresh_interval": self.DEFAULT_PLOT_REFRESH_INTERVAL,
             "plot_listen_interval": self.DEFAULT_PLOT_LISTEN_INTERVAL,
-            "dataLock": self.dataLock,
-            "instrumentLock": self.instrumentLock
+            "data_lock": self.data_lock,
+            "instrument_lock": self.instrument_lock
+        }
+        
+        self.controller_kwargs = {
+            "data_lock": self.data_lock,
+            "instrument_lock": self.instrument_lock,
+            "controller_lock": self.controller_lock
         }
         
         # Define styles
@@ -237,6 +247,8 @@ class GenericGUI(elflab.abstracts.UIBase):
     def quit(self):
         if self.kernel is not None:
             self.kernel.quit()
+        if self.controller is not None:
+            self.controller.terminate()
         self.root.quit()
     
     def start(self):
@@ -251,6 +263,10 @@ class GenericGUI(elflab.abstracts.UIBase):
         # Calculate the wrapping length for status
         w = self.commentFrame.winfo_reqwidth() + self.commandFrame.winfo_reqwidth() - 1
         self.statusLabel.configure(wraplength=w)
+        
+        # Starting a controller instance
+        if self.Controller is not None:
+            self.controller = self.Controller(kernel=None)
         
         # Start the gui
         self.update_interface()
@@ -271,7 +287,7 @@ class GenericGUI(elflab.abstracts.UIBase):
 
     # Refresh UI according to the state
     def set_ui_state(self, state):
-        with self.uiLock:
+        with self.ui_lock:
             self.state = state
             # Disable / enable widgets
             if state > 0:
@@ -312,13 +328,20 @@ class GenericGUI(elflab.abstracts.UIBase):
         try:
             if self.kernel is not None:
                 self.kernel.quit()
+            #if self.
             self.experiment = self.Experiment()
             self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
+            
+            # Restart a controller instance
+            if self.controller is not None:
+                self.controller.terminate()
+            if self.Controller is not None:
+                self.controller = self.Controller(kernel=self.kernel)
         except Exception as err:
             messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
         else:
-            with self.uiLock:
+            with self.ui_lock:
                 self.buttonStart.configure(text="stop", style="GreenBG.TButton", command=self.stop_kernel)
         
     def stop_kernel(self):
@@ -326,12 +349,12 @@ class GenericGUI(elflab.abstracts.UIBase):
         
     def pause_kernel(self):
         self.kernel.pause()
-        with self.uiLock:
+        with self.ui_lock:
             self.buttonPause.configure(text="resume", style="GreenBG.TButton", command=self.resume_kernel)
     
     def resume_kernel(self):
         self.kernel.resume()
-        with self.uiLock:
+        with self.ui_lock:
             self.buttonPause.configure(text="pause", style="TButton", command=self.pause_kernel)
         
     def kernel_plot(self):
@@ -352,16 +375,16 @@ class GenericGUI(elflab.abstracts.UIBase):
     
     def update_status(self):
         st = ""
-        with self.dataLock:
+        with self.data_lock:
             for var in self.var_titles:
                 st = self.VAR_FORMAT.format(st, self.var_titles[var], self.kernel.current_values[var])
         
-        with self.uiLock:
+        with self.ui_lock:
             self.statusLabel.configure(text=st)
         
     # book keeping: update the interface
     def update_interface(self):
-        with self.uiLock:
+        with self.ui_lock:
             if (self.kernel is None) or self.kernel.flag_stop or self.kernel.flag_quit:
                 new_state = 0
             elif self.kernel.flag_pause:

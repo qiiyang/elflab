@@ -6,9 +6,9 @@ class KernelBase:
     """Base class for kernels"""
     title = None
     current_values = None
-    # Various Locks:
-    dataLock = None # Lock the urrentValues
-    instrumentLock = None # Lock the access to instruments
+    # Various locks:
+    data_lock = None # lock the urrentValues
+    instrument_lock = None # lock the access to instruments
      
     def __init__(self):
         self.flag_stop = None
@@ -117,8 +117,12 @@ class LoggerBase:
 
 class ControllerBase:
     """Controller Base Class"""
-    def __init__(self, experiment, instrument_lock, data_lock):
+    def __init__(self, kernel, instrument_lock, data_lock, controller_lock):
         raise Exception("controller class not implimented")
+    
+    def terminate(self):
+        raise Exception("controller class not implimented")
+    
         
 # classes for data sets
 class DataSetBase(dict):

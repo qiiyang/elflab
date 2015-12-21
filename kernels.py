@@ -62,7 +62,7 @@ class Galileo(elflab.abstracts.KernelBase):
             QUESTIONS.append(line.strip())
       
 
-    def __init__(self, experiment, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL, dataLock=None, instrumentLock=None):
+    def __init__(self, experiment, plot_refresh_interval=DEFAULT_PLOT_REFRESH_INTERVAL, plot_listen_interval=DEFAULT_PLOT_LISTEN_INTERVAL, data_lock=None, instrument_lock=None):
               # (self, Experiment object, XYs for the sub-plots, ...) 
         print("    [Galileo:] Initialising Galileo......")
         # set flags
@@ -94,23 +94,23 @@ class Galileo(elflab.abstracts.KernelBase):
         
         # initialize the pipes and locks
         self.plotConn, self.mainConn = multiprocessing.Pipe(duplex=False)
-        self.pipeLock = multiprocessing.Lock()
+        self.pipe_lock = multiprocessing.Lock()
         
-        if dataLock is None:
-            self.dataLock = multiprocessing.Lock()
+        if data_lock is None:
+            self.data_lock = multiprocessing.Lock()
         else:
-            self.dataLock = dataLock
+            self.data_lock = data_lock
             
-        if instrumentLock is None:
-            self.instrumentLock = multiprocessing.Lock()
+        if instrument_lock is None:
+            self.instrument_lock = multiprocessing.Lock()
         else:
-            self.instrumentLock = dataLock
+            self.instrument_lock = data_lock
         
         # Initialise RNG
         random.seed()
        
        
-    def keepMeasuring(self, mainConn, pipeLock, dataLock, instrumentLock):
+    def keepMeasuring(self, mainConn, pipe_lock, data_lock, instrument_lock):
         # Start and finish a dummy thread
         logThread = threading.Thread(target=None)
         logThread.start()
@@ -127,14 +127,14 @@ class Galileo(elflab.abstracts.KernelBase):
         # Measure
         for token in self.experiment.sequence():
             if not self.flag_stop:
-                with instrumentLock:
+                with instrument_lock:
                     self.experiment.measure()   # Take a measurement
                 
                 # Wait for any data logging to finish
                 logThread.join()
                 
                 # start another logging thread
-                with dataLock:
+                with data_lock:
                     self.current_values = self.experiment.current_values.copy()
                 logThread = threading.Thread(target=self.experiment.log, name="Galileo:data-logging", kwargs={"dataToLog":self.current_values})
                 logThread.start()
@@ -142,12 +142,12 @@ class Galileo(elflab.abstracts.KernelBase):
                 # Blow data to the plotting service only if requested
                 if self.plotStatus["request_data"].is_set():
                     # Blow data
-                    with dataLock:
+                    with data_lock:
                         for i in range(self.NROWS):
                             for j in range(self.NCOLS):
                                 for k in (0, 1):
                                     xys[i][j][k] = self.experiment.current_values[self.plotXYs[i][j][k]]
-                    with pipeLock:
+                    with pipe_lock:
                         mainConn.send(("data", xys))
                     self.plotStatus["request_data"].clear()
             # Pause if asked to
@@ -207,13 +207,13 @@ class Galileo(elflab.abstracts.KernelBase):
             self.flag_stop = True
             self.measureThread.join()
         print("    [Galileo:] Terminating data plotting......\n")
-        with self.pipeLock:
+        with self.pipe_lock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))
         self.plotProc.join(3)
         if self.plotProc.is_alive():
             print("    [Galileo:] WARNING: Data plotting time-out, forcibly terminating......\n")
-            with self.pipeLock:
+            with self.pipe_lock:
                 self.plotProc.terminate()
         print("    [Galileo:] Live plotting service is terminated.\n")
         print("    [Galileo:] Yet it moves.\n") 
@@ -224,7 +224,7 @@ class Galileo(elflab.abstracts.KernelBase):
         else:
             self.plotStatus["command_done"].clear()
             print("    [Galileo:] Waiting for a plot window to open......")
-            with self.pipeLock:
+            with self.pipe_lock:
                 self.mainConn.send(("replot",[]))
             self.plotStatus["plot_shown"].wait()
             time.sleep(self.UI_LAG)
@@ -234,7 +234,7 @@ class Galileo(elflab.abstracts.KernelBase):
     def autoscaleOn(self):
         self.plotStatus["command_done"].clear()
         print("    [Galileo:] Turning auto-scale on......")
-        with self.pipeLock:
+        with self.pipe_lock:
             self.mainConn.send(("autoscale_on",[]))
         self.plotStatus["command_done"].wait()
         time.sleep(self.UI_LAG)
@@ -244,7 +244,7 @@ class Galileo(elflab.abstracts.KernelBase):
     def autoscaleOff(self):    
         self.plotStatus["command_done"].clear()
         print("    [Galileo:] Turning auto-scale off......")
-        with self.pipeLock:
+        with self.pipe_lock:
             self.mainConn.send(("autoscale_off",[]))
         self.plotStatus["command_done"].wait()
         time.sleep(self.UI_LAG)
@@ -254,7 +254,7 @@ class Galileo(elflab.abstracts.KernelBase):
     def clearPlot(self):
         self.plotStatus["command_done"].clear()
         print("    [Galileo:] Clearing plotting buffer......")
-        with self.pipeLock:
+        with self.pipe_lock:
             self.mainConn.send(("clear",[]))
         self.plotStatus["command_done"].wait()
         time.sleep(self.UI_LAG)
@@ -307,7 +307,7 @@ class Galileo(elflab.abstracts.KernelBase):
             
         self.experiment.start()
         
-        self.measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.pipeLock, self.dataLock, self.instrumentLock))
+        self.measureThread = threading.Thread(target=self.keepMeasuring, name="Galileo: Measurements", args=(self.mainConn, self.pipe_lock, self.data_lock, self.instrument_lock))
         self.measureThread.start()
         
         print ("    [Galileo:] Measurements have started.\n\n    [Galileo:] Waiting for a plot window to open......")
