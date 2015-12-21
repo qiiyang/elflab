@@ -266,7 +266,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         # Starting a controller instance
         if self.Controller is not None:
-            self.controller = self.Controller(kernel=None)
+            self.controller = self.Controller(kernel=None, **self.controller_kwargs)
         
         # Start the gui
         self.update_interface()
@@ -328,7 +328,6 @@ class GenericGUI(elflab.abstracts.UIBase):
         try:
             if self.kernel is not None:
                 self.kernel.quit()
-            #if self.
             self.experiment = self.Experiment()
             self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
@@ -337,7 +336,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             if self.controller is not None:
                 self.controller.terminate()
             if self.Controller is not None:
-                self.controller = self.Controller(kernel=self.kernel)
+                self.controller = self.Controller(kernel=self.kernel, **self.controller_kwargs)
         except Exception as err:
             messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
         else:
