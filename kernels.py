@@ -210,7 +210,7 @@ class Galileo(elflab.abstracts.KernelBase):
         with self.pipe_lock:
             self.flag_quit = True
             self.mainConn.send(("quit", []))
-        self.plotProc.join(3)
+        self.plotProc.join(1)
         if self.plotProc.is_alive():
             print("    [Galileo:] WARNING: Data plotting time-out, forcibly terminating......\n")
             with self.pipe_lock:
