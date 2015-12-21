@@ -338,9 +338,12 @@ class GenericGUI(elflab.abstracts.UIBase):
         
     def start_kernel(self):
         try:
+            # Read parameters
+            for par in self.params:
+                self.params[par] = self.param_vars[par].get()
             if self.kernel is not None:
                 self.kernel.quit()
-            self.experiment = self.Experiment()
+            self.experiment = self.Experiment(params=self.params)
             self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
             
