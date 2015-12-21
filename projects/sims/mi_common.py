@@ -54,7 +54,7 @@ initialData = { "n": 0,     # data point index
                 "X": 0.,     # lock-in X in V
                 "dX": 0.,    # error of X in V
                 "Y": 0.,     # lock-in Y in V
-                "dX": 0.,    # error of Y in V
+                "dY": 0.,    # error of Y in V
                 "I_therm": 0.,   # thermometer current
                 "V_therm": 0.,   # thermometer voltage
                 "I_mag": 0.     # magnet current

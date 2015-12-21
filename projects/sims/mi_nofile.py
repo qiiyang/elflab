@@ -33,11 +33,11 @@ class SimMI(abstracts.ExperimentWithLogger):
     title = "simulated MI"
     
     param_list = ["sample_interval"]
+    var_titles = mi.dataLabels
     
     def __init__(self, params={"sample_interval":0.1}):
         self.measurement_interval = float(params["sample_interval"])
-        self.currentValues = mi.initialData.copy()
-        self.varTitles = mi.dataLabels
+        self.current_values = mi.initialData.copy()
         self.plotXYs = XYVARS
         self.n = 0
         time.perf_counter()
@@ -53,11 +53,11 @@ class SimMI(abstracts.ExperimentWithLogger):
         self.logger = nologger.Logger()
         
     def measure(self):
-        self.currentValues["n"] += 1
-        self.currentValues["t"] = time.perf_counter()
-        (t, self.currentValues["I_therm"], self.currentValues["V_therm"], self.currentValues["T"]) = self.therm.read()
-        (t, self.currentValues["I_mag"], self.currentValues["H"]) = self.magnet.read()
-        (self.currentValues["X"], self.currentValues["Y"]) = self.lockin.readXY()
+        self.current_values["n"] += 1
+        self.current_values["t"] = time.perf_counter()
+        (t, self.current_values["I_therm"], self.current_values["V_therm"], self.current_values["T"]) = self.therm.read()
+        (t, self.current_values["I_mag"], self.current_values["H"]) = self.magnet.read()
+        (self.current_values["X"], self.current_values["Y"]) = self.lockin.readXY()
         
     def finish(self):
         pass

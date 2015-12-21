@@ -5,6 +5,11 @@
 class KernelBase:
     """Base class for kernels"""
     title = None
+    current_values = None
+    # Various Locks:
+    dataLock = None # Lock the urrentValues
+    instrumentLock = None # Lock the access to instruments
+     
     def __init__(self):
         self.flag_stop = None
         self.flag_quit = None
@@ -45,12 +50,12 @@ class ExperimentBase:
     """A minimal abstraction of an experiment"""
     
     # "Public" Variables
-    currentValues = None   # = {"name": "value"}
+    current_values = None   # = {"name": "value"}
     varTitles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
     
     title = None    # Title of the Experiment
     plotXYs = None
-    parameters = None
+    param_list = None
     
     def __init__(self):
         raise Exception("!!Galileo ERROR!! Experiment initialisation not implemented!!!")

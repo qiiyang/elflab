@@ -89,20 +89,29 @@ class GenericGUI(elflab.abstracts.UIBase):
     # CONSTANTS
     PATH_LENGTH = 60
     FN_LENGTH = 20
+    VAR_FORMAT = "{}{}={:.5g};     "
+    
     UI_REFRESH = 0.1   # Update ui every #seconds
+    STATUS_REFRESH = 1.0    # Update the status frame every # seconds
     CONTROLLER_REFRESH = 5.0   # Update controller status every #seconds
     
     # default values to pass on to the kernel
     DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
     DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
     
-    def __init__(self, Kernel, Experiment, controller=None):
+    def __init__(self, Kernel, Experiment, Controller=None):
         # 0=stoped, 1=running, 2=paused
         self.state = 0
         
-        # setting gui root
+        # saving arguments
         self.Kernel = Kernel
         self.Experiment = Experiment
+        self.Controller = Controller
+        
+        self.param_list = Experiment.param_list
+        self.var_titles = Experiment.var_titles
+        
+        # setting gui root
         self.kernel = None
         self.experiment = None
         self.root = tk.Tk()
@@ -118,13 +127,18 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.filename_var.set(r"logfile")
         
         # Declare other variables
-        self.controller_time = time.perf_counter()
+        self.controller_time = self.status_time = time.perf_counter()
+
+        self.instrumentLock = multiprocessing.Lock()
         self.dataLock = multiprocessing.Lock()
         self.uiLock = multiprocessing.Lock()
+        
+        
         self.kernel_kwargs = {
             "plot_refresh_interval": self.DEFAULT_PLOT_REFRESH_INTERVAL,
             "plot_listen_interval": self.DEFAULT_PLOT_LISTEN_INTERVAL,
             "dataLock": self.dataLock,
+            "instrumentLock": self.instrumentLock
         }
         
         # Define styles
@@ -216,7 +230,9 @@ class GenericGUI(elflab.abstracts.UIBase):
         for child in self.commandFrame.winfo_children():
             child.grid_configure(padx=5, pady=5)
         
-
+        # Status
+        self.statusLabel = ttk.Label(self.statusFrame, text="", justify=tk.LEFT, foreground="blue")
+        self.statusLabel.pack(side=tk.LEFT)
         
     def quit(self):
         if self.kernel is not None:
@@ -227,10 +243,16 @@ class GenericGUI(elflab.abstracts.UIBase):
         # Update Frames and Define the scrolling
         self.mainFrame.update()
         self.mainCanvas.config(width=self.mainFrame.winfo_reqwidth(), height=self.mainFrame.winfo_reqheight(), scrollregion = (0, 0, self.mainFrame.winfo_reqwidth(), self.mainFrame.winfo_reqheight()))
+        
         self.ybar.config(command=self.mainCanvas.yview)
         self.xbar.config(command=self.mainCanvas.xview)
         self.mainCanvas.config(xscrollcommand=self.xbar.set, yscrollcommand=self.ybar.set)
 
+        # Calculate the wrapping length for status
+        w = self.commentFrame.winfo_reqwidth() + self.commandFrame.winfo_reqwidth() - 1
+        self.statusLabel.configure(wraplength=w)
+        
+        # Start the gui
         self.update_interface()
         self.root.mainloop()
         
@@ -327,6 +349,15 @@ class GenericGUI(elflab.abstracts.UIBase):
     # book keeping: update the controller status
     def update_controller(self):
         pass
+    
+    def update_status(self):
+        st = ""
+        with self.dataLock:
+            for var in self.var_titles:
+                st = self.VAR_FORMAT.format(st, self.var_titles[var], self.kernel.current_values[var])
+        
+        with self.uiLock:
+            self.statusLabel.configure(text=st)
         
     # book keeping: update the interface
     def update_interface(self):
@@ -339,8 +370,15 @@ class GenericGUI(elflab.abstracts.UIBase):
                 new_state = 1
         if new_state != self.state:
             self.set_ui_state(new_state)
+        
         t = time.perf_counter()
-        if (t - self.controller_time) > self.CONTROLLER_REFRESH:
+        
+        if (self.state > 0) and (t - self.status_time > self.STATUS_REFRESH):
+            self.status_time = t
+            self.update_status()
+            
+        if t - self.controller_time > self.CONTROLLER_REFRESH:
             self.controller_time = t
             self.update_controller()
+            
         self.root.after(round(self.UI_REFRESH*1000.), self.update_interface)
