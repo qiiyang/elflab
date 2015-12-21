@@ -59,7 +59,7 @@ class Lakeshore340(TControllerBase):
     def set_setp(self, loop, T):   # change the set point of a loop
         if not self.connected:
             self.connect()
-        self.gpib.write("SETP {:d},{:.5E}".format(loop, T))
+        self.gpib.write("SETP {:d}, {:.5E}".format(loop, T))
     
         
     def get_setp(self, loop):   # change the set point of a loop
@@ -73,12 +73,12 @@ class Lakeshore340(TControllerBase):
         return v
         
         
-    def set_ramp(self, loop, on, r):    # set the ramp state, and rate of a loop
+    def set_ramp(self, loop, on, r):    # set the ramp state, and rate/min of a loop
         if not self.connected:
             self.connect()
-        self.gpib.write("RAMP {:d},{:d},{:.4g}".format(loop, on, r))
+        self.gpib.write("RAMP {:d}, {:d}, {:.4g}".format(loop, on, r))
         
-    def get_ramp(self, loop):    # get the ramp on/off state
+    def get_rampst(self, loop):    # get the ramp on/off state
         if not self.connected:
             self.connect()
         s = self.gpib.query("RAMP? {:d}".format(loop))

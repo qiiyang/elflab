@@ -189,7 +189,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.commandFrame = ttk.LabelFrame(self.mainFrame, text="Program Control")
         self.commandFrame.grid(row=1, column=2, sticky="nwe")
         
-        self.controlFrame = ttk.LabelFrame(self.mainFrame, text="experiment control")
+        self.controlFrame = ttk.LabelFrame(self.mainFrame, text="Instrument Control")
         self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
         
         self.statusFrame = ttk.LabelFrame(self.mainFrame, text="status")
@@ -288,6 +288,9 @@ class GenericGUI(elflab.abstracts.UIBase):
         # Start the gui
         self.update_interface()
         self.root.mainloop()
+
+    def error_box(self, err):
+        messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
         
     def change_folder(self):
         folder = filedialog.askdirectory()
@@ -385,7 +388,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             if self.Controller is not None:
                 self.controller = self.Controller(kernel=self.kernel, **self.controller_kwargs)
         except Exception as err:
-            messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
+            self.error_box(err)
         else:
             with self.ui_lock:
                 self.buttonStart.configure(text="stop", style="GreenBG.TButton", command=self.stop_kernel)

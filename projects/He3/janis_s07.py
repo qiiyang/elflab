@@ -4,6 +4,10 @@ import time
 import math
 import threading
 
+import tkinter as tk
+from tkinter import ttk
+
+from elflab import uis
 from elflab.devices.T_controllers.lakeshore import Lakeshore340
 
 import elflab.abstracts as abstracts
@@ -111,26 +115,134 @@ VAR_INIT = {
 
 SENS_RANGE = (0.1, 0.8)
 
+class JanisS07GUI(uis.GenericGUI):
+    def __init__(self, Kernel, Experiment, Controller=JanisS07Controller):
+        super().__init__(Kernel, Experiment, Controller=Controller)
+        # Control Panel Layout
+            # Status
+        self.c0_frame = ttk.Frame(self.controlFrame)
+        self.c0_frame.grid(row=0, column=0)
+        
+        self.c1_frame = ttk.LabelFrame(self.controlFrame, text="Sorb Loop")
+        self.c1_frame.grid(row=1, column=0, sticky="nw")
+        
+        self.c2_frame = ttk.LabelFrame(self.controlFrame, text="Sample Loop")
+        self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw")
+        
+        # Instrument Status
+            # titles
+        l = ttk.Label(self.c0_frame, text="sample")
+        l.grid(row=1, column=0)
+        l = ttk.Label(self.c0_frame, text="sorb")
+        l.grid(row=2, column=0)
+        l = ttk.Label(self.c0_frame, text="T / K")
+        l.grid(row=0, column=1)
+        l = ttk.Label(self.c0_frame, text="setp. / K")
+        l.grid(row=0, column=2)
+        l = ttk.Label(self.c0_frame, text="ramp")
+        l.grid(row=0, column=3)
+        l = ttk.Label(self.c0_frame, text="heater / \%")
+        l.grid(row=0, column=4)
+        
+        self.c0_T1 = ttk.Label(text="", )
+
 class JanisS07Controller(abstracts.ControllerBase):
     """Controller for s07 Janis"""
     T_MIN = 0.0
     R_MIN = 0.1
+    R_MAX = 20.0
+    
+    DEFAULT_ASSIST_INTERVAL = 5.0
+    DEFAULT_ASSIST_STEP = 0.05
+    DEFAULT_ASSIST_THRESHOLD = 0.8
+    ASSIST_MAX_T = 40.0
+    
     def __init__(self, kernel):
         self.kernel = kernel
         self.lakeshore = kernel.experiment.lakeshore
         self.instrument_lock = kernel.instrument_lock
         self.data_lock = kernel.data_lock
         
+        # sort stepping parameters for assisting sample ramping
+        self.ramp_assist_threshold = self.DEFAULT_ASSIST_THRESHOLD 
+        self.ramp_assist_interval = self.DEFAULT_ASSIST_INTERVAL     # in second
+        self.ramp_assist_step = self.DEFAULT_ASSIST_STEP    # in Kelvin
+        
+        self.end_assist = threading.Event()
+        
+        # Initialise the assist thread
+        self.assist_thread = threading.Thread(target=None)
+        self.assist_thread.start()
+        
+    # Read the status of the T_controller
+    # returns (T1, SETP1, rampst1, Heater1, T2, SETP2, rampst2, HEATERs)
+    def get_status(self):
+        if self.kernel.flag_pause or self.kernel.flag_stop or self.kernel.flag_quit:
+            with self.instrument_lock:
+                T1 = self.lakeshore.read("C")[1]
+                T2 = self.lakeshore.read("A")[1]
+        else:
+            with self.data_lock:
+                T1 = self.kernel.current_values["T_sorb"]
+                T2 = self.kernel.current_values["T_A"]
+        with self.instrument_lock:
+            setp1 = self.lakeshore.get_setp(1)
+            setp2 = self.lakeshore.get_setp(2)
+            heater1 = self.lakeshore.get_heater(1)
+            heater2 = self.lakeshore.get_heater(2)
+            rampst1 = self.lakeshore.get_rampst(1)
+            rampst2 = self.lakeshore.get_rampst(2)
+        return (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2)
+        
     def heater_off(self, loop):
-        self.lakeshore.set_setp(loop, T_MIN)
-        self.lakeshore.set_ramp(loop, 0, R_MIN)
+        with self.instrument_lock:
+            self.lakeshore.set_ramp(loop, 0, R_MIN)
+            self.lakeshore.set_setp(loop, T_MIN)
     
     def step(self, loop, T):
-        self.lakeshore.set_setp(loop, T_MIN)
-        self.lakeshore.set_ramp(loop, 0, R_MIN)
+        with self.instrument_lock:
+            self.lakeshore.set_ramp(loop, 0, R_MIN)
+            self.lakeshore.set_setp(loop, T_MIN)
+        
+    def ramp1(self, T, r):
+        (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
+        self.step(1, T1)
+        with self.instrument_lock:
+            self.lakeshore.set_ramp(1, 1, r)
+            self.lakeshore.set_setp(1, T)
+            
+    
+    def ramp2(self, T, r):
+        # stop the old assist thread
+        self.end_assist.set()
+        self.assist_thread.join(timeout=0.1)
+        # set ramping
+        (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
+        self.step(2, T2)
+        with self.instrument_lock:
+            self.lakeshore.set_ramp(2, 1, r)
+            self.lakeshore.set_setp(2, T)
+        # starting the assist thread
+        self.assist_thread = threading.Thread(target=self.ramp_assist)
+        self.assist_thread.start()
+    
+    # Change the parameters for ramping assist
+    def set_assist(self, threshold, interval, step):
+        self.ramp_assist_threshold = threshold
+        self.ramp_assist_interval = interval     # in second
+        self.ramp_assist_step = step    # in Kelvin
+        
+    def ramp_assist(self):
+        while self.end_assist.wait(timeout=self.ramp_assist_interval):
+            (T1, setp1, heater1, T2, setp2, heater2) = self.get_status()
+            if heater2 > self.ramp_assist_threshold:
+                self.step(1, T1+self.ramp_assist_step)
+            if T1 >= self.ASSIST_MAX_T:
+                self.end_assist.set()
         
     def terminate(self):
-        raise Exception("controller class not implimented")
+        self.end_assist.set()
+        self.assist_thread.join(timeout=0.1)
                 
 class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     # "Public" Variables
