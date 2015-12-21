@@ -50,12 +50,17 @@ class ExperimentBase:
     """A minimal abstraction of an experiment"""
     
     # "Public" Variables
-    current_values = None   # = {"name": "value"}
-    var_titles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
-    
     title = None    # Title of the Experiment
-    plotXYs = None
+    
     default_params = None
+    
+    var_order = None    # order of variables
+    var_titles = None    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    current_values = None   # = {"name": "value"}
+    format_strings = None   # Format strings for the variables
+    
+    plotXYs = None
+    
     default_comments = ""
     
     def __init__(self):
