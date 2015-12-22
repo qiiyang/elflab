@@ -116,7 +116,7 @@ VAR_INIT = {
 SENS_RANGE = (0.1, 0.8)
 
 class JanisS07GUI(uis.GenericGUI):
-    HEATER_LOW = 0.02   # Below which show heater off
+    HEATER_LOW = 0.01   # Below which show heater off
     STAT_WIDTH = 9  # Min width in status entries
     def __init__(self, Kernel, Experiment, Controller):
         super().__init__(Kernel, Experiment, Controller=Controller)
@@ -296,6 +296,36 @@ class JanisS07GUI(uis.GenericGUI):
     def update_controller(self):
         with self.controller_lock:
             (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.controller.get_status()
+        
+        # Update Controller entries:
+        with self.ui_lock:
+            self.c0_T1.configure(text="{:.5g}".format(T1))
+            self.c0_T2.configure(text="{:.5g}".format(T2))
+            
+            self.c0_sp1.configure(text="{:.5g}".format(setp1))
+            self.c0_sp2.configure(text="{:.5g}".format(setp2))
+            
+            if rampst1 > 0:
+                self.c0_ramp1.configure(text="On", background="green")
+            else:
+                self.c0_ramp1.configure(text="Off", background="dim gray")
+                
+            if rampst2 > 0:
+                self.c0_ramp2.configure(text="On", background="green")
+            else:
+                self.c0_ramp2.configure(text="Off", background="dim gray")
+            
+            self.c0_heater1.configure(text="{:.5g}".format(heater1))
+            self.c0_heater2.configure(text="{:.5g}".format(heater2))
+            if heater1 > self.HEATER_LOW:
+                self.c0_heater1.configure(background="green")
+            else:
+                self.c0_heater1.configure(background="dim gray")
+            if heater2 > self.HEATER_LOW:
+                self.c0_heater2.configure(background="green")
+            else:
+                self.c0_heater2.configure(background="dim gray")
+                
         self.controller_time = time.perf_counter()
         
 

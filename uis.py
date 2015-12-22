@@ -290,7 +290,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.root.mainloop()
 
     def error_box(self, err):
-        messagebox.showerror("Cannot start kernel", "    An error has occurred, try checking the parameter values.\nerror code:\n    {}".format(err))
+        messagebox.showerror("Error", "An error has occurred, try checking the values entered.\n  error code:\n    {}".format(err))
         
     def change_folder(self):
         folder = filedialog.askdirectory()
@@ -461,7 +461,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         if (self.state > 0) and (t - self.status_time > self.STATUS_REFRESH):
             self.update_status()
             
-        if t - self.controller_time > self.CONTROLLER_REFRESH:
+        if (self.state > 0) and (t - self.controller_time > self.CONTROLLER_REFRESH):
             self.update_controller()
             
         self.root.after(round(self.UI_REFRESH*1000.), self.update_interface)
