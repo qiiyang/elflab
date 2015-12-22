@@ -100,3 +100,7 @@ class Lakeshore340(TControllerBase):
             v = float("nan")
         return v
         
+    def set_range(self, range): # Set the range of heater 1
+        self.gpib.write("RANGE {:d}".format(range))
+        
+        

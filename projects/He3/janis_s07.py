@@ -445,9 +445,13 @@ class JanisS07Controller(abstracts.ControllerBase):
         with self.instrument_lock:
             self.lakeshore.set_ramp(loop, 0, self.R_MIN)
             self.lakeshore.set_setp(loop, self.T_MIN)
+            if loop == 1:
+                self.lakeshore_set_range(0)
     
     def step(self, loop, T):
         with self.instrument_lock:
+            if loop == 1:
+                self.lakeshore_set_range(5)
             self.lakeshore.set_ramp(loop, 0, self.R_MIN)
             self.lakeshore.set_setp(loop, T)
     
@@ -456,6 +460,7 @@ class JanisS07Controller(abstracts.ControllerBase):
             (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
             self.step(1, T1)
             with self.instrument_lock:
+                self.lakeshore_set_range(5)
                 self.lakeshore.set_ramp(1, 1, r)
                 self.lakeshore.set_setp(1, T)
         elif loop == 2:
