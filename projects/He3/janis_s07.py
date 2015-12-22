@@ -17,7 +17,7 @@ from elflab.devices.lockins import fake_lockins, par
 from elflab.devices.magnets import fake_magnets
 from elflab.devices.dmms import keithley
 
-T_RUO = 20. # Temperature below which to use RuO readings
+
 
 GPIB_LAKESHORE340 = 11
 GPIB_DMM = 19
@@ -495,6 +495,11 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     # "Public" Variables
     title = "Janis S07 He-3: with Two Lock In Amplifiers"
     
+     # Temperature cross-over between Si-diode and RuO
+    T_RUO_H = 19.
+    T_RUO_L = 15.
+    
+    
     default_params = {
         "R_series1 / Ohm": 'no entry',
         "R_series2 / Ohm": 'no entry',
@@ -556,7 +561,18 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         self.t0 = time.perf_counter()
         # Start the csv logger
         self.logger.start()
+    
+    # Calculate the sample temperature from TA and TB
+    def calc_Tsample(self, TA, TB):
+        if math.isnan(TA) or (TB >= self.T_RUO_H):
+            T = TB
+        elif math.isnan(TB) or (TB <= self.T_RUO_L):
+            T = TA
+        else:   # cross-over regime
+            T = (TA * (self.T_RUO_H - TB) + TB * (TB - self.T_RUO_L)) / (self.T_RUO_H - self.T_RUO_L)
         
+        return T
+    
     def measure(self):
         self.current_values["n"] += 1
         t,self.current_values["T_A"] = self.lakeshore.read("A")
@@ -566,10 +582,7 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         
         self.current_values["t"] = t - self.t0
         
-        if math.isnan(self.current_values["T_B"]) or (self.current_values["T_B"] < T_RUO):
-            self.current_values["T_sample"] = self.current_values["T_A"]
-        else:
-            self.current_values["T_sample"] = self.current_values["T_B"]
+        self.current_values["T_sample"] = self.calc_Tsample(self.current_values["T_A"], self.current_values["T_B"])
         
         t,self.current_values["H"],t = self.magnet.read()
         t,self.current_values["X1"],self.current_values["Y1"],t,t,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()
