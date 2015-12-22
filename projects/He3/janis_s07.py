@@ -483,6 +483,8 @@ class JanisS07Controller(abstracts.ControllerBase):
                 self.lakeshore.set_setp(2, T)
             # starting the assist thread
             if T > T2:
+                with self.instrument_lock:
+                    self.lakeshore.set_range(5)
                 self.assist_thread = threading.Thread(target=self.ramp_assist)
                 self.assist_thread.start()
     
