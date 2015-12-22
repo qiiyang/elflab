@@ -108,7 +108,7 @@ class GenericGUI(elflab.abstracts.UIBase):
     
     def __init__(self, Kernel, Experiment, Controller=None):
         # 0=stoped, 1=running, 2=paused
-        self.state = 0
+        self.state = -1
         
         # saving arguments
         self.Kernel = Kernel
@@ -188,9 +188,9 @@ class GenericGUI(elflab.abstracts.UIBase):
         
         self.commandFrame = ttk.LabelFrame(self.mainFrame, text="Program Control")
         self.commandFrame.grid(row=1, column=2, sticky="nwe")
-        
-        #self.controlFrame = ttk.LabelFrame(self.mainFrame, text="Instrument Control")
-        #self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
+
+        self.controlFrame = ttk.Frame(self.mainFrame, relief="solid")
+        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe", padx = 5, pady=5)
         
         self.statusFrame = ttk.LabelFrame(self.mainFrame, text="status")
         self.statusFrame.grid(row=3, column=1, columnspan=2, sticky="nwe")
@@ -219,13 +219,13 @@ class GenericGUI(elflab.abstracts.UIBase):
             self.param_vars[par] = tk.StringVar()
             self.param_vars[par].set(self.params[par])
             w = ttk.Entry(self.paramFrame, width=self.PARAM_LENGTH, textvariable=self.param_vars[par])
-            w.grid(column=0, row=r+1, sticky="nw", pady=(0,3))
+            w.grid(column=0, row=r+1, sticky="nw", pady=(0,8))
             r += 2
         
             # Comments box
         self.comment_button = ttk.Button(self.commentFrame, text="update", command=self.update_comment, state="disabled")
         self.comment_button.grid(row=0, column=0, sticky="nw")
-        self.comment_box = ScrolledText(self.commentFrame, width=40, height=10)
+        self.comment_box = ScrolledText(self.commentFrame, width=40, height=8)
         self.comment_box.insert(0., Experiment.default_comments)
         self.comment_box.grid(row=1, column=0, sticky="nw")
         
@@ -286,7 +286,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.mainCanvas.config(xscrollcommand=self.xbar.set, yscrollcommand=self.ybar.set)
                 
         # Start the gui
-        self.update_interface()
+        self.root.after(0, self.update_interface)
         self.root.mainloop()
 
     def error_box(self, err):
@@ -313,7 +313,15 @@ class GenericGUI(elflab.abstracts.UIBase):
             f.write("____________________________________________________________\n")
             t = self.comment_box.get(0.0, tk.END)
             f.write(t)     
-        
+
+    # Recursively disable / enable widgets
+    def set_widget_state(self, w, state):
+        if "frame" in w.winfo_class().lower():
+            for child in w.winfo_children():
+                self.set_widget_state(child, state)
+        elif "text" not in w.winfo_class().lower():
+            w.configure(state=state)
+    
     # Refresh UI according to the state
     def set_ui_state(self, state):
         with self.ui_lock:
@@ -327,10 +335,9 @@ class GenericGUI(elflab.abstracts.UIBase):
                 s1 = "normal"
                 s2 = "disable"
                 self.buttonStart.configure(text="start", style="TButton", command=self.start_kernel)
-            for child in self.fileFrame.winfo_children():
-                child.configure(state=s1)
-            for child in self.paramFrame.winfo_children():
-                child.configure(state=s1)
+            
+            self.set_widget_state(self.fileFrame, s1)
+            self.set_widget_state(self.paramFrame, s1)
             
             self.comment_button.configure(state=s2)
             self.buttonPause.configure(state=s2)
@@ -338,8 +345,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             self.buttonAutoOn.configure(state=s2)
             self.buttonAutoOff.configure(state=s2)
             self.buttonClear.configure(state=s2)
-            for child in self.controlFrame.winfo_children():
-                child.configure(state=s2)
+            self.set_widget_state(self.controlFrame, s2)
             
             # update state label
             if state == 0:

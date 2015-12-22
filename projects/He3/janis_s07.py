@@ -120,19 +120,16 @@ class JanisS07GUI(uis.GenericGUI):
     STAT_WIDTH = 9  # Min width in status entries
     def __init__(self, Kernel, Experiment, Controller):
         super().__init__(Kernel, Experiment, Controller=Controller)
-        # Control Panel Layout
-        self.controlFrame = ttk.Frame(self.mainFrame)
-        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe", padx = 5, pady=5)
-        
+        # Control Panel Layout        
             # status
-        self.c0_frame = ttk.LabelFrame(self.controlFrame, text="Controller Status")
+        self.c0_frame = ttk.Frame(self.controlFrame)
         self.c0_frame.grid(row=0, column=0, sticky="nswe", padx = 5, pady=5)
             # sorb
-        self.c1_frame = ttk.LabelFrame(self.controlFrame, text="Sorb Loop")
-        self.c1_frame.grid(row=1, column=0, sticky="nw", padx = 5, pady=5)
+        self.c1_frame = ttk.LabelFrame(self.controlFrame, text="Sorb Control")
+        self.c1_frame.grid(row=1, column=0, sticky="nsw", padx = 5, pady=5, ipadx=5, ipady=5)
             # sample
-        self.c2_frame = ttk.LabelFrame(self.controlFrame, text="Sample Loop")
-        self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw", padx = 5, pady=5)
+        self.c2_frame = ttk.LabelFrame(self.controlFrame, text="Sample Control")
+        self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw", padx = 5, pady=5, ipadx=5, ipady=5)
         
         # Instrument Status
             # titles
@@ -174,10 +171,10 @@ class JanisS07GUI(uis.GenericGUI):
             child.grid_configure(padx=2, pady=2, sticky="nswe")
             
         # Sorb Control
-        l = ttk.Label(self.c1_frame, text="set:")
-        l.grid(row=0, column=0, sticky="nw", padx=(0, 5))
+        l = ttk.Label(self.c1_frame, text="set point:")
+        l.grid(row=0, column=0, sticky="nw", padx=5)
         l = ttk.Label(self.c1_frame, text="rate:")
-        l.grid(row=1, column=0, sticky="nw", padx=(0, 5))
+        l.grid(row=1, column=0, sticky="nw", padx=5)
         
         self.c1_sp = tk.StringVar()
         l = ttk.Entry(self.c1_frame, textvariable=self.c1_sp, width=8)
@@ -186,19 +183,115 @@ class JanisS07GUI(uis.GenericGUI):
         l = ttk.Entry(self.c1_frame, textvariable=self.c1_rate, width=8)
         l.grid(row=1, column=1, columnspan=4, sticky="new")
         
-        l = ttk.Label(self.c1_frame, text="/ K")
+        l = ttk.Label(self.c1_frame, text=" K")
         l.grid(row=0, column=5, sticky="nw")
-        l = ttk.Label(self.c1_frame, text="/ K/min")
+        l = ttk.Label(self.c1_frame, text=" K/min")
         l.grid(row=1, column=5, sticky="nw")
         
         self.c1_button_off = ttk.Button(self.c1_frame, text="heater off")
-        self.c1_button_off.grid(row=2, column=0, columnspan=2, sticky="new", padx=5)
+        self.c1_button_off.grid(row=2, column=0, columnspan=2, sticky="new", padx=5, pady=5)
         
         self.c1_button_step = ttk.Button(self.c1_frame, text="step")
-        self.c1_button_step.grid(row=2, column=2, columnspan=2, sticky="new", padx=5)
+        self.c1_button_step.grid(row=2, column=2, columnspan=2, sticky="new", padx=5, pady=5)
         
         self.c1_button_ramp = ttk.Button(self.c1_frame, text="ramp")
-        self.c1_button_ramp.grid(row=2, column=4, columnspan=2, sticky="new", padx=5)
+        self.c1_button_ramp.grid(row=2, column=4, columnspan=2, sticky="new", padx=5, pady=5)
+        
+        # sample control
+        l = ttk.Label(self.c2_frame, text="set point:")
+        l.grid(row=0, column=0, sticky="nw", padx=5)
+        l = ttk.Label(self.c2_frame, text="rate:")
+        l.grid(row=1, column=0, sticky="nw", padx=5)
+        
+        self.c2_sp = tk.StringVar()
+        l = ttk.Entry(self.c2_frame, textvariable=self.c2_sp, width=8)
+        l.grid(row=0, column=1, columnspan=4, sticky="new")
+        self.c2_rate = tk.StringVar()
+        l = ttk.Entry(self.c2_frame, textvariable=self.c2_rate, width=8)
+        l.grid(row=1, column=1, columnspan=4, sticky="new")
+        
+        l = ttk.Label(self.c2_frame, text=" K")
+        l.grid(row=0, column=5, sticky="nw")
+        l = ttk.Label(self.c2_frame, text=" K/min")
+        l.grid(row=1, column=5, sticky="nw")    
+        
+            # Calculate rate from time:
+        frame = ttk.Frame(self.c2_frame, relief="sunken")
+        frame.grid(row=2, column=0, columnspan=6, sticky="new", padx=5, pady=5)
+        
+        l = ttk.Label(frame, text="hours")
+        l.grid(row=0, column=0, sticky="new", padx=5, pady=(5,0))
+        l = ttk.Label(frame, text=" minutes")
+        l.grid(row=0, column=1, sticky="new", padx=5, pady=(5,0))
+        
+        self.c2_h = tk.StringVar()
+        l = ttk.Entry(frame, textvariable=self.c2_h, width=8)
+        l.grid(row=1, column=0, sticky="new", padx=5, pady=(0,10))
+        self.c2_m = tk.StringVar()
+        l = ttk.Entry(frame, textvariable=self.c2_m, width=8)
+        l.grid(row=1, column=1, sticky="new", padx=5, pady=(0,10))   
+        
+        self.c2_button_calc = ttk.Button(frame, text="calc.\nrate")
+        self.c2_button_calc.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=5, pady=5)        
+        
+        for c in range(3):
+            tk.Grid.columnconfigure(frame, c, weight=1)
+            
+        
+        
+        self.c2_button_off = ttk.Button(self.c2_frame, text="heater off")
+        self.c2_button_off.grid(row=3, column=0, columnspan=2, sticky="new", padx=5, pady=5)
+        
+        self.c2_button_step = ttk.Button(self.c2_frame, text="step")
+        self.c2_button_step.grid(row=3, column=2, columnspan=2, sticky="new", padx=5, pady=5)
+        
+        self.c2_button_ramp = ttk.Button(self.c2_frame, text="ramp")
+        self.c2_button_ramp.grid(row=3, column=4, columnspan=2, sticky="new", padx=5, pady=5)
+        
+        # Update ramp assist parameters
+        frame = ttk.Frame(self.c2_frame, relief="sunken")
+        frame.grid(row=4, column=0, columnspan=6, sticky="new", padx=5, pady=5)
+        
+            # spacers
+        w = ttk.Frame(frame)
+        w.grid(row=0, column=0, pady=2.5)
+        w = ttk.Frame(frame)
+        w.grid(row=4, column=0, pady=2.5)
+        
+        l = ttk.Label(frame, text="threshold:  ")
+        l.grid(row=1, column=0, sticky="nw", padx=5)
+        l = ttk.Label(frame, text="step size:  ")
+        l.grid(row=2, column=0, sticky="nw", padx=5)
+        l = ttk.Label(frame, text="check every:  ")
+        l.grid(row=3, column=0, sticky="nw", padx=5)
+        
+        self.c2a_threshold = tk.StringVar()
+        self.c2a_threshold.set("{:g}".format(self.Controller.DEFAULT_ASSIST_THRESHOLD))
+        l = ttk.Entry(frame, textvariable=self.c2a_threshold, width=6)
+        l.grid(row=1, column=1, sticky="new")
+        
+        self.c2a_step = tk.StringVar()
+        self.c2a_step.set("{:g}".format(self.Controller.DEFAULT_ASSIST_STEP))
+        l = ttk.Entry(frame, textvariable=self.c2a_step, width=6)
+        l.grid(row=2, column=1, sticky="new")
+        
+        self.c2a_interval = tk.StringVar()
+        self.c2a_interval.set("{:g}".format(self.Controller.DEFAULT_ASSIST_INTERVAL))
+        l = ttk.Entry(frame, textvariable=self.c2a_interval, width=6)
+        l.grid(row=3, column=1, sticky="new")
+        
+        l = ttk.Label(frame, text="%")
+        l.grid(row=1, column=2, sticky="nw", padx=5)
+        l = ttk.Label(frame, text="K")
+        l.grid(row=2, column=2, sticky="nw", padx=5)
+        l = ttk.Label(frame, text="s")
+        l.grid(row=3, column=2, sticky="nw", padx=5)
+        
+        self.c2a_button_update = ttk.Button(frame, text="update")
+        self.c2a_button_update.grid(row=1, column=3, rowspan=3, sticky="nsew", padx=5)
+        
+        tk.Grid.columnconfigure(frame, 1, weight=1)
+        tk.Grid.columnconfigure(frame, 3, weight=1)  
         
         
 
@@ -279,8 +372,9 @@ class JanisS07Controller(abstracts.ControllerBase):
             self.lakeshore.set_ramp(2, 1, r)
             self.lakeshore.set_setp(2, T)
         # starting the assist thread
-        self.assist_thread = threading.Thread(target=self.ramp_assist)
-        self.assist_thread.start()
+        if T > T2:
+            self.assist_thread = threading.Thread(target=self.ramp_assist)
+            self.assist_thread.start()
     
     # Change the parameters for ramping assist
     def set_assist(self, threshold, interval, step):
