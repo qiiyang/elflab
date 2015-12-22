@@ -116,8 +116,13 @@ VAR_INIT = {
 SENS_RANGE = (0.1, 0.8)
 
 class JanisS07GUI(uis.GenericGUI):
+    DEFAULT_FOLDER = r"D:\Qi\data"
+    DEFAULT_FN = r"mi"
+    
     HEATER_LOW = 0.01   # Below which show heater off
     STAT_WIDTH = 9  # Min width in status entries
+    RATE_MULTIPLIER = 1.02  # multiplier when calculating the rate based on time, to allow some margin of errors
+    
     def __init__(self, Kernel, Experiment, Controller):
         super().__init__(Kernel, Experiment, Controller=Controller)
         # Control Panel Layout        
@@ -188,13 +193,13 @@ class JanisS07GUI(uis.GenericGUI):
         l = ttk.Label(self.c1_frame, text=" K/min")
         l.grid(row=1, column=5, sticky="nw")
         
-        self.c1_button_off = ttk.Button(self.c1_frame, text="heater off")
+        self.c1_button_off = ttk.Button(self.c1_frame, text="heater off", command=self.c1_heater_off)
         self.c1_button_off.grid(row=2, column=0, columnspan=2, sticky="new", padx=5, pady=5)
         
-        self.c1_button_step = ttk.Button(self.c1_frame, text="step")
+        self.c1_button_step = ttk.Button(self.c1_frame, text="step", command=self.c1_step)
         self.c1_button_step.grid(row=2, column=2, columnspan=2, sticky="new", padx=5, pady=5)
         
-        self.c1_button_ramp = ttk.Button(self.c1_frame, text="ramp")
+        self.c1_button_ramp = ttk.Button(self.c1_frame, text="ramp", command=self.c1_ramp)
         self.c1_button_ramp.grid(row=2, column=4, columnspan=2, sticky="new", padx=5, pady=5)
         
         # sample control
@@ -231,7 +236,7 @@ class JanisS07GUI(uis.GenericGUI):
         l = ttk.Entry(frame, textvariable=self.c2_m, width=8)
         l.grid(row=1, column=1, sticky="new", padx=5, pady=(0,10))   
         
-        self.c2_button_calc = ttk.Button(frame, text="calc.\nrate")
+        self.c2_button_calc = ttk.Button(frame, text="calc.\nrate", command=self.c2_calc_rate)
         self.c2_button_calc.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=5, pady=5)        
         
         for c in range(3):
@@ -239,13 +244,13 @@ class JanisS07GUI(uis.GenericGUI):
             
         
         
-        self.c2_button_off = ttk.Button(self.c2_frame, text="heater off")
+        self.c2_button_off = ttk.Button(self.c2_frame, text="heater off", command=self.c2_heater_off)
         self.c2_button_off.grid(row=3, column=0, columnspan=2, sticky="new", padx=5, pady=5)
         
-        self.c2_button_step = ttk.Button(self.c2_frame, text="step")
+        self.c2_button_step = ttk.Button(self.c2_frame, text="step", command=self.c2_step)
         self.c2_button_step.grid(row=3, column=2, columnspan=2, sticky="new", padx=5, pady=5)
         
-        self.c2_button_ramp = ttk.Button(self.c2_frame, text="ramp")
+        self.c2_button_ramp = ttk.Button(self.c2_frame, text="ramp", command=self.c2_ramp)
         self.c2_button_ramp.grid(row=3, column=4, columnspan=2, sticky="new", padx=5, pady=5)
         
         # Update ramp assist parameters
@@ -287,7 +292,7 @@ class JanisS07GUI(uis.GenericGUI):
         l = ttk.Label(frame, text="s")
         l.grid(row=3, column=2, sticky="nw", padx=5)
         
-        self.c2a_button_update = ttk.Button(frame, text="update")
+        self.c2a_button_update = ttk.Button(frame, text="update", command=self.c2_update_assist)
         self.c2a_button_update.grid(row=1, column=3, rowspan=3, sticky="nsew", padx=5)
         
         tk.Grid.columnconfigure(frame, 1, weight=1)
@@ -327,6 +332,65 @@ class JanisS07GUI(uis.GenericGUI):
                 self.c0_heater2.configure(background="dim gray")
                 
         self.controller_time = time.perf_counter()
+
+    # sorb control functions
+    def c1_heater_off(self):
+        self.controller.heater_off(1)
+        
+    def c1_step(self):
+        try:
+            sp = float(self.c1_sp.get())
+            self.controller.step(1, sp)
+        except Exception as err:
+            self.error_box(err)
+            
+    def c1_ramp(self):
+        try:
+            sp = float(self.c1_sp.get())
+            r = float(self.c1_rate.get())
+            self.controller.ramp(1, sp, r)
+        except Exception as err:
+            self.error_box(err)
+            
+    # sample control functions
+    def c2_heater_off(self):
+        self.controller.heater_off(2)
+        
+    def c2_step(self):
+        try:
+            sp = float(self.c2_sp.get())
+            self.controller.step(2, sp)
+        except Exception as err:
+            self.error_box(err)
+            
+    def c2_ramp(self):
+        try:
+            sp = float(self.c2_sp.get())
+            r = float(self.c2_rate.get())
+            self.controller.ramp(2, sp, r)
+        except Exception as err:
+            self.error_box(err)
+            
+    def c2_calc_rate(self):
+        try:
+            sp = float(self.c2_sp.get())
+            h = float(self.c2_h.get())
+            m = float(self.c2_m.get())
+            with self.controller_lock:
+                (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.controller.get_status()
+            r = abs(sp - T2) / (h*60+m) * self.RATE_MULTIPLIER
+            self.c2_rate.set("{:.3g}".format(r))
+        except Exception as err:
+            self.error_box(err)
+            
+    def c2_update_assist(self):
+        try:
+            threshold = float(self.c2_threshold.get())
+            step = float(self.c2_step.get())
+            interval = float(self.c2_interval.get())
+            self.controller.set_assist(threshold=threshold, step=step, interval=interval)
+        except Exception as err:
+            self.error_box(err)
         
 
 class JanisS07Controller(abstracts.ControllerBase):
@@ -386,32 +450,31 @@ class JanisS07Controller(abstracts.ControllerBase):
         with self.instrument_lock:
             self.lakeshore.set_ramp(loop, 0, R_MIN)
             self.lakeshore.set_setp(loop, T_MIN)
-        
-    def ramp1(self, T, r):
-        (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
-        self.step(1, T1)
-        with self.instrument_lock:
-            self.lakeshore.set_ramp(1, 1, r)
-            self.lakeshore.set_setp(1, T)
-            
     
-    def ramp2(self, T, r):
-        # stop the old assist thread
-        self.end_assist.set()
-        self.assist_thread.join(timeout=0.1)
-        # set ramping
-        (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
-        self.step(2, T2)
-        with self.instrument_lock:
-            self.lakeshore.set_ramp(2, 1, r)
-            self.lakeshore.set_setp(2, T)
-        # starting the assist thread
-        if T > T2:
-            self.assist_thread = threading.Thread(target=self.ramp_assist)
-            self.assist_thread.start()
+    def ramp(self, loop, T, r):
+        if loop == 1:
+            (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
+            self.step(1, T1)
+            with self.instrument_lock:
+                self.lakeshore.set_ramp(1, 1, r)
+                self.lakeshore.set_setp(1, T)
+        elif loop == 2:
+            # stop the old assist thread
+            self.end_assist.set()
+            self.assist_thread.join(timeout=0.1)
+            # set ramping
+            (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
+            self.step(2, T2)
+            with self.instrument_lock:
+                self.lakeshore.set_ramp(2, 1, r)
+                self.lakeshore.set_setp(2, T)
+            # starting the assist thread
+            if T > T2:
+                self.assist_thread = threading.Thread(target=self.ramp_assist)
+                self.assist_thread.start()
     
     # Change the parameters for ramping assist
-    def set_assist(self, threshold, interval, step):
+    def set_assist(self, threshold, step, interval):
         self.ramp_assist_threshold = threshold
         self.ramp_assist_interval = interval     # in second
         self.ramp_assist_step = step    # in Kelvin
@@ -434,8 +497,14 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     
     default_params = {
         "R_series1 / Ohm": 'no entry',
-        "R_series2 / Ohm": 'no entry'
+        "R_series2 / Ohm": 'no entry',
+        "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340)
     }
+    param_order = [
+        "GPIB Lakeshore 340",
+        "R_series1 / Ohm",
+        "R_series2 / Ohm"
+    ]
     
     var_order = VAR_ORDER.copy()    # order of variables
     var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
@@ -448,8 +517,6 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     
     default_comments = ""
     def __init__(self, params, filename, lockin1, lockin2, magnet):
-        # Define the temperature controllers
-        self.lakeshore = Lakeshore340(GPIB_LAKESHORE340)
     
         # Save parameters
         self.lockin1 = lockin1
@@ -457,6 +524,11 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         self.lockin2 = lockin2
         self.R_series2 = float(params["R_series2 / Ohm"])
         self.magnet = magnet
+        
+        gpib_lakeshore = int(params["GPIB Lakeshore 340"])
+        
+        # Define the temperature controllers
+        self.lakeshore = Lakeshore340(gpib_lakeshore)
         
         # Initialise variables
         self.current_values = VAR_INIT.copy()   # = {"name": "value"}
@@ -519,13 +591,24 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
     
     default_params = {
         "R_series1 / Ohm": 'no entry',
-        "R_series2 / Ohm": 'no entry',
         "sens / V": 'no entry',
         "theta / degrees": 'no entry',
         "f / Hz": 'no entry',
         "Vout / V": 'no entry',
-        "transformer mode": '0 for False'
+        "transformer mode": '0 for False',
+        "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340),
+        "GPIB DMM": "{:d}".format(GPIB_DMM)
     }
+    
+    param_order = [
+        "GPIB Lakeshore 340",
+        "GPIB DMM",
+        "R_series1 / Ohm",
+        "sens / V",
+        "theta / degrees",
+        "f / Hz",
+        "Vout / V",
+        "transformer mode"]
     
     var_order = VAR_ORDER.copy()    # order of variables
     var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
@@ -545,10 +628,13 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
         Vout = float(params["Vout / V"])
         transformer = (int(params["transformer mode"]) != 0)
         
-        dmm = keithley.Keithley196(GPIB_DMM)
+        gpib_dmm = int(params["GPIB DMM"])
+        
+        dmm = keithley.Keithley196(gpib_dmm)
         lockin1 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=True)
         lockin2 = fake_lockins.ConstLockin(float("nan"))
         
         magnet = fake_magnets.ConstMagnet()
         
+        params["R_series2 / Ohm"] = 0.
         super().__init__(params, filename, lockin1, lockin2, magnet)

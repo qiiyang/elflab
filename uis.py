@@ -116,6 +116,10 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.Controller = Controller
         
         self.params = Experiment.default_params.copy()
+        if Experiment.param_order is None:
+            self.param_order = list(self.params.keys())
+        else:
+            self.param_order = Experiment.param_order
         self.var_order = Experiment.var_order
         self.var_titles = Experiment.var_titles
         
@@ -213,7 +217,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             # Parameters
         self.param_vars = {}
         r = 0
-        for par in self.params:
+        for par in self.param_order:
             w = ttk.Label(self.paramFrame, text=par)
             w.grid(column=0, row=r, sticky="nw")
             self.param_vars[par] = tk.StringVar()
@@ -379,7 +383,7 @@ class GenericGUI(elflab.abstracts.UIBase):
                 t = self.comment_box.get(0.0, tk.END)
                 f.write(t)
                 f.write("\n\nParameters:\n")
-                for par in self.params:
+                for par in self.param_order:
                     f.write("   {} = {}\n".format(par, self.params[par]))
                 
                            

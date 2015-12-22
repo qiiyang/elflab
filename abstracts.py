@@ -52,6 +52,7 @@ class ExperimentBase:
     # "Public" Variables
     title = None    # Title of the Experiment
     
+    param_order = None
     default_params = None
     
     var_order = None    # order of variables
