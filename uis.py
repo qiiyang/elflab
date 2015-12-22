@@ -343,7 +343,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             
             # update state label
             if state == 0:
-                self.kernelLabel.configure(text="stopped", foreground="white", background="dim gray"")
+                self.kernelLabel.configure(text="stopped", foreground="white", background="dim gray")
             elif state == 1:
                 self.kernelLabel.configure(text="running", background="green", foreground="white")
                 self.buttonPause.configure(text="pause", style="TButton", command=self.pause_kernel)
