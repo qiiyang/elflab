@@ -81,7 +81,7 @@ class Lakeshore340(TControllerBase):
     def get_rampst(self, loop):    # get the ramp on/off state
         if not self.connected:
             self.connect()
-        s = self.gpib.query("RAMP? {:d}".format(loop))
+        s = self.gpib.query("RAMPST? {:d}".format(loop))
         try:
             v = int(s)
         except:
