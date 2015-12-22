@@ -189,8 +189,8 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.commandFrame = ttk.LabelFrame(self.mainFrame, text="Program Control")
         self.commandFrame.grid(row=1, column=2, sticky="nwe")
         
-        self.controlFrame = ttk.LabelFrame(self.mainFrame, text="Instrument Control")
-        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
+        #self.controlFrame = ttk.LabelFrame(self.mainFrame, text="Instrument Control")
+        #self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
         
         self.statusFrame = ttk.LabelFrame(self.mainFrame, text="status")
         self.statusFrame.grid(row=3, column=1, columnspan=2, sticky="nwe")

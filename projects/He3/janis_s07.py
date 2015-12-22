@@ -116,16 +116,21 @@ VAR_INIT = {
 SENS_RANGE = (0.1, 0.8)
 
 class JanisS07GUI(uis.GenericGUI):
-    def __init__(self, Kernel, Experiment, Controller=JanisS07Controller):
+    HEATER_LOW = 0.02   # Below which show heater off
+    STAT_WIDTH = 9  # Min width in status entries
+    def __init__(self, Kernel, Experiment, Controller):
         super().__init__(Kernel, Experiment, Controller=Controller)
         # Control Panel Layout
-            # Status
-        self.c0_frame = ttk.Frame(self.controlFrame)
-        self.c0_frame.grid(row=0, column=0)
+        self.controlFrame = ttk.Frame(self.mainFrame)
+        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
         
+            # status
+        self.c0_frame = ttk.LabelFrame(self.controlFrame, text="Controller Status")
+        self.c0_frame.grid(row=0, column=0, sticky="nswe")
+            # sorb
         self.c1_frame = ttk.LabelFrame(self.controlFrame, text="Sorb Loop")
         self.c1_frame.grid(row=1, column=0, sticky="nw")
-        
+            # sample
         self.c2_frame = ttk.LabelFrame(self.controlFrame, text="Sample Loop")
         self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw")
         
@@ -135,16 +140,67 @@ class JanisS07GUI(uis.GenericGUI):
         l.grid(row=1, column=0)
         l = ttk.Label(self.c0_frame, text="sorb")
         l.grid(row=2, column=0)
-        l = ttk.Label(self.c0_frame, text="T / K")
+        l = ttk.Label(self.c0_frame, text="T / K", width=self.STAT_WIDTH)
         l.grid(row=0, column=1)
-        l = ttk.Label(self.c0_frame, text="setp. / K")
+        l = ttk.Label(self.c0_frame, text="setp. / K", width=self.STAT_WIDTH)
         l.grid(row=0, column=2)
-        l = ttk.Label(self.c0_frame, text="ramp")
+        l = ttk.Label(self.c0_frame, text="ramp", width=self.STAT_WIDTH)
         l.grid(row=0, column=3)
-        l = ttk.Label(self.c0_frame, text="heater / \%")
+        l = ttk.Label(self.c0_frame, text="heater / %", width=self.STAT_WIDTH)
         l.grid(row=0, column=4)
         
-        self.c0_T1 = ttk.Label(text="", )
+            # entries
+        self.c0_T1 = ttk.Label(self.c0_frame, text="NA", foreground="blue", relief="sunken")
+        self.c0_T1.grid(row=1, column=1)
+        self.c0_T2 = ttk.Label(self.c0_frame, text="NA", foreground="blue", relief="sunken")
+        self.c0_T2.grid(row=2, column=1)
+        
+        self.c0_sp1 = ttk.Label(self.c0_frame, text="NA", foreground="blue", relief="sunken")
+        self.c0_sp1.grid(row=1, column=2)
+        self.c0_sp2 = ttk.Label(self.c0_frame, text="NA", foreground="blue", relief="sunken")
+        self.c0_sp2.grid(row=2, column=2)
+        
+        self.c0_ramp1 = ttk.Label(self.c0_frame, text="NA", anchor="center", foreground="white", background="dim gray", relief="sunken")
+        self.c0_ramp1.grid(row=1, column=3)
+        self.c0_ramp2 = ttk.Label(self.c0_frame, text="NA", anchor="center", foreground="white", background="dim gray", relief="sunken")
+        self.c0_ramp2.grid(row=2, column=3)
+        
+        self.c0_heater1 = ttk.Label(self.c0_frame, text="NA", anchor="center", foreground="white", background="dim gray", relief="sunken")
+        self.c0_heater1.grid(row=1, column=4)
+        self.c0_heater2 = ttk.Label(self.c0_frame, text="NA", anchor="center", foreground="white", background="dim gray", relief="sunken")
+        self.c0_heater2.grid(row=2, column=4)
+        
+        for child in self.c0_frame.winfo_children():
+            child.grid_configure(padx=2, pady=2, sticky="nswe")
+            
+        # Sorb Control
+        l = ttk.Label(self.c1_frame, text="set:")
+        l.grid(row=0, column=0, sticky="nw", padx=(0, 5))
+        l = ttk.Label(self.c1_frame, text="rate:")
+        l.grid(row=1, column=0, sticky="nw", padx=(0, 5))
+        
+        self.c1_sp = tk.StringVar()
+        l = ttk.Entry(self.c1_frame, textvariable=self.c1_sp, width=10)
+        l.grid(row=0, column=1, columnspan=3, sticky="new")
+        self.c1_rate = tk.StringVar()
+        l = ttk.Entry(self.c1_frame, textvariable=self.c1_rate, width=10)
+        l.grid(row=1, column=1, columnspan=3, sticky="new")
+        
+        l = ttk.Label(self.c1_frame, text="/ K")
+        l.grid(row=0, column=4, sticky="nw")
+        l = ttk.Label(self.c1_frame, text="/ K/min")
+        l.grid(row=1, column=4, sticky="nw")
+        
+        self.c1_button_off = ttk.Button(self.c1_frame, text="heater off")
+        self.c1_button_off.grid(row=2, column=0, columnspan=2, sticky="new", padx=5)
+        
+        self.c1_button_step = ttk.Button(self.c1_frame, text="step")
+        self.c1_button_step.grid(row=2, column=2, sticky="new", padx=5)
+        
+        self.c1_button_ramp = ttk.Button(self.c1_frame, text="ramp")
+        self.c1_button_ramp.grid(row=2, column=3, columnspan=2, sticky="new", padx=5)
+        
+        
 
 class JanisS07Controller(abstracts.ControllerBase):
     """Controller for s07 Janis"""
