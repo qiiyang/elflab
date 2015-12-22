@@ -447,13 +447,12 @@ class GenericGUI(elflab.abstracts.UIBase):
         
     # book keeping: update the interface
     def update_interface(self):
-        with self.ui_lock:
-            if (self.kernel is None) or self.kernel.flag_stop or self.kernel.flag_quit:
-                new_state = 0
-            elif self.kernel.flag_pause:
-                new_state = 2
-            else:
-                new_state = 1
+        if (self.kernel is None) or self.kernel.flag_stop or self.kernel.flag_quit:
+            new_state = 0
+        elif self.kernel.flag_pause:
+            new_state = 2
+        else:
+            new_state = 1
         if new_state != self.state:
             self.set_ui_state(new_state)
         
