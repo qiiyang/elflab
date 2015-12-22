@@ -336,6 +336,7 @@ class JanisS07GUI(uis.GenericGUI):
     # sorb control functions
     def c1_heater_off(self):
         self.controller.heater_off(1)
+        self.update_controller()
         
     def c1_step(self):
         try:
@@ -343,6 +344,7 @@ class JanisS07GUI(uis.GenericGUI):
             self.controller.step(1, sp)
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
             
     def c1_ramp(self):
         try:
@@ -351,10 +353,12 @@ class JanisS07GUI(uis.GenericGUI):
             self.controller.ramp(1, sp, r)
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
             
     # sample control functions
     def c2_heater_off(self):
         self.controller.heater_off(2)
+        self.update_controller()
         
     def c2_step(self):
         try:
@@ -362,6 +366,7 @@ class JanisS07GUI(uis.GenericGUI):
             self.controller.step(2, sp)
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
             
     def c2_ramp(self):
         try:
@@ -370,6 +375,7 @@ class JanisS07GUI(uis.GenericGUI):
             self.controller.ramp(2, sp, r)
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
             
     def c2_calc_rate(self):
         try:
@@ -382,6 +388,7 @@ class JanisS07GUI(uis.GenericGUI):
             self.c2_rate.set("{:.3g}".format(r))
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
             
     def c2_update_assist(self):
         try:
@@ -391,6 +398,7 @@ class JanisS07GUI(uis.GenericGUI):
             self.controller.set_assist(threshold=threshold, step=step, interval=interval)
         except Exception as err:
             self.error_box(err)
+        self.update_controller()
         
 
 class JanisS07Controller(abstracts.ControllerBase):
@@ -446,12 +454,12 @@ class JanisS07Controller(abstracts.ControllerBase):
             self.lakeshore.set_ramp(loop, 0, self.R_MIN)
             self.lakeshore.set_setp(loop, self.T_MIN)
             if loop == 1:
-                self.lakeshore_set_range(0)
+                self.lakeshore.set_range(0)
     
     def step(self, loop, T):
         with self.instrument_lock:
             if loop == 1:
-                self.lakeshore_set_range(5)
+                self.lakeshore.set_range(5)
             self.lakeshore.set_ramp(loop, 0, self.R_MIN)
             self.lakeshore.set_setp(loop, T)
     
@@ -460,7 +468,7 @@ class JanisS07Controller(abstracts.ControllerBase):
             (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
             self.step(1, T1)
             with self.instrument_lock:
-                self.lakeshore_set_range(5)
+                self.lakeshore.set_range(5)
                 self.lakeshore.set_ramp(1, 1, r)
                 self.lakeshore.set_setp(1, T)
         elif loop == 2:
