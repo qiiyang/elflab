@@ -122,17 +122,17 @@ class JanisS07GUI(uis.GenericGUI):
         super().__init__(Kernel, Experiment, Controller=Controller)
         # Control Panel Layout
         self.controlFrame = ttk.Frame(self.mainFrame)
-        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe")
+        self.controlFrame.grid(row=2, column=1, columnspan=2, sticky="nwe", padx = 5, pady=5)
         
             # status
         self.c0_frame = ttk.LabelFrame(self.controlFrame, text="Controller Status")
-        self.c0_frame.grid(row=0, column=0, sticky="nswe")
+        self.c0_frame.grid(row=0, column=0, sticky="nswe", padx = 5, pady=5)
             # sorb
         self.c1_frame = ttk.LabelFrame(self.controlFrame, text="Sorb Loop")
-        self.c1_frame.grid(row=1, column=0, sticky="nw")
+        self.c1_frame.grid(row=1, column=0, sticky="nw", padx = 5, pady=5)
             # sample
         self.c2_frame = ttk.LabelFrame(self.controlFrame, text="Sample Loop")
-        self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw")
+        self.c2_frame.grid(row=0, column=1, rowspan=2, sticky="nw", padx = 5, pady=5)
         
         # Instrument Status
             # titles
@@ -180,25 +180,25 @@ class JanisS07GUI(uis.GenericGUI):
         l.grid(row=1, column=0, sticky="nw", padx=(0, 5))
         
         self.c1_sp = tk.StringVar()
-        l = ttk.Entry(self.c1_frame, textvariable=self.c1_sp, width=10)
-        l.grid(row=0, column=1, columnspan=3, sticky="new")
+        l = ttk.Entry(self.c1_frame, textvariable=self.c1_sp, width=8)
+        l.grid(row=0, column=1, columnspan=4, sticky="new")
         self.c1_rate = tk.StringVar()
-        l = ttk.Entry(self.c1_frame, textvariable=self.c1_rate, width=10)
-        l.grid(row=1, column=1, columnspan=3, sticky="new")
+        l = ttk.Entry(self.c1_frame, textvariable=self.c1_rate, width=8)
+        l.grid(row=1, column=1, columnspan=4, sticky="new")
         
         l = ttk.Label(self.c1_frame, text="/ K")
-        l.grid(row=0, column=4, sticky="nw")
+        l.grid(row=0, column=5, sticky="nw")
         l = ttk.Label(self.c1_frame, text="/ K/min")
-        l.grid(row=1, column=4, sticky="nw")
+        l.grid(row=1, column=5, sticky="nw")
         
         self.c1_button_off = ttk.Button(self.c1_frame, text="heater off")
         self.c1_button_off.grid(row=2, column=0, columnspan=2, sticky="new", padx=5)
         
         self.c1_button_step = ttk.Button(self.c1_frame, text="step")
-        self.c1_button_step.grid(row=2, column=2, sticky="new", padx=5)
+        self.c1_button_step.grid(row=2, column=2, columnspan=2, sticky="new", padx=5)
         
         self.c1_button_ramp = ttk.Button(self.c1_frame, text="ramp")
-        self.c1_button_ramp.grid(row=2, column=3, columnspan=2, sticky="new", padx=5)
+        self.c1_button_ramp.grid(row=2, column=4, columnspan=2, sticky="new", padx=5)
         
         
 

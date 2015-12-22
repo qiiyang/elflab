@@ -230,7 +230,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.comment_box.grid(row=1, column=0, sticky="nw")
         
             # commands
-        self.kernelLabel = ttk.Label(self.commandFrame, text="stopped", justify=tk.CENTER, background="", relief="groove")
+        self.kernelLabel = ttk.Label(self.commandFrame, text="stopped", anchor=tk.CENTER, foreground="white", background="dim gray", relief="groove")
         self.kernelLabel.grid(column=1, row=1, sticky="ew")
         
         self.buttonStart = ttk.Button(self.commandFrame, text="start", command=self.start_kernel)
@@ -343,7 +343,7 @@ class GenericGUI(elflab.abstracts.UIBase):
             
             # update state label
             if state == 0:
-                self.kernelLabel.configure(text="stopped", background="", foreground="")
+                self.kernelLabel.configure(text="stopped", foreground="white", background="dim gray"")
             elif state == 1:
                 self.kernelLabel.configure(text="running", background="green", foreground="white")
                 self.buttonPause.configure(text="pause", style="TButton", command=self.pause_kernel)
