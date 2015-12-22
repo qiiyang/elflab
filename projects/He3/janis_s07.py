@@ -138,9 +138,9 @@ class JanisS07GUI(uis.GenericGUI):
         
         # Instrument Status
             # titles
-        l = ttk.Label(self.c0_frame, text="sample")
-        l.grid(row=1, column=0)
         l = ttk.Label(self.c0_frame, text="sorb")
+        l.grid(row=1, column=0)
+        l = ttk.Label(self.c0_frame, text="sample")
         l.grid(row=2, column=0)
         l = ttk.Label(self.c0_frame, text="T / K", width=self.STAT_WIDTH)
         l.grid(row=0, column=1)
