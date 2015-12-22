@@ -293,6 +293,10 @@ class JanisS07GUI(uis.GenericGUI):
         tk.Grid.columnconfigure(frame, 1, weight=1)
         tk.Grid.columnconfigure(frame, 3, weight=1)  
         
+    def update_controller(self):
+        with self.controller_lock:
+            (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.controller.get_status()
+        self.controller_time = time.perf_counter()
         
 
 class JanisS07Controller(abstracts.ControllerBase):

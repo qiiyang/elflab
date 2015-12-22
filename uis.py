@@ -390,9 +390,11 @@ class GenericGUI(elflab.abstracts.UIBase):
             
             # Restart a controller instance
             if self.controller is not None:
-                self.controller.terminate()
+                with self.controller_lock:
+                    self.controller.terminate()
             if self.Controller is not None:
                 self.controller = self.Controller(kernel=self.kernel, **self.controller_kwargs)
+                self.update_controller()
         except Exception as err:
             self.error_box(err)
         else:
