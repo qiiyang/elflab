@@ -51,6 +51,7 @@ class ExperimentBase:
     
     # "Public" Variables
     title = None    # Title of the Experiment
+    measurement_interval = None
     
     param_order = None
     default_params = None

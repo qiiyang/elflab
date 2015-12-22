@@ -116,7 +116,7 @@ VAR_INIT = {
 SENS_RANGE = (0.1, 0.8)
 
 class JanisS07GUI(uis.GenericGUI):
-    DEFAULT_FOLDER = r"D:\Qi\data"
+    DEFAULT_FOLDER = r"C:\Qi\data"
     DEFAULT_FN = r"mi"
     
     HEATER_LOW = 0.01   # Below which show heater off
@@ -443,13 +443,13 @@ class JanisS07Controller(abstracts.ControllerBase):
         
     def heater_off(self, loop):
         with self.instrument_lock:
-            self.lakeshore.set_ramp(loop, 0, R_MIN)
-            self.lakeshore.set_setp(loop, T_MIN)
+            self.lakeshore.set_ramp(loop, 0, self.R_MIN)
+            self.lakeshore.set_setp(loop, self.T_MIN)
     
     def step(self, loop, T):
         with self.instrument_lock:
-            self.lakeshore.set_ramp(loop, 0, R_MIN)
-            self.lakeshore.set_setp(loop, T_MIN)
+            self.lakeshore.set_ramp(loop, 0, self.R_MIN)
+            self.lakeshore.set_setp(loop, T)
     
     def ramp(self, loop, T, r):
         if loop == 1:
@@ -498,9 +498,11 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
     default_params = {
         "R_series1 / Ohm": 'no entry',
         "R_series2 / Ohm": 'no entry',
-        "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340)
+        "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340),
+        "sampling interval / s": "0.1"
     }
     param_order = [
+        "sampling interval / s",
         "GPIB Lakeshore 340",
         "R_series1 / Ohm",
         "R_series2 / Ohm"
@@ -525,6 +527,7 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         self.R_series2 = float(params["R_series2 / Ohm"])
         self.magnet = magnet
         
+        self.measurement_interval = float(params["sampling interval / s"])
         gpib_lakeshore = int(params["GPIB Lakeshore 340"])
         
         # Define the temperature controllers
@@ -555,24 +558,24 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         self.logger.start()
         
     def measure(self):
-        self.currentValues["n"] += 1
-        t,self.currentValues["T_A"] = self.lakeshore.read("A")
-        t,self.currentValues["T_B"] = self.lakeshore.read("B")
-        t,self.currentValues["T_sorb"] = self.lakeshore.read("C")
-        t,self.currentValues["T_1K"] = self.lakeshore.read("D")
+        self.current_values["n"] += 1
+        t,self.current_values["T_A"] = self.lakeshore.read("A")
+        t,self.current_values["T_B"] = self.lakeshore.read("B")
+        t,self.current_values["T_sorb"] = self.lakeshore.read("C")
+        t,self.current_values["T_1K"] = self.lakeshore.read("D")
         
-        self.currentValues["t"] = t - self.t0
+        self.current_values["t"] = t - self.t0
         
-        if math.isnan(self.currentValues["T_B"]) or (self.currentValues["T_B"] < T_RUO):
-            self.currentValues["T_sample"] = self.currentValues["T_A"]
+        if math.isnan(self.current_values["T_B"]) or (self.current_values["T_B"] < T_RUO):
+            self.current_values["T_sample"] = self.current_values["T_A"]
         else:
-            self.currentValues["T_sample"] = self.currentValues["T_B"]
+            self.current_values["T_sample"] = self.current_values["T_B"]
         
-        t,self.currentValues["H"],t = self.magnet.read()
-        t,self.currentValues["X1"],self.currentValues["Y1"],t,t,self.currentValues["f1"],self.currentValues["Vex1"] = self.lockin1.read()
-        t,self.currentValues["X2"],self.currentValues["Y2"],t,t,self.currentValues["f2"],self.currentValues["Vex2"] = self.lockin2.read()
-        self.currentValues["R1"] = self.currentValues["X1"] / self.currentValues["Vex1"] * self.R_series1
-        self.currentValues["R2"] = self.currentValues["X2"] / self.currentValues["Vex2"] * self.R_series2
+        t,self.current_values["H"],t = self.magnet.read()
+        t,self.current_values["X1"],self.current_values["Y1"],t,t,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()
+        t,self.current_values["X2"],self.current_values["Y2"],t,t,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()
+        self.current_values["R1"] = self.current_values["X1"] / self.current_values["Vex1"] * self.R_series1
+        self.current_values["R2"] = self.current_values["X2"] / self.current_values["Vex2"] * self.R_series2
         
     def log(self, dataToLog):
         self.logger.log(dataToLog)
@@ -590,6 +593,7 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
     title = "Janis S07 He-3: MI measurements with PAR 124"
     
     default_params = {
+        "sampling interval / s": "0.1",
         "R_series1 / Ohm": 'no entry',
         "sens / V": 'no entry',
         "theta / degrees": 'no entry',
@@ -601,6 +605,7 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
     }
     
     param_order = [
+        "sampling interval / s",
         "GPIB Lakeshore 340",
         "GPIB DMM",
         "R_series1 / Ohm",
@@ -636,5 +641,6 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
         
         magnet = fake_magnets.ConstMagnet()
         
-        params["R_series2 / Ohm"] = 0.
-        super().__init__(params, filename, lockin1, lockin2, magnet)
+        p = params.copy()
+        p["R_series2 / Ohm"] = "0"
+        super().__init__(p, filename, lockin1, lockin2, magnet)
