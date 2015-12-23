@@ -5,7 +5,7 @@ import math
 import threading
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from elflab import uis
 from elflab.devices.T_controllers.lakeshore import Lakeshore340
@@ -392,9 +392,9 @@ class JanisS07GUI(uis.GenericGUI):
             
     def c2_update_assist(self):
         try:
-            threshold = float(self.c2_threshold.get())
-            step = float(self.c2_step.get())
-            interval = float(self.c2_interval.get())
+            threshold = float(self.c2a_threshold.get())
+            step = float(self.c2a_step.get())
+            interval = float(self.c2a_interval.get())
             self.controller.set_assist(threshold=threshold, step=step, interval=interval)
         except Exception as err:
             self.error_box(err)
@@ -485,6 +485,7 @@ class JanisS07Controller(abstracts.ControllerBase):
             if T > T2:
                 with self.instrument_lock:
                     self.lakeshore.set_range(5)
+                self.end_assist.clear()
                 self.assist_thread = threading.Thread(target=self.ramp_assist)
                 self.assist_thread.start()
     
@@ -495,12 +496,13 @@ class JanisS07Controller(abstracts.ControllerBase):
         self.ramp_assist_step = step    # in Kelvin
         
     def ramp_assist(self):
-        while self.end_assist.wait(timeout=self.ramp_assist_interval):
-            (T1, setp1, heater1, T2, setp2, heater2) = self.get_status()
-            if heater2 > self.ramp_assist_threshold:
-                self.step(1, T1+self.ramp_assist_step)
+        while not self.end_assist.wait(timeout=self.ramp_assist_interval):
+            #messagebox.showerror("debug", "r")
+            (T1, setp1, rampst1, heater1, T2, setp2, rampst2, heater2) = self.get_status()
             if T1 >= self.ASSIST_MAX_T:
                 self.end_assist.set()
+            elif heater2 > self.ramp_assist_threshold:
+                self.step(1, T1+self.ramp_assist_step)
         
     def terminate(self):
         self.end_assist.set()
