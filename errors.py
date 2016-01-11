@@ -20,6 +20,14 @@ def std(values, errors):
     var2 = np.nanmean(np.square(errors)) # mean-square of input errors
     return np.sqrt(var1 + var2)
     
+# standard error of the mean
+def se(values, errors=None):
+    n = values.size
+    if n <= 1:
+        raise ValueError
+    st = np.nanstd(values)
+    se = st / sqrt(n-1)
+    
     
 # an estimator that gives median value of the input errors as error
 def median(values, errors):

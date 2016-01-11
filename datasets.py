@@ -151,7 +151,7 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
             writer.writerow(row)
     
 
-def downsample(dataset, size, averaging=np.nanmean, error_est=errors.std):
+def downsample(dataset, size, averaging=np.nanmean, error_est=None):
     """Down sampling the dataset by averaging function "averaging"
     size is the window size
     new errors are estimated with the function "error_est"
