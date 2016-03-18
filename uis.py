@@ -3,6 +3,7 @@
 ######################################################################################################
 import time
 import os
+import traceback
 import multiprocessing
 
 import elflab.abstracts
@@ -401,6 +402,7 @@ class GenericGUI(elflab.abstracts.UIBase):
                 self.update_controller()
         except Exception as err:
             self.error_box(err)
+            print(traceback.format_exc())
         else:
             with self.ui_lock:
                 self.buttonStart.configure(text="stop", style="GreenBG.TButton", command=self.stop_kernel)

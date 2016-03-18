@@ -55,7 +55,7 @@ class SR830(LockinBase):
         else:
             return False
     
-    def read(self):     # return (t, X, Y, R, theta, f, Vout)
+    def read(self):     # return (t, X, Y, f, Vout, R, theta)
         snap = str(self.gpib.ask("SNAP?1,2,3,4,9".encode("ASCII")), encoding="ASCII")
         t = time.perf_counter()
         (X, Y, R, theta, f) = [float(v) for v in snap.split(',')]
@@ -65,4 +65,4 @@ class SR830(LockinBase):
         if self.autosense:
             self.adjustSens(R)
             
-        return (t, X, Y, R, theta, f, Vout)
+        return (t, X, Y, f, Vout, R, theta)
