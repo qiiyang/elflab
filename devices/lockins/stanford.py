@@ -1,8 +1,8 @@
 import time
 import visa
-from elflab.devices.lockins.lockin_base import LockinBase
+from elflab.devices.lockins.lockin_base import DigitalLockinBase
 
-class SR830(LockinBase):  
+class SR830(DigitalLockinBase):  
 
     sensList = (2.e-9, 5.e-9, 10.e-9,
             2.e-8, 5.e-8, 10.e-8,
@@ -23,11 +23,11 @@ class SR830(LockinBase):
     
     def connect(self):
         rm = visa.ResourceManager()
-        self.gpib = rm.get_instrument("GPIB::{:n}".format(self.address))
-        idn = str(self.gpib.ask("*idn?".encode("ASCII")), encoding="ASCII")
+        self.gpib = rm.open_resource("GPIB::{:n}".format(self.address))
+        idn = self.gpib.query("*idn?")
         if not ("SR830" in idn):
             raise Exception("SR830 lock-in amplifier idn string does not match")
-        self.gpib.write("*CLS?".encode("ASCII"))
+        self.gpib.write("*CLS?")
         print("        SR830 lock-in amplifier, GPIB={:n}.".format(self.address))        
         self.connected = True
     
@@ -37,32 +37,32 @@ class SR830(LockinBase):
         self.autosense = True
     
     def adjustSens(self, R): # R: current R value
-        i = int(self.gpib.ask("sens?".encode("ASCII")))
+        i = int(self.gpib.query("sens?"))
         sens = self.sensList[i]
-        overloaded = int(self.gpib.ask("LIAS?".encode("ASCII"))) % 8
+        overloaded = int(self.gpib.query("LIAS?")) % 8
         
         if (i < 26) and (overloaded or (abs(R) / sens > self.highSens)):
-            self.gpib.write("sens {:n}".format(i+1).encode("ASCII"))
+            self.gpib.write("sens {:n}".format(i+1))
         elif (i > 0) and (overloaded or (abs(R) / sens < self.lowSens)):
-            self.gpib.write("sens {:n}".format(i-1).encode("ASCII"))
+            self.gpib.write("sens {:n}".format(i-1))
     
     def setf(self, f):
-        self.gpib.write("FREQ {:.4f}".format(f).encode("ASCII"))
-        fnew = float(self.gpib.ask("FREQ?".encode("ASCII")))
+        self.gpib.write("FREQ {:.4f}".format(f))
+        fnew = float(self.gpib.query("FREQ?"))
         
         if (abs(fnew - f) / f <= 1.e-4) or (abs(fnew - f) <= 0.0001):
             return True
         else:
             return False
     
-    def read(self):     # return (t, X, Y, f, Vout, R, theta)
-        snap = str(self.gpib.ask("SNAP?1,2,3,4,9".encode("ASCII")), encoding="ASCII")
+    def read(self):     # return (t, X, Y, R, theta, f, Vout)
+        snap = str(self.gpib.query("SNAP?1,2,3,4,9"))
         t = time.perf_counter()
         (X, Y, R, theta, f) = [float(v) for v in snap.split(',')]
         
-        Vout = float(self.gpib.ask("SLVL?".encode("ASCII")))
+        Vout = float(self.gpib.query("SLVL?"))
         
         if self.autosense:
             self.adjustSens(R)
             
-        return (t, X, Y, f, Vout, R, theta)
+        return (t, X, Y, R, theta, f, Vout)

@@ -186,8 +186,8 @@ class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
         t,self.current_values["T_sample"] = self.cryocon.read("B")
         t,self.current_values["T_sorb"] = self.lakeshore.read("A")
         t,self.current_values["H"],t = self.magnet.read()
-        t,self.current_values["X1"],self.current_values["Y1"],t,t,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()[0:5]
-        t,self.current_values["X2"],self.current_values["Y2"],t,t,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()[0:5]
+        t,self.current_values["X1"],self.current_values["Y1"],_,_,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()
+        t,self.current_values["X2"],self.current_values["Y2"],_,_,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()
         self.current_values["R1"] = self.current_values["X1"] / self.current_values["Vex1"] * self.R_series1
         self.current_values["R2"] = self.current_values["X2"] / self.current_values["Vex2"] * self.R_series2
         
@@ -254,7 +254,7 @@ class Janis001PAR124MI(Janis001He3TwoLockinAbstract):
         gpib_dmm = int(params["GPIB DMM"])
         
         dmm = keithley.Keithley196(gpib_dmm)
-        lockin1 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=True)
+        lockin1 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=transformer)
         lockin2 = fake_lockins.ConstLockin(float("nan"))
         
         magnet = fake_magnets.ConstMagnet()
@@ -272,7 +272,7 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
     default_params = {
         "sampling interval / s": "0.1",
         "SR830 GPIB": "{:d}".format(GPIB_SR830),
-        "SR830 R_series": "no entry",
+        "SR830 R_series / Ohm": "no entry",
         "PAR124 DMM GPIB": "{:d}".format(GPIB_DMM),
         "PAR124 R_series / Ohm": 'no entry',
         "PAR124 sens / V": 'no entry',
@@ -285,7 +285,7 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
     param_order = [
         "sampling interval / s",
         "SR830 GPIB",
-        "SR830 R_series",
+        "SR830 R_series / Ohm",
         "PAR124 DMM GPIB",
         "PAR124 R_series / Ohm",
         "PAR124 sens / V",
@@ -299,8 +299,8 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
     format_strings = VAR_FORMATS.copy()   # Format strings for the variables
     
     plotXYs = [
-            [("T_sample", "X1"), ("T_sample", "X2"),
-            [("t", "T_flow"), ("t", "T_sample")]]
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_flow"), ("t", "T_sample")]
             ]
     
     default_comments = ""
@@ -317,13 +317,13 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
         
         gpib_dmm = int(params["PAR124 DMM GPIB"])
         dmm = keithley.Keithley196(gpib_dmm)
-        lockin2 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=True)
+        lockin2 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=transformer)
         
         magnet = fake_magnets.ConstMagnet()
         
         p = params.copy()
-        p["R_series1 / Ohm"] = params["SR830 R_series"]
-        p["R_series2 / Ohm"] = params["PAR124 R_series"]
+        p["R_series1 / Ohm"] = params["SR830 R_series / Ohm"]
+        p["R_series2 / Ohm"] = params["PAR124 R_series / Ohm"]
         
         super().__init__(p, filename, lockin1, lockin2, magnet)
    
