@@ -3,6 +3,7 @@
 
 # Global flags
 DEBUG_INFO = False
+SCIENTIFIC_NOTATION_POWER = 4  # Minimum power to use scientific notation
 
 # import modules
 import numpy as np
@@ -62,6 +63,10 @@ class PlotLive:
                 self.styles[i].append(self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)])
         if DEBUG_INFO:
             print("##### Debug Info: class PlotLive #####\n------------------------\n    styles ==\n{}\n------------------------".format(self.styles))
+        
+        # Initialise the axis number formatter:
+        self.y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+        self.y_formatter.set_powerlimits((SCIENTIFIC_NOTATION_POWER, SCIENTIFIC_NOTATION_POWER))
         
         # Initialise the plot buffer
         self.nPoints = 0
@@ -223,6 +228,7 @@ class PlotLive:
                 self.subs[i][j].set_ylabel(self.xyLabels[i][j][1])
                 self.subs[i][j].grid()
                 self.subs[i][j].legend()
+                self.subs[i][j].yaxis.set_major_formatter(self.y_formatter)
                 self.lines.append(line)
         if self.nPoints >= 2:
             self.rescale()
