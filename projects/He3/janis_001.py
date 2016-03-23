@@ -104,7 +104,7 @@ VAR_INIT = {
             }
                  
 
-SENS_RANGE = (0.1, 0.8)
+#SENS_RANGE = (0.1, 0.8)
     
 class Janis001GUI(uis.GenericGUI):
     DEFAULT_FOLDER = r"D:\He3_Data\test"
@@ -168,10 +168,10 @@ class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
         self.lockin2.connect()
         self.magnet.connect()
         
-        if self.lockin1.is_digital:
+        '''if self.lockin1.is_digital:
             self.lockin1.setAutoSens(*SENS_RANGE)
         if self.lockin2.is_digital:
-            self.lockin2.setAutoSens(*SENS_RANGE)
+            self.lockin2.setAutoSens(*SENS_RANGE)'''
         
         # Reset counter and timer
         self.n = 0
