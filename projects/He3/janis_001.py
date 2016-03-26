@@ -335,7 +335,7 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
    
 class Janis001SR830PAR124IPS120(Janis001SR830PAR124):
     def __init__(self, params, filename):
-        super().__init__(params, filname)
+        super().__init__(params, filename)
         self.magnet = oxford.IPS120_10(GPIB_IPS120)
         
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays

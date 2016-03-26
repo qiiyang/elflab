@@ -1,5 +1,6 @@
 """ Oxford Magnet Power Supplies """
-
+import visa
+import time
 from .magnet_base import MagnetBase
 
 class IPS120_10(MagnetBase):
@@ -12,11 +13,11 @@ class IPS120_10(MagnetBase):
         
     def connect(self):
         rm = visa.ResourceManager()
-        self.gpib = rm.open_resource("GPIB::{:n}".format(self.address))
+        self.gpib = rm.open_resource("GPIB::{:n}".format(self.address), read_termination='\r', write_termination='\r')
         print("        Oxford IPS 120-10 magnet power supply connected, GPIB={:n}.".format(self.address))        
         self.connected = True
     
-    def read_field(self): # returns (t, H/Tesla, I_magnet/A)
+    def read(self): # returns (t, H/Tesla, I_magnet/A)
         stat = str(self.gpib.query("X"))
         if (stat[8] == '0') or (stat[8] == '2'):    # persistent switch closed
             # use persistent values
