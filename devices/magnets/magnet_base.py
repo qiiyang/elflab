@@ -1,6 +1,13 @@
 from elflab.devices.device_base import DeviceBase
 
 class MagnetBase(DeviceBase):    
-    pass
+    def __init__(self, address):
+        pass
+        
+    def connect(self):
+        pass
+    
+    def read_field(self):   # returns (t, H/Tesla)
+        pass
 
         

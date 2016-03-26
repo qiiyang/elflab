@@ -23,7 +23,7 @@ GPIB_SR830 = 10
 
 # Conversion between data names and indices and labels etc.
 
-VAR_ORDER = ["n", "t", "T_sample", "T_sorb", "T_flow", "H", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2"]
+VAR_ORDER = ["n", "t", "T_sample", "T_sorb", "T_flow", "H", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2", "I_magnet"]
 
 # Everything in SI
 
@@ -43,7 +43,8 @@ VAR_DESC = {
             "X2": "Lockin X on ch 2 / V", 
             "Y2": "Lockin Y on ch 2 / V",
             "f2": "Lockin frequency on ch 2 / Hz",
-            "Vex2": "Lockin sine output on ch 2 / V"
+            "Vex2": "Lockin sine output on ch 2 / V",
+            "I_magnet": "Magnet current / A"
             }
             
 VAR_TITLES = {
@@ -62,7 +63,8 @@ VAR_TITLES = {
             "X2": "X2 / V", 
             "Y2": "Y2 / V",
             "f2": "f2 / Hz",
-            "Vex2": "Vex2 / V"
+            "Vex2": "Vex2 / V",
+            "I_magnet": "I_magnet / A"
             }
             
 VAR_FORMATS = {
@@ -81,7 +83,8 @@ VAR_FORMATS = {
             "X2": "{:.10e}", 
             "Y2": "{:.10e}",
             "f2": "{:.10e}",
-            "Vex2": "{:.10e}"
+            "Vex2": "{:.10e}",
+            "I_magnet": "{:.10e}" 
             }
             
 VAR_INIT = {
@@ -100,7 +103,8 @@ VAR_INIT = {
             "X2": 0., 
             "Y2": 0.,
             "f2": 0.,
-            "Vex2": 0.
+            "Vex2": 0.,
+            "I_magnet": 0.
             }
                  
 
@@ -334,12 +338,15 @@ def loadfile(filename):
         reader = csv.reader(f)
         next(reader)
         datalist = []
-        for var in VAR_LIST:
+        for var in VAR_ORDER:
             datalist.append([])
         for row in reader:
-            for i in range(0, len(VAR_LIST)):
-                datalist[i].append(row[i])
+            for i in range(0, len(row)):
+                datalist[i].append(float(row[i]))
+            # For backward compatibility #
+            for i in range(len(row), len(VAR_ORDER)):
+                datalist[i].append(float('nan'))
         datadict = {}
-        for i in range(0, len(VAR_LIST)):
-            datadict[VAR_LIST[i]] = np.array(datalist[i], dtype=np.float_)
+        for i in range(0, len(VAR_ORDER)):
+            datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_)
         return datadict

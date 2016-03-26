@@ -66,7 +66,7 @@ class PlotLive:
         
         # Initialise the axis number formatter:
         self.y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
-        self.y_formatter.set_powerlimits((SCIENTIFIC_NOTATION_POWER, SCIENTIFIC_NOTATION_POWER))
+        self.y_formatter.set_powerlimits((-SCIENTIFIC_NOTATION_POWER, SCIENTIFIC_NOTATION_POWER))
         
         # Initialise the plot buffer
         self.nPoints = 0
