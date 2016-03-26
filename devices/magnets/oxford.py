@@ -19,18 +19,49 @@ class IPS120_10(MagnetBase):
     
     def read(self): # returns (t, H/Tesla, I_magnet/A)
         stat = str(self.gpib.query("X"))
+        while len(stat) != 15:
+            stat = str(self.gpib.query("X"))
+        
         if (stat[8] == '0') or (stat[8] == '2'):    # persistent switch closed
             # use persistent values
-            s = str(self.gpib.query("R18")).strip("Rr")
-            self.H = float(s)
-            s = str(self.gpib.query("R16")).strip("Rr")
-            self.I = float(s)
+            err = True  # error flag for detecting GPIB error
+            while err:
+                try:
+                    s = str(self.gpib.query("R18")).strip("Rr")
+                    self.H = float(s)
+                except:
+                    pass
+                else:
+                    err = False
+            err = True  # error flag for detecting GPIB error
+            while err:
+                try:
+                    s = str(self.gpib.query("R16")).strip("Rr")
+                    self.I = float(s)
+                except:
+                    pass
+                else:
+                    err = False
         else:   # persistent switch open or not present
             # use demand / measured values
-            s = str(self.gpib.query("R7")).strip("Rr")  # Demand field
-            self.H = float(s)
-            s = str(self.gpib.query("R2")).strip("Rr")  # Measured Current
-            self.I = float(s)
+            err = True  # error flag for detecting GPIB error
+            while err:
+                try:
+                    s = str(self.gpib.query("R7")).strip("Rr")  # Demand field
+                    self.H = float(s)
+                except:
+                    pass
+                else:
+                    err = False
+            err = True  # error flag for detecting GPIB error
+            while err:
+                try:
+                    s = str(self.gpib.query("R2")).strip("Rr")  # Measured Current
+                    self.I = float(s)
+                except:
+                    pass
+                else:
+                    err = False
             
         return (time.perf_counter(), self.H, self.I)
         
