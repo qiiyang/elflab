@@ -9,7 +9,7 @@ from elflab.devices.T_controllers.lakeshore import Lakeshore332
 from elflab.devices.T_controllers.cryocon import Cryocon32B
 
 from elflab.devices.lockins import fake_lockins, par, stanford
-from elflab.devices.magnets import fake_magnets
+from elflab.devices.magnets import fake_magnets, oxford
 from elflab.devices.dmms import keithley
 
 import elflab.abstracts as abstracts
@@ -20,6 +20,7 @@ GPIB_CRYOCON32B = 13
 GPIB_LAKESHORE332 = 8
 GPIB_DMM = 19
 GPIB_SR830 = 10
+GPIB_IPS120 = 25
 
 # Conversion between data names and indices and labels etc.
 
@@ -332,6 +333,11 @@ class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
         super().__init__(p, filename, lockin1, lockin2, magnet)
    
    
+class Janis001SR830PAR124IPS120(Janis001SR830PAR124):
+    def __init__(self, params, filename):
+        super().__init__(params, filname)
+        self.magnet = oxford.IPS120_10(GPIB_IPS120)
+        
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
 def loadfile(filename): 
     with open(filename, mode="r") as f:
