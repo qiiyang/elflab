@@ -189,7 +189,7 @@ class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
         t,self.current_values["T_flow"] = self.cryocon.read("A")
         t,self.current_values["T_sample"] = self.cryocon.read("B")
         t,self.current_values["T_sorb"] = self.lakeshore.read("A")
-        t,self.current_values["H"],t = self.magnet.read()
+        t,self.current_values["H"],self.current_values["I_magnet"] = self.magnet.read()
         t,self.current_values["X1"],self.current_values["Y1"],_,_,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()
         t,self.current_values["X2"],self.current_values["Y2"],_,_,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()
         self.current_values["R1"] = self.current_values["X1"] / self.current_values["Vex1"] * self.R_series1

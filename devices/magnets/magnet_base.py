@@ -7,7 +7,7 @@ class MagnetBase(DeviceBase):
     def connect(self):
         pass
     
-    def read_field(self):   # returns (t, H/Tesla)
+    def read_field(self):   # returns (t, H/Tesla, I_magnet/A)
         pass
 
         
