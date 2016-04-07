@@ -2,6 +2,8 @@
 """
 import time
 import math
+import csv
+import numpy as np
 import threading
 
 import tkinter as tk
@@ -674,3 +676,22 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
         p = params.copy()
         p["R_series2 / Ohm"] = "0"
         super().__init__(p, filename, lockin1, lockin2, magnet)
+        
+# load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
+def loadfile(filename): 
+    with open(filename, mode="r") as f:
+        reader = csv.reader(f)
+        next(reader)
+        datalist = []
+        for var in VAR_ORDER:
+            datalist.append([])
+        for row in reader:
+            for i in range(0, len(row)):
+                datalist[i].append(float(row[i]))
+            # For backward compatibility #
+            for i in range(len(row), len(VAR_ORDER)):
+                datalist[i].append(float('nan'))
+        datadict = {}
+        for i in range(0, len(VAR_ORDER)):
+            datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_)
+        return datadict

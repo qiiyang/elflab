@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+SCIENTIFIC_NOTATION_POWER = 4  # Minimum power to use scientific notation
+
 class plot_static:
     # Graph-related constants
     LW = 2      # line width
@@ -27,6 +29,9 @@ class plot_static:
             for j in range(ncols):
                 k = i*ncols + j
                 self.styles[i].append(self.COLOURPOOL[k % len(self.COLOURPOOL)] + self.MARKERPOOL[k % len(self.MARKERPOOL)])
+        # Initialise the axis number formatter:
+        self.y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+        self.y_formatter.set_powerlimits((-SCIENTIFIC_NOTATION_POWER, SCIENTIFIC_NOTATION_POWER))
         
     def plot(self, data): # data as a dict of numpy arrays.
         self.fig, self.subs= plt.subplots(self.nrows, self.ncols, squeeze=False)
@@ -36,6 +41,7 @@ class plot_static:
                 line, = self.subs[i][j].plot(data[self.xyVars[i][j][0]], data[self.xyVars[i][j][1]], self.styles[i][j], lw=self.LW, label=self.xyVars[i][j][1])
                 self.subs[i][j].set_xlabel(self.xyLabels[i][j][0])
                 self.subs[i][j].set_ylabel(self.xyLabels[i][j][1])
+                self.subs[i][j].yaxis.set_major_formatter(self.y_formatter)
                 self.subs[i][j].grid()
                 self.subs[i][j].legend()
         plt.show()
