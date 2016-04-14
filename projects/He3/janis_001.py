@@ -20,6 +20,7 @@ GPIB_CRYOCON32B = 13
 GPIB_LAKESHORE332 = 8
 GPIB_DMM = 19
 GPIB_SR830 = 10
+GPIB_SR830_2 = 12
 GPIB_IPS120 = 25
 
 # Conversion between data names and indices and labels etc.
@@ -337,7 +338,58 @@ class Janis001SR830PAR124IPS120(Janis001SR830PAR124):
     def __init__(self, params, filename):
         super().__init__(params, filename)
         self.magnet = oxford.IPS120_10(GPIB_IPS120)
+   
+
+class Janis001SR830SR830IPS120(Janis001He3TwoLockinAbstract):
+    # "Public" Variables
+    title = "Janis S07 He-3: SR830 & PAR124"
+    
+    default_params = {
+        "sampling interval / s": "0.1",
+        "Ch1 SR830 GPIB": "{:d}".format(GPIB_SR830_2),
+        "Ch1 R_series / Ohm": "no entry",
         
+        "Ch2 SR830 GPIB": "{:d}".format(GPIB_SR830),
+        "Ch2 R_series / Ohm": "no entry"
+    }
+    
+    param_order = [
+        "sampling interval / s",
+        "Ch1 SR830 GPIB",
+        "Ch1 R_series / Ohm",
+        
+        "Ch2 SR830 GPIB",
+        "Ch2 R_series / Ohm"]
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_flow"), ("t", "T_sample")]
+            ]
+    
+    default_comments = ""
+    
+    def __init__(self, params, filename):   
+        gpib_ch1 = int(params["Ch1 SR830 GPIB"])
+        lockin1 = stanford.SR830(gpib_ch1)
+        
+         
+        gpib_ch2 = int(params["Ch2 SR830 GPIB"])
+        lockin2 = stanford.SR830(gpib_ch2)
+        
+        magnet = oxford.IPS120_10(GPIB_IPS120)
+        
+        p = params.copy()
+        p["R_series1 / Ohm"] = params["Ch1 R_series / Ohm"]
+        p["R_series2 / Ohm"] = params["Ch2 R_series / Ohm"]
+        
+        super().__init__(p, filename, lockin1, lockin2, magnet)
+
+ 
+   
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
 def loadfile(filename): 
     with open(filename, mode="r") as f:
