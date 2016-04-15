@@ -367,7 +367,8 @@ class Janis001SR830SR830IPS120(Janis001He3TwoLockinAbstract):
     
     plotXYs = [
             [("T_sample", "R1"), ("T_sample", "R2")],
-            [("t", "T_flow"), ("t", "T_sample")]
+            [("t", "T_flow"), ("t", "T_sample")],
+            [("H", "R1"), ("H", "R2")]
             ]
     
     default_comments = ""
