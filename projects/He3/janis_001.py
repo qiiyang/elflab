@@ -22,6 +22,7 @@ GPIB_DMM = 19
 GPIB_SR830 = 10
 GPIB_SR830_2 = 12
 GPIB_IPS120 = 25
+GPIB_KEITHLEY617 = 27
 
 # Conversion between data names and indices and labels etc.
 
@@ -91,22 +92,22 @@ VAR_FORMATS = {
             
 VAR_INIT = {
             "n": 0,
-            "t": 0.,
-            "T_sample": 0.,
-            "T_sorb": 0.,
-            "T_flow": 0.,
-            "H": 0.,
-            "R1": 0.,
-            "R2": 0.,
-            "X1": 0.,
-            "Y1": 0.,
-            "f1": 0.,
-            "Vex1": 0.,
-            "X2": 0., 
-            "Y2": 0.,
-            "f2": 0.,
-            "Vex2": 0.,
-            "I_magnet": 0.
+            "t": float("NaN"),
+            "T_sample": float("NaN"),
+            "T_sorb": float("NaN"),
+            "T_flow": float("NaN"),
+            "H": float("NaN"),
+            "R1": float("NaN"),
+            "R2": float("NaN"),
+            "X1": float("NaN"),
+            "Y1": float("NaN"),
+            "f1": float("NaN"),
+            "Vex1": float("NaN"),
+            "X2": float("NaN"), 
+            "Y2": float("NaN"),
+            "f2": float("NaN"),
+            "Vex2": float("NaN"),
+            "I_magnet": float("NaN")
             }
                  
 
@@ -116,6 +117,99 @@ class Janis001GUI(uis.GenericGUI):
     DEFAULT_FOLDER = r"D:\He3_Data\test"
     DEFAULT_FN = r"test"
 
+    title = "Janis 001 He-3: Measurements With Two Lock In Amplifiers"
+    
+    default_params = {
+        "R_series1 / Ohm": 'no entry',
+        "R_series2 / Ohm": 'no entry',
+        "sampling interval / s": "0.1"
+    }
+    param_order = [
+        "sampling interval / s",
+        "R_series1 / Ohm",
+        "R_series2 / Ohm"
+    ]
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_sample"), ("t", "T_flow")]
+            ]
+    
+    default_comments = ""
+    
+    def __init__(self, params, filename, lockin1, lockin2, magnet):
+        # Define the temperature controllers
+        self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
+        self.lakeshore = Lakeshore332(GPIB_LAKESHORE332)
+        
+    
+        # Save parameters
+        self.measurement_interval = float(params["sampling interval / s"])
+        
+        self.lockin1 = lockin1
+        self.R_series1 = float(params["R_series1 / Ohm"])
+        self.lockin2 = lockin2
+        self.R_series2 = float(params["R_series2 / Ohm"])
+        self.magnet = magnet
+        
+        # Initialise variables
+        self.current_values = VAR_INIT.copy()
+        self.var_titles = VAR_TITLES.copy()
+        
+        # create a csv logger
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
+        
+    
+    def start(self):
+        # Connect to instruments
+        self.cryocon.connect()
+        self.lakeshore.connect()
+        self.lockin1.connect()
+        self.lockin2.connect()
+        self.magnet.connect()
+        
+        '''if self.lockin1.is_digital:
+            self.lockin1.setAutoSens(*SENS_RANGE)
+        if self.lockin2.is_digital:
+            self.lockin2.setAutoSens(*SENS_RANGE)'''
+        
+        # Reset counter and timer
+        self.n = 0
+        self.t0 = time.time() - time.perf_counter()
+        # Start the csv logger
+        self.logger.start()
+        
+    def measure(self):
+        self.current_values["n"] += 1
+        self.current_values["t"] = self.t0 + time.perf_counter()
+        t,self.current_values["T_flow"] = self.cryocon.read("A")
+        t,self.current_values["T_sample"] = self.cryocon.read("B")
+        t,self.current_values["T_sorb"] = self.lakeshore.read("A")
+        t,self.current_values["H"],self.current_values["I_magnet"] = self.magnet.read()
+        t,self.current_values["X1"],self.current_values["Y1"],_,_,self.current_values["f1"],self.current_values["Vex1"] = self.lockin1.read()
+        t,self.current_values["X2"],self.current_values["Y2"],_,_,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()
+        self.current_values["R1"] = self.current_values["X1"] / self.current_values["Vex1"] * self.R_series1
+        self.current_values["R2"] = self.current_values["X2"] / self.current_values["Vex2"] * self.R_series2
+        
+    def log(self, dataToLog):
+        self.logger.log(dataToLog)
+        
+    # A perpetual sequence
+    def sequence(self):
+        while True:
+            yield True
+        
+    def finish(self):
+        self.logger.finish()
+        del self.lakeshore
+        del self.cryocon
+        del self.magnet
+        del self.lockin1
+        del self.lockin2
  
     
 class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
@@ -390,7 +484,113 @@ class Janis001SR830SR830IPS120(Janis001He3TwoLockinAbstract):
         super().__init__(p, filename, lockin1, lockin2, magnet)
 
  
-   
+class Janis001Keithley617SR830(abstracts.ExperimentBase):
+    title = "Janis 001 He-3"
+    
+    default_params = {
+        "sampling interval / s": "0.1",
+        
+        "Ch1 Keithley617 GPIB": "{:d}".format(GPIB_KEITHLEY617),
+        
+        "Ch2 SR830 GPIB": "{:d}".format(GPIB_SR830),
+        "Ch2 R_series / Ohm": "no entry"
+    }
+    
+    param_order = [
+        "sampling interval / s",
+        
+        "Ch1 Keithley617 GPIB",
+        
+        "Ch2 SR830 GPIB",
+        "Ch2 R_series / Ohm"]
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_sample"), ("t", "T_flow")]
+            ]
+    
+    default_comments = ""
+    
+    def __init__(self, params, filename):
+        # Define the temperature controllers
+        self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
+        self.lakeshore = Lakeshore332(GPIB_LAKESHORE332)
+        
+    
+        # Save parameters
+        self.measurement_interval = float(params["sampling interval / s"])
+        
+
+        gpib_ch1 = int(params["Ch1 Keithley617 GPIB"])
+        self.keithley617 = keithley.keithley617(gpib_ch1)
+                 
+        gpib_ch2 = int(params["Ch2 SR830 GPIB"])
+        self.lockin2 = stanford.SR830(gpib_ch2)
+        
+        self.R_series2 = float(params["R_series2 / Ohm"])
+        self.magnet = fake_magnets.ConstMagnet()
+        
+        # Initialise variables
+        self.current_values = VAR_INIT.copy()
+        self.var_titles = VAR_TITLES.copy()
+        
+        # create a csv logger
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
+        
+    
+    def start(self):
+        # Connect to instruments
+        self.cryocon.connect()
+        self.lakeshore.connect()
+        self.lockin1.connect()
+        self.lockin2.connect()
+        self.magnet.connect()
+        
+        '''if self.lockin1.is_digital:
+            self.lockin1.setAutoSens(*SENS_RANGE)
+        if self.lockin2.is_digital:
+            self.lockin2.setAutoSens(*SENS_RANGE)'''
+        
+        # Reset counter and timer
+        self.n = 0
+        self.t0 = time.time() - time.perf_counter()
+        # Start the csv logger
+        self.logger.start()
+        
+    def measure(self):
+        self.current_values["n"] += 1
+        self.current_values["t"] = self.t0 + time.perf_counter()
+        t,self.current_values["T_flow"] = self.cryocon.read("A")
+        t,self.current_values["T_sample"] = self.cryocon.read("B")
+        t,self.current_values["T_sorb"] = self.lakeshore.read("A")
+        t,self.current_values["H"],self.current_values["I_magnet"] = self.magnet.read()
+        t,self.current_values["R1"] = self.keithley617.read()
+        t,self.current_values["X2"],self.current_values["Y2"],_,_,self.current_values["f2"],self.current_values["Vex2"] = self.lockin2.read()
+        self.current_values["R2"] = self.current_values["X2"] / self.current_values["Vex2"] * self.R_series2
+        
+    def log(self, dataToLog):
+        self.logger.log(dataToLog)
+        
+    # A perpetual sequence
+    def sequence(self):
+        while True:
+            yield True
+        
+    def finish(self):
+        self.logger.finish()
+        del self.lakeshore
+        del self.cryocon
+        del self.magnet
+        del self.keithley617
+        del self.lockin2
+
+
+
+ 
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
 def loadfile(filename): 
     with open(filename, mode="r") as f:

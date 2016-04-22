@@ -15,7 +15,7 @@ data
 test/
 script*.*
 test*.*
-run_*.*
+run*.*
 
 # No python cache
 __pycache__
