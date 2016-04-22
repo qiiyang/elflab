@@ -107,7 +107,7 @@ class GenericGUI(elflab.abstracts.UIBase):
     DEFAULT_PLOT_REFRESH_INTERVAL = 0.5     # Interval between plot refreshes in s
     DEFAULT_PLOT_LISTEN_INTERVAL = 0.05    # Interval between listening events in s
     
-    def __init__(self, Kernel, Experiment, Controller=None):
+    def __init__(self, Kernel, Experiment, Controller=None, subplots=None): # subplots: overwrite if not None
         # 0=stoped, 1=running, 2=paused
         self.state = -1
         
@@ -115,6 +115,7 @@ class GenericGUI(elflab.abstracts.UIBase):
         self.Kernel = Kernel
         self.Experiment = Experiment
         self.Controller = Controller
+        self.subplots = subplots
         
         self.params = Experiment.default_params.copy()
         if Experiment.param_order is None:
@@ -390,6 +391,8 @@ class GenericGUI(elflab.abstracts.UIBase):
                            
             # Start the experiment and the kernel
             self.experiment = self.Experiment(params=self.params, filename=self.data_file)
+            if self.subplots is not None:
+                self.experiment.plotXYs = self.subplots
             self.kernel = self.Kernel(self.experiment, **self.kernel_kwargs)
             self.kernel.start()
             
