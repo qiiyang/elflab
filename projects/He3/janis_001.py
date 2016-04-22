@@ -431,12 +431,12 @@ class Janis001Keithley617SR830(abstracts.ExperimentBase):
         
 
         gpib_ch1 = int(params["Ch1 Keithley617 GPIB"])
-        self.keithley617 = keithley.keithley617(gpib_ch1)
+        self.keithley617 = keithley.Keithley617(gpib_ch1)
                  
         gpib_ch2 = int(params["Ch2 SR830 GPIB"])
         self.lockin2 = stanford.SR830(gpib_ch2)
         
-        self.R_series2 = float(params["R_series2 / Ohm"])
+        self.R_series2 = float(params["Ch2 R_series / Ohm"])
         self.magnet = fake_magnets.ConstMagnet()
         
         # Initialise variables
@@ -451,7 +451,7 @@ class Janis001Keithley617SR830(abstracts.ExperimentBase):
         # Connect to instruments
         self.cryocon.connect()
         self.lakeshore.connect()
-        self.lockin1.connect()
+        self.keithley617.connect()
         self.lockin2.connect()
         self.magnet.connect()
         

@@ -78,7 +78,7 @@ class Keithley617(DMMBase):
         rm = visa.ResourceManager()
         self.gpib = rm.open_resource("GPIB::{:n}".format(self.address))
         self.gpib.write("XF2C0X")   # Default to resistance readings
-        time.sleep(DELAY)
+        time.sleep(self.DELAY)
         print("        Keithley 617 Electrometer connected, GPIB={:n}.".format(self.address))
         self.connected = True
         
@@ -96,7 +96,7 @@ class Keithley617(DMMBase):
             self.gpib.write("XF3C0X")
         else:
             raise Exeption("config unrecognised for Keithley 617 Electrometer")
-        time.sleep(DELAY)
+        time.sleep(self.DELAY)
  
     def read(self):     # Returns (relative timestamp, reading)
         if not self.connected:
