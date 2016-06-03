@@ -28,7 +28,7 @@ GPIB_HPDMM = 18
 
 # Conversion between data names and indices and labels etc.
 
-VAR_ORDER = ["n", "t", "T_sample", "T_sorb", "T_flow", "H", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2", "I_magnet"]
+VAR_ORDER = ["n", "t", "T_sample", "T_sorb", "T_flow", "H", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2", "I_magnet", "V_gate"]
 
 # Everything in SI
 
@@ -545,9 +545,6 @@ class Janis001He3Gating(abstracts.ExperimentBase):
         
         magnet = oxford.IPS120_10(GPIB_IPS120)
         
-        params["R_series1 / Ohm"] = params["Ch1 R_series / Ohm"]
-        params["R_series2 / Ohm"] = params["Ch2 R_series / Ohm"]
-        
         # Define the temperature controllers
         self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
         self.lakeshore = Lakeshore332(GPIB_LAKESHORE332)
@@ -557,9 +554,9 @@ class Janis001He3Gating(abstracts.ExperimentBase):
         self.measurement_interval = float(params["sampling interval / s"])
         
         self.lockin1 = lockin1
-        self.R_series1 = float(params["R_series1 / Ohm"])
+        self.R_series1 = float(params["Ch1 R_series / Ohm"])
         self.lockin2 = lockin2
-        self.R_series2 = float(params["R_series2 / Ohm"])
+        self.R_series2 = float(params["Ch2 R_series / Ohm"])
         self.magnet = magnet
         
         self.vgate = hp.HP3478(GPIB_HPDMM)
