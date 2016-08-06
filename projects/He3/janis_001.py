@@ -4,7 +4,7 @@ import time
 import csv
 import numpy as np
 
-from elflab import uis
+from elflab import uis, datasets
 from elflab.devices.T_controllers.lakeshore import Lakeshore332
 from elflab.devices.T_controllers.cryocon import Cryocon32B
 
@@ -619,6 +619,97 @@ class Janis001He3Gating(abstracts.ExperimentBase):
         del self.lockin1
         del self.lockin2
 
+class Janis001He3GatingElectrometer(abstracts.ExperimentBase):
+    # "Public" Variables
+    title = "Janis S07 He-3: Gating"
+    
+    default_params = {
+        "sampling interval / s": "0.1"
+    }
+    
+    param_order = [
+        "sampling interval / s"]
+    
+    var_order = VAR_ORDER.copy()    # order of variables
+    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("T_sample", "R1"), ("T_sample", "R2")],
+            [("t", "T_flow"), ("t", "T_sample")]
+            ]
+    
+    default_comments = ""
+    
+    def __init__(self, params, filename):
+
+        self.keithley617 = keithley.Keithley617(GPIB_KEITHLEY617)
+        
+        self.magnet = oxford.IPS120_10(GPIB_IPS120)
+        
+        # Define the temperature controllers
+        self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
+        self.lakeshore = Lakeshore332(GPIB_LAKESHORE332)
+        
+    
+        # Save parameters
+        self.measurement_interval = float(params["sampling interval / s"])
+        
+        self.vgate = hp.HP3478(GPIB_HPDMM)
+        
+        # Initialise variables
+        self.current_values = VAR_INIT.copy()
+        self.var_titles = VAR_TITLES.copy()
+        
+        # create a csv logger
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
+        
+    
+    def start(self):
+        # Connect to instruments
+        self.cryocon.connect()
+        self.lakeshore.connect()
+        self.magnet.connect()
+        
+        '''if self.lockin1.is_digital:
+            self.lockin1.setAutoSens(*SENS_RANGE)
+        if self.lockin2.is_digital:
+            self.lockin2.setAutoSens(*SENS_RANGE)'''
+        
+        # Reset counter and timer
+        self.n = 0
+        self.t0 = time.time() - time.perf_counter()
+        # Start the csv logger
+        self.logger.start()
+        
+    def measure(self):
+        self.current_values["n"] += 1
+        self.current_values["t"] = self.t0 + time.perf_counter()
+        t,self.current_values["T_flow"] = self.cryocon.read("A")
+        t,self.current_values["T_sample"] = self.cryocon.read("B")
+        t,self.current_values["T_sorb"] = self.lakeshore.read("A")
+        t,self.current_values["R1"] = self.keithley617.read()
+        t,self.current_values["H"],self.current_values["I_magnet"] = self.magnet.read()
+        self.current_values["V_gate"] = self.vgate.read()[1]
+        
+        
+        
+    def log(self, dataToLog):
+        self.logger.log(dataToLog)
+        
+    # A perpetual sequence
+    def sequence(self):
+        while True:
+            yield True
+        
+    def finish(self):
+        self.logger.finish()
+        del self.lakeshore
+        del self.cryocon
+        del self.magnet
+        del self.lockin1
+        del self.lockin2
+
         
  
 # load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
@@ -638,4 +729,4 @@ def loadfile(filename):
         datadict = {}
         for i in range(0, len(VAR_ORDER)):
             datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_)
-        return datadict
+        return datasets.DataSet(datadict)

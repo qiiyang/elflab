@@ -65,7 +65,17 @@ def split_MR_down_up(data):
         down[key] = data[key][:index].copy()
         up[key] = data[key][index:].copy()
     return (down, up)    
+
     
+# Split MR at zero field
+def split_MR_zero(data):
+    index = np.argmin(np.abs(data["H"]))
+    a = data.empty()
+    b = data.empty()
+    for key in data:
+        a[key] = data[key][:index].copy()
+        b[key] = data[key][index:].copy()
+    return (a, b)
 
     
 # Symmetrise / Antisymmetrise magnetoresistance data, by default using linear interpolation
