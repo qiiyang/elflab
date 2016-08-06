@@ -52,13 +52,8 @@ def van_der_Pauw_set(set1, set2, param):
 
 # Split MR into down and up sweeps
 def split_MR_down_up(data):
-    # Find the minimum
-    minimum = 9.e20
-    index = 0
-    for i in range(len(data["H"])):
-        if data["H"][i] < minimum:
-            index = i
-            minimum = data["H"][i]
+    # Find the minimum    
+    index = np.argmin(data["H"])
     up = data.empty()
     down = data.empty()
     for key in data:
