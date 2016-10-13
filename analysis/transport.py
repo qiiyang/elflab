@@ -86,8 +86,7 @@ def symmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
                     if (data["H"][i] <= -(sorted_mirror["H"][0])) and (data["H"][i] >= -(sorted_mirror["H"][-1]))]
     result = data.empty()
     for key in data:
-        result[key] = data[key][indices]
-        
+        result[key] = data[key][indices]   
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] + mirror_R(-result["H"]))
     result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5
@@ -106,8 +105,7 @@ def antisymmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
                     if (data["H"][i] <= -(sorted_mirror["H"][0])) and (data["H"][i] >= -(sorted_mirror["H"][-1]))]
     result = data.empty()
     for key in data:
-        result[key] = data[key][indices]
-        
+        result[key] = data[key][indices]         
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] - mirror_R(-result["H"]))
     result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5

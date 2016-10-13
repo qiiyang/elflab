@@ -728,5 +728,5 @@ def loadfile(filename):
                 datalist[i].append(float('nan'))
         datadict = {}
         for i in range(0, len(VAR_ORDER)):
-            datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_)
+            datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_, copy=True)
         return datasets.DataSet(datadict)
