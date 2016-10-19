@@ -173,10 +173,9 @@ def downsample(dataset, size, averaging=np.nanmean, error_est=None):
         newset.errors[key][new_length-1] = error_est(dataset[key][(new_length-1)*size:dataset.length], dataset.errors[key][(new_length-1)*size:dataset.length])
     return newset
 
-def zero_error(*args, **kwargs):
-    return 0.
+
     
-def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=zero_error):
+def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=None):
     """consolidate the dataset by averaging similar values in the variable "key",  averaging near by data points by function "averaging"
     size is the window size
     new errors are estimated with the function "error_est"
@@ -192,10 +191,13 @@ def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=zero_er
         
     # make the list representation of the consolidated data
     datalists = {}
-    errorlists = {}
     for k in sorted:
         datalists[k] = []
-        errorlists[k] = []
+        
+    if error_est is not None:
+        errorlists = {}
+        for k in sorted:
+            errorlists[k] = []
         
     l = sorted.length
     i = 0
@@ -209,10 +211,14 @@ def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=zero_er
             j += 1
         for k in sorted:
             datalists[k].append(averaging(sorted[k][i:j]))
-            errorlists[k].append(error_est(sorted[k][i:j], sorted.errors[k][i:j]))
+            if error_est is not None:
+                errorlists[k].append(error_est(sorted[k][i:j], sorted.errors[k][i:j]))
         
     # Make the new set
     newset = DataSet([(k, np.array(datalists[k], dtype=np.float)) for k in dataset])
-    newset.errors = {k: np.array(errorlists[k], dtype=np.float) for k in dataset}
+    if error_est is not None:
+        newset.errors = {k: np.array(errorlists[k], dtype=np.float) for k in dataset}
+    else:
+        newset.errors = None
 
     return newset
