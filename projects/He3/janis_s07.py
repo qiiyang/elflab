@@ -759,21 +759,21 @@ class JanisS07Sagnac(JanisS07TwoLockinAbstract):
     title = "Janis S07 He-3: Sagnac"
     
     # Default GPIB addresses for 1st and 2nd harmonics lock-ins for Sagnac
-    GPIB_SR830_1ST = 0
-    GPIB_SR830_2ND = 0
+    GPIB_SR844_1ST = 18
+    GPIB_SR844_2ND = 9
     
     default_params = {
         "sampling interval / s": "0.1",
         "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340),
-        "GPIB SR830 1st": "{:d}".format(self.GPIB_1ST),
-        "GPIB SR830 2nd": "{:d}".format(self.GPIB_2ND)
+        "GPIB SR844 1st": "{:d}".format(GPIB_SR844_1ST),
+        "GPIB SR844 2nd": "{:d}".format(GPIB_SR844_2ND)
     }
     
     param_order = [
         "sampling interval / s",
         "GPIB Lakeshore 340",
-        "GPIB SR830 1st",
-        "GPIB SR830 2nd"]
+        "GPIB SR844 1st",
+        "GPIB SR844 2nd"]
     
     var_order = SAGNAC_VAR_ORDER.copy()    # order of variables
     var_titles = SAGNAC_VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
@@ -789,19 +789,19 @@ class JanisS07Sagnac(JanisS07TwoLockinAbstract):
     # to calculate the Kerr angle from the first and the second harmonics, everything in SI
     # The Bessel prefactor
     BESSEL_PREFACTOR = scipy.special.jv(2.,1.841) / scipy.special.jv(1.,1.841)        
-    def kerr(self, firt_harm, second_harm): 
+    def kerr(self, first_harm, second_harm): 
         angle = 0.5 * np.arctan(self.BESSEL_PREFACTOR * first_harm / second_harm)
         return angle
         
     def __init__(self, params, filename):
     
         # Save parameters  
-        gpib1 = int(params["GPIB SR830 1st"])
-        self.lockin1 = stanford.SR830(gpib1)
+        gpib1 = int(params["GPIB SR844 1st"])
+        self.lockin1 = stanford.SR844(gpib1)
         
          
-        gpib2 = int(params["GPIB SR830 2nd"])
-        self.lockin2 = stanford.SR830(gpib2)
+        gpib2 = int(params["GPIB SR844 2nd"])
+        self.lockin2 = stanford.SR844(gpib2)
         
         self.magnet = fake_magnets.ConstMagnet()
         
@@ -835,8 +835,8 @@ class JanisS07Sagnac(JanisS07TwoLockinAbstract):
         
 class JanisS07SagnacWithMagnet(JanisS07Sagnac):
     title = "Janis S07 He-3: Sagnac with Magnet"
-    MAGNET_GPIB = 0
+    MAGNET_GPIB = 22
     
     def __init__(self, params, filename):
         super().__init__(params, filename)
-    self.magnet = ami.Model420(MAGNET_GPIB)
+        self.magnet = ami.Model420(self.MAGNET_GPIB)
