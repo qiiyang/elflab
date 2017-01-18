@@ -4,6 +4,7 @@ import time
 import math
 import csv
 import numpy as np
+import scipy.special
 import threading
 
 import tkinter as tk
@@ -15,15 +16,19 @@ from elflab.devices.T_controllers.lakeshore import Lakeshore340
 import elflab.abstracts as abstracts
 import elflab.dataloggers.csvlogger as csvlogger
 
-from elflab.devices.lockins import fake_lockins, par
-from elflab.devices.magnets import fake_magnets
+from elflab.devices.lockins import fake_lockins, par, stanford
+from elflab.devices.magnets import fake_magnets, ami
 from elflab.devices.dmms import keithley
 
 
+SENS_RANGE = (0.1, 0.8)
 
 GPIB_LAKESHORE340 = 11
 GPIB_DMM = 19
 
+
+
+# For generic measurements
 # Conversion between data names and indices and labels etc.
 
 VAR_ORDER = ["n", "t", "T_sample", "H", "T_A", "T_B", "T_sorb", "T_1K", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2"]
@@ -113,13 +118,72 @@ VAR_INIT = {
             "f2": 0.,
             "Vex2": 0.
             }
-                 
 
-SENS_RANGE = (0.1, 0.8)
+
+# For Sagnac measurements
+# Conversion between data names and indices and labels etc.
+
+SAGNAC_VAR_ORDER = ["n", "t", "T_sample", "H", "Kerr_angle", "X1", "Y1", "X2", "Y2", "T_A", "T_B", "T_sorb", "T_1K", "I_mag"]
+
+# Everything in SI
+       
+SAGNAC_VAR_TITLES = {
+            "n": "n",
+            "t": "t / s",
+            "T_sample": "T_sample / K",
+            "T_A": "T_A / K",
+            "T_B": "T_B / K",
+            "T_sorb": "T_sorb / K", 
+            "T_1K": "T_1K / K",
+            "H": "H / T",
+            "I_mag": "I_mag / T",
+            "X1": "X1 / V", 
+            "Y1": "Y1 / V",
+            "X2": "X2 / V", 
+            "Y2": "Y2 / V",
+            "f2": "f2 / Hz",
+            "Kerr_angle": "Kerr_angle / rad"
+            }
+            
+SAGNAC_VAR_FORMATS = {
+            "n": "{:n}",
+            "t": "{:.8f}",
+            "T_sample": "{:.10e}",
+            "T_A": "{:.10e}",
+            "T_B": "{:.10e}",
+            "T_sorb": "{:.10e}", 
+            "T_1K": "{:.10e}",
+            "H": "{:.10e}",
+            "I_mag": "{:.10e}",
+            "X1": "{:.10e}",
+            "Y1": "{:.10e}",
+            "X2": "{:.10e}", 
+            "Y2": "{:.10e}",
+            "Kerr_angle": "{:.10e}"
+            }
+            
+SAGNAC_VAR_INIT = {
+            "n": 0,
+            "t": 0.,
+            "T_sample": 0.,
+            "T_A": 0.,
+            "T_B": 0.,
+            "T_sorb": 0., 
+            "T_1K": 0.,
+            "H": 0.,
+            "I_mag": 0.,
+            "X1": 0.,
+            "Y1": 0.,
+            "X2": 0., 
+            "Y2": 0.,
+            "Kerr_angle": 0.
+            }
+
+
 
 class JanisS07GUI(uis.GenericGUI):
     DEFAULT_FOLDER = r"C:\Qi\data"
-    DEFAULT_FN = r"mi"
+    DEFAULT_FN = r"datalog"
     
     HEATER_LOW = 0.01   # Below which show heater off
     STAT_WIDTH = 9  # Min width in status entries
@@ -570,11 +634,6 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         self.lockin2.connect()
         self.magnet.connect()
         
-        if self.lockin1.is_digital:
-            self.lockin1.setAutoSens(*SENS_RANGE)
-        if self.lockin2.is_digital:
-            self.lockin2.setAutoSens(*SENS_RANGE)
-        
         # Reset counter and timer
         self.n = 0
         self.t0 = time.perf_counter()
@@ -619,6 +678,24 @@ class JanisS07TwoLockinAbstract(abstracts.ExperimentBase):
         
     def finish(self):
         self.logger.finish()
+        
+    def loadfile(filename): 
+        with open(filename, mode="r") as f:
+            reader = csv.reader(f)
+            next(reader)
+            datalist = []
+            for var in self.var_order:
+                datalist.append([])
+            for row in reader:
+                for i in range(0, len(row)):
+                    datalist[i].append(float(row[i]))
+                # For backward compatibility #
+                for i in range(len(row), len(self.var_order)):
+                    datalist[i].append(float('nan'))
+            datadict = {}
+            for i in range(0, len(self.var_order)):
+                datadict[self.var_order[i]] = np.array(datalist[i], dtype=np.float_)
+            return datadict
 
 class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
     # "Public" Variables
@@ -676,22 +753,90 @@ class JanisS07PAR124MI(JanisS07TwoLockinAbstract):
         p = params.copy()
         p["R_series2 / Ohm"] = "0"
         super().__init__(p, filename, lockin1, lockin2, magnet)
+     
+class JanisS07Sagnac(JanisS07TwoLockinAbstract):
+    # "Public" Variables
+    title = "Janis S07 He-3: Sagnac"
+    
+    # Default GPIB addresses for 1st and 2nd harmonics lock-ins for Sagnac
+    GPIB_SR830_1ST = 0
+    GPIB_SR830_2ND = 0
+    
+    default_params = {
+        "sampling interval / s": "0.1",
+        "GPIB Lakeshore 340": "{:d}".format(GPIB_LAKESHORE340),
+        "GPIB SR830 1st": "{:d}".format(self.GPIB_1ST),
+        "GPIB SR830 2nd": "{:d}".format(self.GPIB_2ND)
+    }
+    
+    param_order = [
+        "sampling interval / s",
+        "GPIB Lakeshore 340",
+        "GPIB SR830 1st",
+        "GPIB SR830 2nd"]
+    
+    var_order = SAGNAC_VAR_ORDER.copy()    # order of variables
+    var_titles = SAGNAC_VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
+    format_strings = SAGNAC_VAR_FORMATS.copy()   # Format strings for the variables
+    
+    plotXYs = [
+            [("H", "Kerr_angle"), ("T_sample", "Kerr_angle")],
+            [("t", "T_sample"), ("t", "H")]
+            ]
+    
+    default_comments = ""
+    
+    # to calculate the Kerr angle from the first and the second harmonics, everything in SI
+    # The Bessel prefactor
+    BESSEL_PREFACTOR = scipy.special.jv(2.,1.841) / scipy.special.jv(1.,1.841)        
+    def kerr(self, firt_harm, second_harm): 
+        angle = 0.5 * np.arctan(self.BESSEL_PREFACTOR * first_harm / second_harm)
+        return angle
         
-# load a csv file from Janis He-3 measurements and return the data as a dict of np arrays
-def loadfile(filename): 
-    with open(filename, mode="r") as f:
-        reader = csv.reader(f)
-        next(reader)
-        datalist = []
-        for var in VAR_ORDER:
-            datalist.append([])
-        for row in reader:
-            for i in range(0, len(row)):
-                datalist[i].append(float(row[i]))
-            # For backward compatibility #
-            for i in range(len(row), len(VAR_ORDER)):
-                datalist[i].append(float('nan'))
-        datadict = {}
-        for i in range(0, len(VAR_ORDER)):
-            datadict[VAR_ORDER[i]] = np.array(datalist[i], dtype=np.float_)
-        return datadict
+    def __init__(self, params, filename):
+    
+        # Save parameters  
+        gpib1 = int(params["GPIB SR830 1st"])
+        self.lockin1 = stanford.SR830(gpib1)
+        
+         
+        gpib2 = int(params["GPIB SR830 2nd"])
+        self.lockin2 = stanford.SR830(gpib2)
+        
+        self.magnet = fake_magnets.ConstMagnet()
+        
+        self.measurement_interval = float(params["sampling interval / s"])
+        gpib_lakeshore = int(params["GPIB Lakeshore 340"])
+        
+        # Define the temperature controllers
+        self.lakeshore = Lakeshore340(gpib_lakeshore)
+        
+        # Initialise variables
+        self.current_values = VAR_INIT.copy()   # = {"name": "value"}
+        # create a csv logger
+        self.logger = csvlogger.Logger(filename, self.var_order, self.var_titles, self.format_strings)
+        
+        
+    def measure(self):
+        self.current_values["n"] += 1
+        t,self.current_values["T_A"] = self.lakeshore.read("A")
+        t,self.current_values["T_B"] = self.lakeshore.read("B")
+        t,self.current_values["T_sorb"] = self.lakeshore.read("C")
+        t,self.current_values["T_1K"] = self.lakeshore.read("D")
+        
+        self.current_values["t"] = t - self.t0
+        
+        self.current_values["T_sample"] = self.calc_Tsample(self.current_values["T_A"], self.current_values["T_B"])
+        
+        t,self.current_values["H"],self.current_values["I_mag"] = self.magnet.read()
+        t,self.current_values["X1"],self.current_values["Y1"],_,_,_,_ = self.lockin1.read()
+        t,self.current_values["X2"],self.current_values["Y2"],_,_,_,_ = self.lockin2.read()
+        self.current_values["Kerr_angle"] = self.kerr(self.current_values["X1"], self.current_values["X2"])
+        
+class JanisS07SagnacWithMagnet(JanisS07Sagnac):
+    title = "Janis S07 He-3: Sagnac with Magnet"
+    MAGNET_GPIB = 0
+    
+    def __init__(self, params, filename):
+        super().__init__(params, filename)
+    self.magnet = ami.Model420(MAGNET_GPIB)
