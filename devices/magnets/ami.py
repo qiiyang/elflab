@@ -19,15 +19,15 @@ class Model420(MagnetBase):
         self.connected = True
     
     def read(self): # returns (t, H/Tesla, I_magnet/A)
-            err = True  # error flag for detecting GPIB error
-            while err:
-                try:
-                    stat = str(self.gpib.query("CURRent:MAGnet?"))
-                    self.I = float(stat)
-                except:
-                    pass
-                else:
-                    err = False
+        err = True  # error flag for detecting GPIB error
+        while err:
+            try:
+                stat = str(self.gpib.query("CURRent:MAGnet?"))
+                self.I = float(stat)
+            except:
+                pass
+            else:
+                err = False
         #stat = str(self.gpib.query("FIELD:MAGnet?"))
         #self.H = float(stat)
             
