@@ -151,9 +151,9 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
             writer.writerow(row)
     
 
-def downsample(dataset, size, averaging=np.nanmean, error_est=None):
-    """Down sampling the dataset by averaging function "averaging"
-    size is the window size
+def downsample(dataset, size, method=np.nanmean, error_est=None):
+    """Down sampling the dataset by a sampling function "method"
+    size is the number of data points per sample
     new errors are estimated with the function "error_est"
     return the down-sampled dataset"""
     # If the old set has errors undefined, set all errors as zero
@@ -167,25 +167,25 @@ def downsample(dataset, size, averaging=np.nanmean, error_est=None):
     # calculate the values in the new set
     for key in dataset:
         for i in range(new_length-1):
-            newset[key][i] = averaging(dataset[key][i*size:(i+1)*size])
+            newset[key][i] = method(dataset[key][i*size:(i+1)*size])
             newset.errors[key][i] = error_est(dataset[key][i*size:(i+1)*size], dataset.errors[key][i*size:(i+1)*size])
-        newset[key][new_length-1] = averaging(dataset[key][(new_length-1)*size:dataset.length])
+        newset[key][new_length-1] = method(dataset[key][(new_length-1)*size:dataset.length])
         newset.errors[key][new_length-1] = error_est(dataset[key][(new_length-1)*size:dataset.length], dataset.errors[key][(new_length-1)*size:dataset.length])
     return newset
 
 
     
-def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=None):
-    """consolidate the dataset by averaging similar values in the variable "key",  averaging near by data points by function "averaging"
-    size is the window size
+def consolidate(dataset, key, window_size, method, error_est=None):
+    """consolidate the dataset by method similar values in the variable "key",  method near by data points by function "method"
+    window_size is the threshold defining similarity
     new errors are estimated with the function "error_est"
-    return the down-sampled dataset"""
+    return the consolidated dataset"""
     
     # sort the dataset
     sorted = dataset.sort(key)
     
     # If the old set has errors undefined, set all errors as zero
-    if sorted.errors is None:
+    if (sorted.errors is None) and (error_est is not None):
         sorted.errors = {k:np.zeros((sorted.length,), dtype=np.float) for k in sorted}
         
         
@@ -207,10 +207,10 @@ def consolidate(dataset, key, tolerance, averaging=np.nanmean, error_est=None):
     while j < l:
         i = j
         j = i + 1
-        while (j < l) and (sorted[key][j] - sorted[key][i] <= tolerance):
+        while (j < l) and (sorted[key][j] - sorted[key][i] <= window_size):
             j += 1
         for k in sorted:
-            datalists[k].append(averaging(sorted[k][i:j]))
+            datalists[k].append(method(sorted[k][i:j]))
             if error_est is not None:
                 errorlists[k].append(error_est(sorted[k][i:j], sorted.errors[k][i:j]))
         
