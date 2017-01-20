@@ -67,15 +67,15 @@ class DataSet(abstracts.DataSetBase):
         else:
             return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
         
-def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True, **csv_params):
+def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_header=True, **csv_params):
     """read data from a csv file, assuming no error values are recorded
-    indices = [(row_index1,variable_name1), ...], has to be specified by user
+    column_mapping = {column_index1: variable_name1, ...}, has to be specified by user for all columns to read
     If use_header == True, then the headers will be read as the full titles of the variables
     error_column > 0 if the file contains error information on the values, and stored starting at error_column in the same order of value columns."""              
     # prepare the temporary lists for reading the data
-    data_lists = {key:[] for (i,key) in indices}
+    data_lists = {column_mapping[i]:[] for i in column_mapping}
     if error_column:
-        error_lists = {key:[] for (i,key) in indices}       
+        error_lists = {column_mapping[i]:[] for i in column_mapping}      
     # read the file
     with open(filepath, "r", newline='') as f:  
         reader = csv.reader(f,**csv_params)
@@ -83,14 +83,15 @@ def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True
         if has_header:
             row = next(reader)
             if use_header:
-                titles = {key: row[i] for (i, key) in indices}
+                titles = {column_mapping[i]: row[i] for i in column_mapping}
             else:
-                titles = {key: key for (i, key) in indices}
+                titles = {column_mapping[i]: column_mapping[i] for i in column_mapping}
         else:
-            titles = {key: key for (i, key) in indices}
+            titles = {column_mapping[i]: column_mapping[i] for i in column_mapping}
         # now read the data
         for row in reader:
-            for (i,key) in indices:            
+            for i in column_mapping:   
+                key = column_mapping[i]
                 try:
                     data_lists[key].append(float(row[i]))
                 except ValueError:
@@ -104,10 +105,10 @@ def load_csv(filepath, indices, error_column=0, has_header=True, use_header=True
                     
     
     # Convert data to the dataset format
-    data_set = DataSet([(key, np.array(data_lists[key], dtype=np.float) ) for (i, key) in indices])
+    data_set = DataSet([(key, np.array(data_lists[key], dtype=np.float)) for key in data_lists])
     data_set.titles = titles
     if error_column > 0:
-        data_set.errors = {key: np.array(error_lists[key], dtype=np.float) for (i, key) in indices}
+        data_set.errors = {key: np.array(error_lists[key], dtype=np.float) for key in data_lists}
     return data_set
     
 def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0, write_header=True, **csv_params):
