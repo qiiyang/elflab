@@ -69,7 +69,7 @@ class DataSet(abstracts.DataSetBase):
     
     # return a masked version of self by using numpy indexing
     def mask(self, indices):
-        newset = Dataset({key: self[key][indices] for key in self})
+        newset = DataSet({key: self[key][indices] for key in self})
         if self.errors is not None:
             newset.errors = {key: self.errors[key][indices] for key in self}
         return newset

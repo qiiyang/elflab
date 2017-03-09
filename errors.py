@@ -24,9 +24,10 @@ def std(values, errors):
 def se(values, errors=None):
     n = values.size
     if n <= 1:
-        raise ValueError
-    st = np.nanstd(values)
-    se = st / sqrt(n-1)
+        return float("nan")
+    else:
+        st = np.nanstd(values)
+        se = st / np.sqrt(n-1)
     
     
 # an estimator that gives median value of the input errors as error
