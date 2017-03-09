@@ -158,20 +158,25 @@ def downsample(dataset, size, method=np.nanmean, error_est=None):
     new errors are estimated with the function "error_est"
     return the down-sampled dataset"""
     # If the old set has errors undefined, set all errors as zero
-    if dataset.errors is None:
+    if (error_est is not None) and (dataset.errors is None):
         dataset.errors = {key:np.zeros((dataset.length,), dtype=np.float) for key in dataset}
     # prepare an empty new set
     new_length = dataset.length // size
     newset = DataSet([(key, np.empty((new_length,), dtype=np.float)) for key in dataset])
-    newset.errors = {key: np.empty((new_length,), dtype=np.float) for key in dataset}
+    if error_est is None:
+        newset.errors = None
+    else:
+        newset.errors = {key: np.empty((new_length,), dtype=np.float) for key in dataset}
     
     # calculate the values in the new set
     for key in dataset:
         for i in range(new_length-1):
             newset[key][i] = method(dataset[key][i*size:(i+1)*size])
-            newset.errors[key][i] = error_est(dataset[key][i*size:(i+1)*size], dataset.errors[key][i*size:(i+1)*size])
+            if error_est is not None:
+                newset.errors[key][i] = error_est(dataset[key][i*size:(i+1)*size], dataset.errors[key][i*size:(i+1)*size])
         newset[key][new_length-1] = method(dataset[key][(new_length-1)*size:dataset.length])
-        newset.errors[key][new_length-1] = error_est(dataset[key][(new_length-1)*size:dataset.length], dataset.errors[key][(new_length-1)*size:dataset.length])
+        if error_est is not None:
+            newset.errors[key][new_length-1] = error_est(dataset[key][(new_length-1)*size:dataset.length], dataset.errors[key][(new_length-1)*size:dataset.length])
     return newset
 
 
