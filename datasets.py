@@ -66,6 +66,14 @@ class DataSet(abstracts.DataSetBase):
             return interpolate.UnivariateSpline(sorted[x], sorted.errors[y], k=order, s=0)
         else:
             return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
+    
+    # return a masked version of self by using numpy indexing
+    def mask(self, indices):
+        newset = Dataset({key: self[key][indices] for key in self})
+        if self.errors is not None:
+            newset.errors = {key: self.errors[key][indices] for key in self}
+        return newset
+    
         
 def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_header=True, **csv_params):
     """read data from a csv file, assuming no error values are recorded
