@@ -159,7 +159,14 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
                     row[j+N] = format_string.format(dataset.errors[key][i])
             writer.writerow(row)
     
-
+# Merge two datasets, currently errors are ignored
+def merge(dataset1, dataset2):
+    # Firstly check whether keys match
+    if set(dataset1.keys()) != set(dataset2.keys()):
+        raise Error("The datasets to merge have different keys!")
+    newset = DataSet(key: np.concatenate((dataset1[key], dataset2[key])) for key in dataset1)
+    return newset
+    
 def downsample(dataset, size, method=np.nanmean, error_est=None):
     """Down sampling the dataset by a sampling function "method"
     size is the number of data points per sample
