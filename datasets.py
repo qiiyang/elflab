@@ -81,6 +81,7 @@ def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_head
     If use_header == True, then the headers will be read as the full titles of the variables
     error_column > 0 if the file contains error information on the values, and stored starting at error_column in the same order of value columns."""              
     # prepare the temporary lists for reading the data
+    n_column = len(column_mapping)
     data_lists = {column_mapping[i]:[] for i in column_mapping}
     if error_column:
         error_lists = {column_mapping[i]:[] for i in column_mapping}      
@@ -98,18 +99,23 @@ def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_head
             titles = {column_mapping[i]: column_mapping[i] for i in column_mapping}
         # now read the data
         for row in reader:
-            for i in column_mapping:   
-                key = column_mapping[i]
-                try:
-                    data_lists[key].append(float(row[i]))
-                except ValueError:
-                    data_lists[key].append(np.nan)
-                
-                if error_column > 0:
+            if len(row) >= n_column:
+                if len(row) > n_column:
+                    print ("WARNING: Too many columns read, skipping trailing columns.")
+                for i in column_mapping:   
+                    key = column_mapping[i]
                     try:
-                        error_lists[key].append(float(row[i+error_column]))
+                        data_lists[key].append(float(row[i]))
                     except ValueError:
-                        error_lists[key].append(np.nan)
+                        data_lists[key].append(np.nan)
+                    
+                    if error_column > 0:
+                        try:
+                            error_lists[key].append(float(row[i+error_column]))
+                        except ValueError:
+                            error_lists[key].append(np.nan)
+            else:
+                print ("WARNING: Too few columns read, skipping row.")
                     
     
     # Convert data to the dataset format
@@ -164,7 +170,7 @@ def merge(dataset1, dataset2):
     # Firstly check whether keys match
     if set(dataset1.keys()) != set(dataset2.keys()):
         raise Error("The datasets to merge have different keys!")
-    newset = DataSet(key: np.concatenate((dataset1[key], dataset2[key])) for key in dataset1)
+    newset = DataSet({key: np.concatenate((dataset1[key], dataset2[key])) for key in dataset1})
     return newset
     
 def downsample(dataset, size, method=np.nanmean, error_est=None):
