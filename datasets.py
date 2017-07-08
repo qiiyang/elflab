@@ -125,17 +125,16 @@ def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_head
         data_set.errors = {key: np.array(error_lists[key], dtype=np.float) for key in data_lists}
     return data_set
     
-def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0, write_header=True, **csv_params):
-    """write data to a csv file, assuming no error values are recorded
-    indices = [(row_index1,variable1), ...], not including errors
-    N is the total number of data columns, excluding errors. It's automatically determined if N == 0.
+def save_csv(dataset, filepath, columns=None, format_string="{:.10g}", write_header=True, **csv_params):
+    """write data to a csv file
+    columns: a list of variables to write, write all variables if None
     header is the header row in list format, including the errors"""
-    N = max([i for (i,key) in indices]) + 1
-    if data_columns > 0:
-        if data_columns < N:
-            print("[elflab.datasets.save_csv()] WARNING: data_columns supplied is too small to contain all the entries, readjusting column numbers.")
-        else:
-            N = data_columns
+    
+    if columns is None:
+        N = len(dataset)
+        columns = [key for key in dataset]
+    else:
+        N = len(columns)
     
     # create an empty row
     if dataset.errors is None:
@@ -148,20 +147,20 @@ def save_csv(dataset, filepath, indices, format_string="{:.10g}", data_columns=0
         writer = csv.writer(f, **csv_params)
         # write header line
         if write_header:
-            if dataset.titles is None:
-                dataset.titles = {key:key for key in dataset}
-            for (i, key) in indices:
-                row[i] = dataset.titles[key]
+            for i in range(N):
+                row[i] = columns[i]
             if dataset.errors is not None:
-                for (i, key) in indices:
-                    row[i+N] = "error({})".format(dataset.titles[key])
+                for i in range(N):
+                    row[i+N] = "error({})".format(columns[i])
             writer.writerow(row)
         # write data lines
         for i in range(dataset.length):
-            for (j,key) in indices:
+            for j in range(N):
+                key = columns[j]
                 row[j] = format_string.format(dataset[key][i])
             if dataset.errors is not None:
-                for (j,key) in indices:
+                for j in range(N):
+                    key = columns[j]
                     row[j+N] = format_string.format(dataset.errors[key][i])
             writer.writerow(row)
     
