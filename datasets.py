@@ -98,8 +98,6 @@ def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_head
         # now read the data
         for row in reader:
             if len(row) >= n_column:
-                if len(row) > n_column:
-                    print ("WARNING: Too many columns read, skipping trailing columns.")
                 for i in column_mapping:   
                     key = column_mapping[i]
                     try:
