@@ -29,7 +29,7 @@ def se(values, errors=None):
         st = np.nanstd(values)
         se = st / np.sqrt(n-1)
         return se
-    
+        
     
 # an estimator that gives median value of the input errors as error
 def median(values, errors):

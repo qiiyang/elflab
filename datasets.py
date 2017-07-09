@@ -1,11 +1,9 @@
 ######################################################################################################
 # Defines the DataSet class and various creation / manipulation methods
 ######################################################################################################
-
 import csv
 
 import elflab.abstracts as abstracts
-import elflab.errors as errors
 
 import scipy.interpolate as interpolate
 import numpy as np
@@ -83,7 +81,7 @@ def load_csv(filepath, column_mapping, error_column=0, has_header=True, use_head
     # prepare the temporary lists for reading the data
     n_column = len(column_mapping)
     data_lists = {column_mapping[i]:[] for i in column_mapping}
-    if error_column:
+    if error_column > 0:
         error_lists = {column_mapping[i]:[] for i in column_mapping}      
     # read the file
     with open(filepath, "r", newline='') as f:  
