@@ -14,16 +14,19 @@ def van_der_Pauw(R_horizontal, R_vertical, xtol=1e-12, rtol=4.4408920985006262e-
         A = math.exp(-constants.pi * R_horizontal / Rs)
         B = math.exp(-constants.pi * R_vertical / Rs)
         return A + B - 1.
-    if R_horizontal < R_vertical:
-        R1 = R_horizontal
-        R2 = R_vertical
+    if math.isnan(R_horizontal) or math.isnan(R_vertical):
+        Rs = float("nan")
     else:
-        R2 = R_horizontal
-        R1 = R_vertical
-    Rmin = constants.pi * R1 /constants.ln2 - xtol
-    Rmax = constants.pi * (R1+R2) / 2. /constants.ln2 + xtol
-    
-    Rs = scipy.optimize.brentq(f, Rmin, Rmax, args=(), xtol=xtol, rtol=rtol, maxiter=maxiter, full_output=False, disp=True)
+        if R_horizontal < R_vertical:
+            R1 = R_horizontal
+            R2 = R_vertical
+        else:
+            R2 = R_horizontal
+            R1 = R_vertical
+        Rmin = constants.pi * R1 /constants.ln2 - xtol
+        Rmax = constants.pi * (R1+R2) / 2. /constants.ln2 + xtol
+        
+        Rs = scipy.optimize.brentq(f, Rmin, Rmax, args=(), xtol=xtol, rtol=rtol, maxiter=maxiter, full_output=False, disp=True)
     return Rs
 
 # For a pair of data sets, calculating the sets of sheet resistance by van der Pauw method, using "param" as the interpolation parameter
