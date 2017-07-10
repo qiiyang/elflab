@@ -26,6 +26,7 @@ class DataSet(abstracts.DataSetBase):
         
     # Update the fields after data change
     def update(self):
+        self.sorted_views = {}
         if len(self) > 0:
             self.length = -1
             for key in self:
@@ -184,6 +185,9 @@ def merge(dataset1, dataset2):
     if set(dataset1.keys()) != set(dataset2.keys()):
         raise Error("The datasets to merge have different keys!")
     newset = DataSet({key: np.concatenate((dataset1[key], dataset2[key])) for key in dataset1})
+    if (dataset1.errors is not None) and (dataset2.errors is not None):
+        newset.errors = DataSet({key: np.concatenate((dataset1.errors[key], dataset2.errors[key])) for key in dataset1})
+    newset.update()    
     return newset
     
 def downsample(dataset, size, method=np.nanmean, error_est=None):
