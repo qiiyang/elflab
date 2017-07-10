@@ -24,6 +24,23 @@ class DataSet(abstracts.DataSetBase):
             self.length = 0
         self.titles={key:key for key in self}
         
+    # Update the fields after data change
+    def update(self):
+        if len(self) > 0:
+            self.length = -1
+            for key in self:
+                n = self[key].shape[0]
+                if (self.length > -1) and (n != self.length):
+                    raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
+                else:
+                    self.length = n
+        else:
+            self.length = 0
+        for key in self:
+            if key not in self.titles:
+                self.titles[key] = key
+        
+        
     # Create an empty dataset with identical variables
     def empty(self):
         new_set = DataSet([(key, np.empty((0,), dtype=np.float)) for key in self])
@@ -70,6 +87,7 @@ class DataSet(abstracts.DataSetBase):
         newset = DataSet({key: self[key][indices] for key in self})
         if self.errors is not None:
             newset.errors = {key: self.errors[key][indices] for key in self}
+        newset.update()
         return newset
     
         

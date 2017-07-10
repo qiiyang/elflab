@@ -51,6 +51,7 @@ def van_der_Pauw_set(set1, set2, param):
         Rs = van_der_Pauw(R1, R2)
         result["R"][i] = Rs
         result["err_R"][i] = dR1 + dR2  # Very approximately
+    result.update()
     return result
 
 # Split MR into down and up sweeps
@@ -62,6 +63,8 @@ def split_MR_down_up(data):
     for key in data:
         down[key] = data[key][:index].copy()
         up[key] = data[key][index:].copy()
+    up.update()
+    down.update()
     return (down, up)    
 
     
@@ -73,6 +76,8 @@ def split_MR_zero(data):
     for key in data:
         a[key] = data[key][:index].copy()
         b[key] = data[key][index:].copy()
+    a.update()
+    b.update()
     return (a, b)
 
     
@@ -93,7 +98,7 @@ def symmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] + mirror_R(-result["H"]))
     result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5
-    
+    result.update()
     return result
     
 def antisymmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
@@ -112,5 +117,5 @@ def antisymmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] - mirror_R(-result["H"]))
     result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5
-    
+    result.update()
     return result
