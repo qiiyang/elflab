@@ -1,4 +1,4 @@
-import csv
+import csv, math
 
 import numpy as np
 
@@ -51,19 +51,19 @@ def import_dc(filename):
                 except ValueError:
                     lch3R.append(np.nan)
                 
-                # Calculating the standard errors assuming the stupid default resistivity calculation made by PPMS
+                # Calculating the standard errors assuming the stupid default resistivity calculation made by PPMS                    
                 try:
-                    lch1err.append(float(row[14]) * 1.e3 / float(row[18])**0.5)
+                    lch1err.append(float(row[14]) / float(row[6]) * float(row[19]))
                 except ValueError:
                     lch1err.append(np.nan)
                 
                 try:
-                    lch2err.append(float(row[15]) * 1.e3 / float(row[18])**0.5)
+                    lch2err.append(float(row[15]) / float(row[8]) * float(row[20]))
                 except ValueError:
                     lch2err.append(np.nan)
                     
                 try:
-                    lch3err.append(float(row[16]) * 1.e3 / float(row[18])**0.5)
+                    lch3err.append(float(row[16]) / float(row[10]) * float(row[21]))
                 except ValueError:
                     lch3err.append(np.nan)
                 
