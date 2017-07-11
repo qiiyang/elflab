@@ -37,3 +37,12 @@ def median(values, errors):
     estimate the grand standard deviation as error value
     not accurate for multiple rounds of averaging"""
     return np.median(errors)
+    
+# For small sample size, trust the error estimations of the samples, instead of re-calculation of population std
+def from_samples(values, errors):
+    n = np.count_nonzero(~np.isnan(errors))
+    if n < 1:
+        return float("nan")
+    else:
+        return np.sqrt(np.nansum(np.square(errors))) / n
+    
