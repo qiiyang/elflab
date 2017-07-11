@@ -50,7 +50,7 @@ def van_der_Pauw_set(set1, set2, param):
         dR2 = set2err(x)
         Rs = van_der_Pauw(R1, R2)
         result["R"][i] = Rs
-        result["err_R"][i] = dR1 + dR2  # Very approximately
+        result["err_R"][i] = (dR1 + dR2) * constants.pi / constants.ln2 / 2.0  # Very approximately
     result.update()
     return result
 
@@ -62,60 +62,57 @@ def split_MR_down_up(data):
     down = data.empty()
     for key in data:
         down[key] = data[key][:index].copy()
+        down.errors[key] = data.errors[key][:index].copy()
         up[key] = data[key][index:].copy()
+        up.errors[key] = data.errors[key][index:].copy()
     up.update()
     down.update()
-    return (down, up)    
-
-    
-# Split MR at zero field
-def split_MR_zero(data):
-    index = np.argmin(np.abs(data["H"]))
-    a = data.empty()
-    b = data.empty()
-    for key in data:
-        a[key] = data[key][:index].copy()
-        b[key] = data[key][index:].copy()
-    a.update()
-    b.update()
-    return (a, b)
+    return (down, up)   
 
     
 # Symmetrise / Antisymmetrise magnetoresistance data, by default using linear interpolation
 def symmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
+    has_errors = (data.errors is not None) and (mirror.errors is not None)
     # Sort the mirror set by H
     sorted_mirror = mirror.sort("H")
     # prepare the interpolators
     mirror_R = mirror.interpolator("H", "R", order=spline_order)
-    mirror_err_R = mirror.interpolator("H", "err_R", order=spline_order)
+    if has_errors:
+        mirror_err2 = mirror.error2_interpolator("H", "R", order=spline_order)
     
     # filtering through data, only getting data points where H is in range of the mirror
     indices = [i for i in range(len(data["H"]))
                     if (data["H"][i] <= -(sorted_mirror["H"][0])) and (data["H"][i] >= -(sorted_mirror["H"][-1]))]
     result = data.empty()
     for key in data:
-        result[key] = data[key][indices]   
+        result[key] = data[key][indices].copy()
+        result.errors[key] = data.errors[key][indices].copy()
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] + mirror_R(-result["H"]))
-    result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5
+    if has_errors:
+        result.errors["R"] = 0.5 * np.sqrt(np.square(result.errors["R"]) + mirror_err2(-result["H"]))
     result.update()
     return result
     
 def antisymmetrize_MR(data, mirror, spline_order=1):    # data and its mirror
+    has_errors = (data.errors is not None) and (mirror.errors is not None)
     # Sort the mirror set by H
     sorted_mirror = mirror.sort("H")
     # prepare the interpolators
     mirror_R = mirror.interpolator("H", "R", order=spline_order)
-    mirror_err_R = mirror.interpolator("H", "err_R", order=spline_order)
+    if has_errors:
+        mirror_err2 = mirror.error2_interpolator("H", "R", order=spline_order)
     
     # filtering through data, only getting data points where H is in range of the mirror
     indices = [i for i in range(len(data["H"]))
                     if (data["H"][i] <= -(sorted_mirror["H"][0])) and (data["H"][i] >= -(sorted_mirror["H"][-1]))]
     result = data.empty()
     for key in data:
-        result[key] = data[key][indices]         
+        result[key] = data[key][indices].copy()
+        result.errors[key] = data.errors[key][indices].copy()
     # compute symmetrized R and its standard error
     result["R"] = 0.5 * (result["R"] - mirror_R(-result["H"]))
-    result["err_R"] = 0.5 * (result["err_R"]**2 + mirror_err_R(-result["H"])**2)**0.5
+    if has_errors:
+        result.errors["R"] = 0.5 * np.sqrt(np.square(result.errors["R"]) + mirror_err2(-result["H"]))
     result.update()
     return result

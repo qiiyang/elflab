@@ -68,25 +68,41 @@ def import_dc(filename):
                     lch3err.append(np.nan)
                 
     # Convert lists to datasets (dicts of 1D numpy arrays)
+    n = len(ltime)
     ch1 = datasets.DataSet([
                             ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
-                            ("R", np.array(lch1R, dtype=np.float_, copy=True)),
-                            ("err_R", np.array(lch1err, dtype=np.float_, copy=True))
+                            ("R", np.array(lch1R, dtype=np.float_, copy=True))
                             ])
+    ch1.errors = {"time":np.zeros(n, dtype=np.float_),
+        "T":np.zeros(n, dtype=np.float_),
+        "H":np.zeros(n, dtype=np.float_),
+        "R":np.array(lch1err, dtype=np.float_, copy=True)}
+    ch1.update()
+    
     ch2 = datasets.DataSet([
                             ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
-                            ("R", np.array(lch2R, dtype=np.float_, copy=True)),
-                            ("err_R", np.array(lch2err, dtype=np.float_, copy=True))
+                            ("R", np.array(lch2R, dtype=np.float_, copy=True))
                             ])
+    ch2.errors = {"time":np.zeros(n, dtype=np.float_),
+        "T":np.zeros(n, dtype=np.float_),
+        "H":np.zeros(n, dtype=np.float_),
+        "R":np.array(lch2err, dtype=np.float_, copy=True)}
+    ch2.update()
+    
     ch3 = datasets.DataSet([
                             ("time", np.array(ltime, dtype=np.float_, copy=True)),
                             ("T", np.array(lT, dtype=np.float_, copy=True)),
                             ("H", np.array(lH, dtype=np.float_, copy=True)),
-                            ("R", np.array(lch3R, dtype=np.float_, copy=True)),
-                            ("err_R", np.array(lch3err, dtype=np.float_, copy=True))
+                            ("R", np.array(lch3R, dtype=np.float_, copy=True))
                             ])
+    ch3.errors = {"time":np.zeros(n, dtype=np.float_),
+        "T":np.zeros(n, dtype=np.float_),
+        "H":np.zeros(n, dtype=np.float_),
+        "R":np.array(lch3err, dtype=np.float_, copy=True)}
+    ch3.update()
+    
     return (ch1, ch2, ch3)

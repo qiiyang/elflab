@@ -61,7 +61,7 @@ class DataSet(abstracts.DataSetBase):
     def duplicate(self):
         new_set = DataSet([(key,self[key].copy()) for key in self])
         if self.errors is not None:
-            newset.errors = {key: self.errors[key].copy() for key in self}
+            new_set.errors = {key: self.errors[key].copy() for key in self}
         new_set.titles = self.titles.copy()
         return new_set
         
@@ -84,10 +84,16 @@ class DataSet(abstracts.DataSetBase):
     def interpolator(self, x, y, order=1):
         # sort according to the argument
         sorted = self.sort(x)
+        return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
+            
+    # return an interpolator: interpolate err^2(y) from x
+    def error2_interpolator(self, x, y, order=1):
+        # sort according to the argument
+        sorted = self.sort(x)
         if self.errors is not None:
-            return interpolate.UnivariateSpline(sorted[x], sorted.errors[y], k=order, s=0)
+            return interpolate.UnivariateSpline(sorted[x], np.square(sorted.errors[y]), k=order, s=0)
         else:
-            return interpolate.UnivariateSpline(sorted[x], sorted[y], k=order, s=0)
+            raise Exception("Errors not defined.")
     
     # return a masked version of self by using numpy indexing
     def mask(self, indices):
