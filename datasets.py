@@ -15,11 +15,14 @@ class DataSet(abstracts.DataSetBase):
         if len(self) > 0:
             self.length = -1
             for key in self:
-                n = self[key].shape[0]
-                if (self.length > -1) and (n != self.length):
+                if self.length < 0:
+                    self.length = self[key].shape[0]
+                # Check entry length
+                if (self[key].shape[0] != self.length):
                     raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
-                else:
-                    self.length = n
+                # Check error entry length
+                if (self.errors is not None) and (self.errors[key].shape[0] != self.length):
+                    raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
         else:
             self.length = 0
         self.titles={key:key for key in self}
@@ -30,13 +33,16 @@ class DataSet(abstracts.DataSetBase):
         if len(self) > 0:
             self.length = -1
             for key in self:
-                n = self[key].shape[0]
-                if (self.length > -1) and (n != self.length):
+                if self.length < 0:
+                    self.length = self[key].shape[0]
+                # Check entry length
+                if (self[key].shape[0] != self.length):
                     raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
-                else:
-                    self.length = n
+                # Check error entry length
+                if (self.errors is not None) and (self.errors[key].shape[0] != self.length):
+                    raise IndexError("[elflab.DataSet.__init__] lengths of entries do not match")
         else:
-            self.length = 0
+            self.length = -1
         for key in self:
             if key not in self.titles:
                 self.titles[key] = key
