@@ -28,29 +28,38 @@ def van_der_Pauw(R_horizontal, R_vertical, xtol=1e-12, rtol=4.4408920985006262e-
         
         Rs = scipy.optimize.brentq(f, Rmin, Rmax, args=(), xtol=xtol, rtol=rtol, maxiter=maxiter, full_output=False, disp=True)
     return Rs
+    
+# Van der Pauw error propagation
+def van_der_Pauw_error(Rs, R1, R2, err_R1, err_R2):
+    e1 = math.exp(-constants.pi * R1 / Rs)
+    e2 = math.exp(-constants.pi * R2 / Rs)
+    denorm = e1 * R1 / Rs + e2 * R2 / Rs
+    # error squared
+    err = math.sqrt((e1 / denorm * err_R1)**2 + (e2 / denorm * err_R2)**2)
 
 # For a pair of data sets, calculating the sets of sheet resistance by van der Pauw method, using "param" as the interpolation parameter
 def van_der_Pauw_set(set1, set2, param):
     # sort set2 according to param
     set2sorted = set2.sort(param)
+    
     # filter set1 to have param within the range of set2
-    indices = [i for i in range(len(set1[param]))
-                    if (set1[param][i] >= set2sorted[param][0]) and (set1[param][i] <= set2sorted[param][-1])]
-    result = set1.empty()
-    for key in result:
-        result[key] = set1[key][indices]
+    indices = np.logical_and(set1[param] >= set2sorted[param][0], set1[param] <= set2sorted[param][-1])
+    result = set1.mask(indices).duplicate()
+    
     # Compute VdP sheet resistance
     set2R = set2sorted.interpolator(param, "R")
-    set2err = set2sorted.interpolator(param, "err_R")
+    set2err2 = set2sorted.error2_interpolator(param, "R")   # error squared
     for i in range(len(result[param])):
-        x = result[param][i]
         R1 = result["R"][i]
-        dR1 = result["err_R"][i]
+        dR1 = result.errors["R"][i]
+        
+        x = result[param][i]
         R2 = set2R(x)
-        dR2 = set2err(x)
+        dR2 = math.sqrt(set2err2(x))
+        
         Rs = van_der_Pauw(R1, R2)
         result["R"][i] = Rs
-        result["err_R"][i] = (dR1 + dR2) * constants.pi / constants.ln2 / 2.0  # Very approximately
+        result.errors["R"][i] = van_der_Pauw_error(Rs, R1, R2, dR1, dR2)
     result.update()
     return result
 
