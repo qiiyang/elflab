@@ -5,19 +5,17 @@ import csv
 import numpy as np
 
 from elflab import uis, datasets
-from elflab.devices.T_controllers.lakeshore import Lakeshore332
-from elflab.devices.T_controllers.cryocon import Cryocon32B
+from elflab.devices.T_controllers.leiden import LeidenTC
 
-from elflab.devices.lockins import fake_lockins, par, stanford
-from elflab.devices.magnets import fake_magnets, oxford
-from elflab.devices.dmms import keithley, hp
+from elflab.devices.lockins import stanford
 
 import elflab.abstracts as abstracts
 import elflab.dataloggers.csvlogger as csvlogger
 
 
-GPIB_CRYOCON32B = 13
-GPIB_LAKESHORE332 = 8
+TC_PATH = r"C:\Software\Leiden Cryogenics\TC\DR TempControl.exe" # path to the Leiden temperature controller exe
+TC_
+
 GPIB_DMM = 19
 GPIB_SR830 = 10
 GPIB_SR830_2 = 12
@@ -27,105 +25,89 @@ GPIB_HPDMM = 18
 
 
 # Conversion between data names and indices and labels etc.
-
-VAR_ORDER = ["n", "t", "T_sample", "T_sorb", "T_flow", "H", "R1", "R2", "X1", "Y1", "f1", "Vex1", "X2", "Y2", "f2", "Vex2", "I_magnet", "V_gate"]
+VAR_ORDER = ["n", "time", "T_sample", "R1", "R2", "X1", "Y1", "Vex1", "X2", "Y2", "Vex2", "T_Cernox", "T_RuO", "T_CMN", "R_Cernox", "R_RuO", "L_CMN", "Hx", "Hy", "Hz"]
 
 # Everything in SI
-
-VAR_DESC = {
-            "n": "no. of data points",
-            "t": "timestamp, absolute, in s",
-            "T_sample": "sample temperature / K",
-            "T_sorb": "sorb temperature / K",
-            "T_flow": "flow temperature / K",
-            "H": "magnetic field, in T",
-            "R1": "Resistance of channel 1 / Ohm",
-            "R2": "Resistance of channel 2 / Ohm",
-            "X1": "Lockin X on ch 1 / V", 
-            "Y1": "Lockin Y on ch 1 / V",
-            "f1": "Lockin frequency on ch 1 / Hz",
-            "Vex1": "Lockin sine output on ch 1 / V",
-            "X2": "Lockin X on ch 2 / V", 
-            "Y2": "Lockin Y on ch 2 / V",
-            "f2": "Lockin frequency on ch 2 / Hz",
-            "Vex2": "Lockin sine output on ch 2 / V",
-            "I_magnet": "Magnet current / A",
-            "V_gate": "gate voltage / V"
-            }
             
 VAR_TITLES = {
             "n": "n",
-            "t": "t / s",
+            "time": "t / s",
             "T_sample": "T_sample / K",
-            "T_sorb": "T_sorb / K",
-            "T_flow": "T_flow / K",
-            "H": "H / T",
-            "R1": "R1 / Ohm",
-            "R2": "R2 / Ohm",
-            "X1": "X1 / V", 
+            "R1": "R1/ Ohm",
+            "R2": "R2/ Ohm",
+            "X1": "X1/ V",
             "Y1": "Y1 / V",
-            "f1": "f1 / Hz",
-            "Vex1": "Vex1 / V",
-            "X2": "X2 / V", 
+            "Vex1": "Vex / V",
+            "X2": "X2 / V",
             "Y2": "Y2 / V",
-            "f2": "f2 / Hz",
-            "Vex2": "Vex2 / V",
-            "I_magnet": "I_magnet / A",
-            "V_gate": "V_gate / V"
+            "Vex2": "Vex2 / V", 
+            "T_Cernox": "T_Cernox / K",
+            "T_RuO": "T_RuO / K",
+            "T_CMN": "T_CMN / K",
+            "R_Cernox": "R_Cernox / K",
+            "R_RuO": "R_RuO / K",
+            "L_CMN": "L_CMN / uH",
+            "Hx": "Hx / T",
+            "Hy": "Hy / T",
+            "Hz": "Hz / T"
             }
             
 VAR_FORMATS = {
             "n": "{:n}",
-            "t": "{:.8f}",
+            "time": "{:.8f}",
             "T_sample": "{:.10e}",
-            "T_sorb": "{:.10e}",
-            "T_flow": "{:.10e}",
-            "H": "{:.10e}",
             "R1": "{:.10e}",
             "R2": "{:.10e}",
             "X1": "{:.10e}",
             "Y1": "{:.10e}",
-            "f1": "{:.10e}",
             "Vex1": "{:.10e}",
-            "X2": "{:.10e}", 
+            "X2": "{:.10e}",
             "Y2": "{:.10e}",
-            "f2": "{:.10e}",
-            "Vex2": "{:.10e}",
-            "I_magnet": "{:.10e}",
-            "V_gate": "{:.10e}"
+            "Vex2": "{:.10e}", 
+            "T_Cernox": "{:.10e}",
+            "T_RuO": "{:.10e}",
+            "T_CMN": "{:.10e}",
+            "R_Cernox": "{:.10e}",
+            "R_RuO": "{:.10e}",
+            "L_CMN": "{:.10e}",
+            "Hx": "{:.10e}",
+            "Hy": "{:.10e}",
+            "Hz": "{:.10e}"
             }
             
 VAR_INIT = {
             "n": 0,
-            "t": float("NaN"),
+            "time": float("NaN"),
             "T_sample": float("NaN"),
-            "T_sorb": float("NaN"),
-            "T_flow": float("NaN"),
-            "H": float("NaN"),
             "R1": float("NaN"),
             "R2": float("NaN"),
             "X1": float("NaN"),
             "Y1": float("NaN"),
-            "f1": float("NaN"),
             "Vex1": float("NaN"),
-            "X2": float("NaN"), 
+            "X2": float("NaN"),
             "Y2": float("NaN"),
-            "f2": float("NaN"),
-            "Vex2": float("NaN"),
-            "I_magnet": float("NaN"),
-            "V_gate": float("NaN")
+            "Vex2": float("NaN"), 
+            "T_Cernox": float("NaN"),
+            "T_RuO": float("NaN"),
+            "T_CMN": float("NaN"),
+            "R_Cernox": float("NaN"),
+            "R_RuO": float("NaN"),
+            "L_CMN": float("NaN"),
+            "Hx": float("NaN"),
+            "Hy": float("NaN"),
+            "Hz": float("NaN")
             }
                  
 
 #SENS_RANGE = (0.1, 0.8)
     
-class Janis001GUI(uis.GenericGUI):
-    DEFAULT_FOLDER = r"D:\He3_Data\test"
+class Dil_GUI_Prototype(uis.GenericGUI):
+    DEFAULT_FOLDER = r"C:\Dropbox (KGB Group)\Dilution_Fridge\data\test"
     DEFAULT_FN = r"test"
  
     
-class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
-    title = "Janis 001 He-3: Measurements With Two Lock In Amplifiers"
+class Dil001TwoLockin(abstracts.ExperimentBase):
+    title = "Dilution Fridge 001"
     
     default_params = {
         "R_series1 / Ohm": 'no entry',
@@ -144,15 +126,12 @@ class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
     
     plotXYs = [
             [("T_sample", "R1"), ("T_sample", "R2")],
-            [("t", "T_sample"), ("t", "T_flow")]
             ]
     
     default_comments = ""
     
     def __init__(self, params, filename, lockin1, lockin2, magnet):
         # Define the temperature controllers
-        self.cryocon = Cryocon32B(GPIB_CRYOCON32B)
-        self.lakeshore = Lakeshore332(GPIB_LAKESHORE332)
         
     
         # Save parameters
@@ -219,132 +198,6 @@ class Janis001He3TwoLockinAbstract(abstracts.ExperimentBase):
         del self.lockin1
         del self.lockin2
 
-
-class Janis001PAR124MI(Janis001He3TwoLockinAbstract):
-    # "Public" Variables
-    title = "Janis S07 He-3: MI measurements with PAR 124"
-    
-    default_params = {
-        "sampling interval / s": "0.1",
-        "R_series1 / Ohm": 'no entry',
-        "sens / V": 'no entry',
-        "theta / degrees": 'no entry',
-        "f / Hz": 'no entry',
-        "Vout / V": 'no entry',
-        "transformer mode": '0 for False',
-        "GPIB DMM": "{:d}".format(GPIB_DMM)
-    }
-    
-    param_order = [
-        "sampling interval / s",
-        "GPIB DMM",
-        "R_series1 / Ohm",
-        "sens / V",
-        "theta / degrees",
-        "f / Hz",
-        "Vout / V",
-        "transformer mode"]
-    
-    var_order = VAR_ORDER.copy()    # order of variables
-    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
-    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
-    
-    plotXYs = [
-            [("T_sample", "X1"), ("t", "T_sample")],
-            [("t", "T_flow"), ("t", "T_sorb")]
-            ]
-    
-    default_comments = ""
-    
-    def __init__(self, params, filename):   
-        sens = float(params["sens / V"])
-        theta = float(params["theta / degrees"])
-        f = float(params["f / Hz"])
-        Vout = float(params["Vout / V"])
-        transformer = (int(params["transformer mode"]) != 0)
-        
-        gpib_dmm = int(params["GPIB DMM"])
-        
-        dmm = keithley.Keithley196(gpib_dmm)
-        lockin1 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=transformer)
-        lockin2 = fake_lockins.ConstLockin(float("nan"))
-        
-        magnet = fake_magnets.ConstMagnet()
-        
-        p = params.copy()
-        p["R_series2 / Ohm"] = "0"
-        super().__init__(p, filename, lockin1, lockin2, magnet)
-   
-   
-
-class Janis001SR830PAR124(Janis001He3TwoLockinAbstract):
-    # "Public" Variables
-    title = "Janis S07 He-3: SR830 & PAR124"
-    
-    default_params = {
-        "sampling interval / s": "0.1",
-        "SR830 GPIB": "{:d}".format(GPIB_SR830),
-        "SR830 R_series / Ohm": "no entry",
-        "PAR124 DMM GPIB": "{:d}".format(GPIB_DMM),
-        "PAR124 R_series / Ohm": 'no entry',
-        "PAR124 sens / V": 'no entry',
-        "PAR124 theta / degrees": 'no entry',
-        "PAR124 f / Hz": 'no entry',
-        "PAR124 Vout / V": 'no entry',
-        "PAR124 transformer mode": '0 for False'
-    }
-    
-    param_order = [
-        "sampling interval / s",
-        "SR830 GPIB",
-        "SR830 R_series / Ohm",
-        "PAR124 DMM GPIB",
-        "PAR124 R_series / Ohm",
-        "PAR124 sens / V",
-        "PAR124 theta / degrees",
-        "PAR124 f / Hz",
-        "PAR124 Vout / V",
-        "PAR124 transformer mode"]
-    
-    var_order = VAR_ORDER.copy()    # order of variables
-    var_titles = VAR_TITLES.copy()    # matching short names with full titles  = {e.g "H": "$H$ (T / $\mu_0$)"}
-    format_strings = VAR_FORMATS.copy()   # Format strings for the variables
-    
-    plotXYs = [
-            [("T_sample", "R1"), ("T_sample", "R2")],
-            [("t", "T_flow"), ("t", "T_sample")]
-            ]
-    
-    default_comments = ""
-    
-    def __init__(self, params, filename):   
-        gpib_sr830 = int(params["SR830 GPIB"])
-        lockin1 = stanford.SR830(gpib_sr830)
-        
-        sens = float(params["PAR124 sens / V"])
-        theta = float(params["PAR124 theta / degrees"])
-        f = float(params["PAR124 f / Hz"])
-        Vout = float(params["PAR124 Vout / V"])
-        transformer = (int(params["PAR124 transformer mode"]) != 0)
-        
-        gpib_dmm = int(params["PAR124 DMM GPIB"])
-        dmm = keithley.Keithley196(gpib_dmm)
-        lockin2 = par.PAR124A(dmm, sens=sens, theta=theta, f=f, Vout=Vout, transformer=transformer)
-        
-        magnet = fake_magnets.ConstMagnet()
-        
-        p = params.copy()
-        p["R_series1 / Ohm"] = params["SR830 R_series / Ohm"]
-        p["R_series2 / Ohm"] = params["PAR124 R_series / Ohm"]
-        
-        super().__init__(p, filename, lockin1, lockin2, magnet)
-   
-   
-class Janis001SR830PAR124IPS120(Janis001SR830PAR124):
-    def __init__(self, params, filename):
-        super().__init__(params, filename)
-        self.magnet = oxford.IPS120_10(GPIB_IPS120)
-   
 
 class Janis001SR830SR830IPS120(Janis001He3TwoLockinAbstract):
     # "Public" Variables
