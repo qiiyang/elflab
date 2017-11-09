@@ -56,6 +56,8 @@ class SR830(DigitalLockinBase):
             return False
     
     def read(self):     # return (t, X, Y, R, theta, f, Vout)
+        if not self.connected:
+            self.connect()
         snap = str(self.gpib.query("SNAP?1,2,3,4,9"))
         t = time.perf_counter()
         (X, Y, R, theta, f) = [float(v) for v in snap.split(',')]
@@ -121,6 +123,8 @@ class SR844(DigitalLockinBase):
             return False
     
     def read(self):     # return (t, X, Y, R, theta, f, Vout)
+        if not self.connected:
+            self.connect()
         snap = str(self.gpib.query("SNAP?1,2,3,5,8"))
         t = time.perf_counter()
         (X, Y, R, theta, f) = [float(v) for v in snap.split(',')]
