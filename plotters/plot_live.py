@@ -256,6 +256,7 @@ class PlotLive:
                     self.flag_replot = False
                 self.ani = animation.FuncAnimation(self.fig, func=self.update, frames=self.genCheckFlags, init_func=self.initLines, blit=self.BLIT, interval=self.refreshInterval*1000., repeat=False)
                 self.status["plot_shown"].set()
+                plt.tight_layout()
                 plt.show()
                 self.status["plot_shown"].clear()
         self.listenThread.join()
