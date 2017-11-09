@@ -25,19 +25,20 @@ class LVApp:
 class LeidenTC(TControllerBase): 
     # Default read function, returns (t, T) of the specified channel
     def __init__(self, address):    # address = path to the executable
-        self.TC = LVApp("DRTempControl.Application", address)
+        self.address = address
         self.connected = True
     
     def connect(self):
         pass
     
     def read(self, ch):     # return (t, T, R) for the specified channel
-        reading = self.TC.GetData("T{}".format(ch))
+        TC = LVApp("DRTempControl.Application", address)
+        reading = TC.GetData("T{}".format(ch))
         try:
             T = float(reading) / 1.e3
         except ValueError:
             T = float("nan")
-        reading = self.TC.GetData("R{}".format(ch))
+        reading = TC.GetData("R{}".format(ch))
         try:
             R = float(reading)
         except ValueError:

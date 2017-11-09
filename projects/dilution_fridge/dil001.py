@@ -244,11 +244,12 @@ class Dil001TwoLockin(abstracts.ExperimentBase):
         
     def finish(self):
         self.logger.finish()
-        del self.lakeshore
-        del self.cryocon
-        del self.magnet
+        del self.leiden_tc
         del self.lockin1
         del self.lockin2
+        del self.magnet_x
+        del self.magnet_y
+        del self.magnet_z
 
 
         
