@@ -32,8 +32,6 @@ class LeidenTC(TControllerBase):
         pass
     
     def read(self, ch):     # return (t, T, R) for the specified channel
-        if not self.connected:
-            self.connect()
         reading = self.TC.GetData("T{}".format(ch))
         try:
             T = float(reading) / 1.e3
