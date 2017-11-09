@@ -45,7 +45,9 @@ class Model430(MagnetBase):
         
     def connect(self):
         rm = visa.ResourceManager()
-        self.instrument = rm.open_resource(self.address)
+        self.instrument = rm.open_resource(self.address, baud_rate = 115200, parity = visa.constants.Parity.none, data_bits = 8, stop_bits = visa.constants.StopBits.one, flow_control=visa.constants.VI_ASRL_FLOW_RTS_CTS)
+        
+        
         idn = self.instrument.query("*idn?")
         if (self.idn_str not in idn):
             raise Exception("AMI Model 430 magnet programmer idn string does not match")
