@@ -1,6 +1,5 @@
 """ Reading temperatures from Leiden Temperature Controller VI """
-import win32com.client
-import time
+import time, pythoncom, win32com.client
 from elflab.devices.T_controllers.T_controller_base import TControllerBase
 
 # Copied from Leiden code examples
@@ -32,7 +31,8 @@ class LeidenTC(TControllerBase):
         pass
     
     def read(self, ch):     # return (t, T, R) for the specified channel
-        TC = LVApp("DRTempControl.Application", address)
+        pythoncom.CoInitialize()
+        TC = LVApp("DRTempControl.Application", self.address)
         reading = TC.GetData("T{}".format(ch))
         try:
             T = float(reading) / 1.e3

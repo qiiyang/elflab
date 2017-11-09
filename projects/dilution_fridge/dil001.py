@@ -22,7 +22,7 @@ TC_CMN = 9
 
 # Default addresses
 ADD_7124 = r"USB0::0x0A2D::0x0018::09337277::RAW"
-GPIB_SR830 = "10"
+GPIB_SR830 = 10
 COM_Hx = 35
 COM_Hy = 36
 COM_Hz = 37
